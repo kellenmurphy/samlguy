@@ -16,7 +16,7 @@
         "coverage": "vitest run --coverage"
     },
     "devDependencies": {
-        "@eslint/js": "^9.0.0",
+        "@eslint/js": "^10.0.1",
         "@sveltejs/adapter-cloudflare": "^5.0.0",
         "@sveltejs/kit": "^2.0.0",
         "@sveltejs/vite-plugin-svelte": "^5.0.0",
