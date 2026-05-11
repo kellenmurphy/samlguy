@@ -110,7 +110,7 @@
                 Made with ♥ by <a
                     href="https://kellenmurphy.com"
                     class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
-                    >Kellen "The SAML Guy" Murphy</a
+                    >The SAML Guy</a
                 >
             </span>
             <span aria-hidden="true" class="hidden sm:inline">&middot;</span>
