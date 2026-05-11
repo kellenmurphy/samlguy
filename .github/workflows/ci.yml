@@ -35,7 +35,7 @@ jobs:
               run: npm run check
 
             - name: Test with coverage
-              run: npm run coverage -- --reporter=lcov --reporter=text
+              run: npm run coverage
 
             - name: Upload coverage to Codecov
               # codecov/codecov-action v6.0.0
