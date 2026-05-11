@@ -41,7 +41,6 @@
         "wrangler": "^4.90.0"
     },
     "dependencies": {
-        "@peculiar/x509": "^2.0.0",
         "pako": "^2.1.0"
     }
 }

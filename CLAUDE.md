@@ -1,355 +1,159 @@
 # samlguy.com — SAML & JWT Decoder
 
-## Project Overview
+## Project overview
 
-A clean, fast, identity-community-focused decoder tool for SAML assertions and JWTs. Lives at **samlguy.com**. Built as a learning project and genuine community resource — think jwt.io but for the full modern IAM stack.
+A clean, fast, identity-community-focused decoder tool for SAML assertions and JWTs. Lives at **samlguy.com**. Aimed at IAM practitioners in higher education, research, and federated identity — particularly the InCommon/Internet2 community, Shibboleth IdP operators, and anyone debugging SAML flows or JWT tokens professionally.
 
-The core value prop: paste whatever messy thing you grabbed from a log file, a network tab, or a browser plugin, and the tool figures out what it is and decodes it cleanly. No more manually stripping RelayState params or fighting with double-encoded URLs.
+The core UX premise: paste whatever messy thing you grabbed from a log file, a network tab, or a proxy tool, and the tool figures out what it is and decodes it cleanly. No binding-type dropdowns, no manual RelayState stripping, no fighting with double-encoded URLs.
 
 ---
 
-## Tech Stack
+## Tech stack
 
-- **Framework**: SvelteKit (latest)
-- **Deployment**: Cloudflare Pages with `@sveltejs/adapter-cloudflare`
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
+- **Framework**: SvelteKit 2 with Svelte 5 (runes API: `$state`, `$derived`, `$effect`, `$props`)
+- **Deployment**: Cloudflare Pages + Workers via `@sveltejs/adapter-cloudflare`
+- **Language**: TypeScript (strict)
+- **Styling**: Tailwind CSS 4
 - **Package manager**: npm
-
-Server routes (SvelteKit API routes) run as Cloudflare Workers automatically via the adapter. No separate infrastructure needed.
+- **Testing**: Vitest 4 with v8 coverage provider, jsdom + happy-dom environments
+- **CI**: GitHub Actions with SHA-pinned actions, Codecov integration
+- **Linting**: typescript-eslint + eslint-plugin-svelte
 
 ---
 
-## Scaffold Instructions
+## What's built
 
+### Single-page auto-detect decoder (`src/routes/+page.svelte`)
+
+A single `<textarea>` input. The `detect()` function determines whether the input is a JWT (three-part dot-separated base64url, or starts with `Authorization: Bearer`) or SAML (everything else). A debounced `$effect` drives decoding on a 300ms timer.
+
+The page handles:
+- Multiple SAML messages in one paste (`decodeAllSaml` scans for all `SAMLRequest`/`SAMLResponse` params)
+- Generic fallback decoding (`decodeAllGeneric`) for non-SAML base64/XML/JSON blobs
+- Lazy-loaded cert decoding via dynamic `import('$lib/cert')` to avoid blocking first render
+
+### SAML decode library (`src/lib/saml.ts`)
+
+`decodeSaml(raw)` / `decodeAllSaml(raw)` — full input detection pipeline:
+
+1. **`extractSamlParam`** — tries URL parse, HTTP log line regex, colon-format (`SAMLRequest: <value>`), raw query string, fallback to raw value. Extracts RelayState separately.
+2. **`extractQueryString`** — handles full URLs, HTTP GET log lines, raw `?`-prefixed strings, bare `SAMLRequest=` strings.
+3. **`decodeValue`** — iterative URL-decode (handles `%252F` etc.), base64 normalize (standard ↔ base64url), try DEFLATE-inflate (HTTP-Redirect), try plain base64 (HTTP-POST), fail with a clear error.
+4. **`parseSummary`** — extracts all summary fields from the parsed DOM using namespace-aware `getElementsByTagNameNS`. Handles encrypted assertions/NameIDs, signing cert extraction (only from `ds:Signature`, not encryption key certs), attribute statements, timestamps.
+5. **`prettyPrintXml`** — custom indenting printer (no external XML library).
+
+### JWT decode library (`src/lib/jwt.ts`)
+
+`decodeJwt(input)` — strips `Bearer` prefix, splits on `.`, base64url-decodes header and payload, returns typed `JwtDecodeResult` with:
+- `isAlgNone` / `isWeakAlg` flags
+- `timestamps` object (`iat`, `exp`, `nbf` as `JwtTimestamp` with `date`, `label`, `expired`)
+- `scopes` array (handles both `scope` string and `scp` array claim variants)
+
+### X.509 certificate parser (`src/lib/cert.ts`)
+
+**Pure custom DER/ASN.1 parser — no external library.** (`@peculiar/x509` is in package.json but is unused and should be removed.) Parses: subject DN, issuer DN, validity dates (both UTCTime and GeneralizedTime), serial number, and key algorithm (RSA with bit length, EC with named curve). Handles unknown OIDs gracefully.
+
+### Time helpers (`src/lib/time.ts`)
+
+`relativeLabel(date)` — returns human-readable relative strings ("just expired", "3 hours ago", "in 5 minutes", "active"). `isExpired(date)` — boolean check.
+
+### Generic fallback decoder (`src/lib/generic.ts`)
+
+`decodeAllGeneric(raw)` — scans input for base64 blobs and attempts decode, returns content type classification (XML, JSON, text) for display. Shown when SAML decode fails and SAML-specific errors shouldn't be surfaced.
+
+### OIDC discovery proxy (`src/routes/api/discover/+server.ts`)
+
+Cloudflare Worker. Accepts `?issuer=<url>`, validates HTTPS, fetches `{issuer}/.well-known/openid-configuration`, returns the discovery document. Rejects non-HTTPS issuers with HTTP 400. **The API is deployed but the JWT UI does not yet call it** — wiring up the UI is a planned feature.
+
+### InfoTip component (`src/lib/InfoTip.svelte`)
+
+Hover tooltip on every summary field. Renders a small `?` button; on hover/focus, calculates the button's `getBoundingClientRect()` and renders the tooltip using `position: fixed` to escape the `overflow-hidden` card containers (absolute positioning would be clipped). The tooltip resets `uppercase`, `tracking-wider`, and `font-semibold` via `normal-case tracking-normal font-normal` to handle inheriting from section header spans.
+
+### Explanations (`src/lib/explanations.ts`)
+
+All tooltip text externalized as `FIELD_EXPLANATIONS: Record<string, string>` with dotted-namespace keys (`saml.binding`, `jwt.algorithm`, `saml.ts.notOnOrAfter`, etc.). Also exports `SAML_TS_KEY` to map dynamic SAML timestamp labels (from `parseSummary`) to their explanation keys. Designed to be i18n-ready — a translation is just an alternate implementation of the same record shape.
+
+---
+
+## Test coverage
+
+100% statements, branches, functions, and lines across all `src/lib/` modules. Achieved via:
+- `/* v8 ignore next */` directives on defensive null-guards that are unreachable in valid DER/XML (never in `parseName`, `parseKeyAlg`, etc.)
+- Carefully crafted DER certificate fixtures (single-line base64, length divisible by 4 — jsdom's `atob()` is strict, unlike Node's `Buffer.from()`)
+- Test cases for every edge path: UTCTime year ≥ 50, EC with no curve OID, RSA modulus without leading zero, unknown DN attribute OIDs, all SAML timestamp variants, JWT non-string alg, etc.
+- `explanations.test.ts` verifies every key used in the UI has a non-empty explanation, and that `SAML_TS_KEY` has no dangling references
+
+Run with: `npm run coverage`
+
+---
+
+## Architecture decisions
+
+**Single page, no routing** — JWT was briefly planned as a separate `/jwt` route; collapsed into the same page with auto-detection. Simpler, less navigation friction.
+
+**Custom X.509 DER parser** — wrote a pure-JS parser rather than using `@peculiar/x509` to eliminate the dependency. The parser handles the cases we actually encounter in SAML signing certs (RSA, EC, both time formats, standard DN attributes + unknown OID fallback).
+
+**`position: fixed` tooltips** — the summary cards use `overflow-hidden rounded-lg` for styling. `absolute`-positioned children are clipped by `overflow: hidden` ancestors. `position: fixed` elements escape this and are not clipped, at the cost of needing JS to compute the viewport coordinates on hover.
+
+**Debounced reactive decoding** — a 300ms `$effect` timer rather than a form submit or button click. Provides instant feedback on paste without thrashing during continuous typing.
+
+**Generic fallback** — if SAML decode fails and the input contains base64 or JSON, `decodeAllGeneric` tries to decode what it can and display it, rather than just showing an error. Useful for pasting partially-encoded or non-SAML content.
+
+**Namespace-aware XML parsing** — all SAML element lookups use `getElementsByTagNameNS` with the correct URNs. This handles documents that use non-standard namespace prefixes, which is common in the wild.
+
+---
+
+## Planned features
+
+### High priority
+- **OIDC Discovery UI** — the `/api/discover` endpoint is live; the JWT results panel needs a "Fetch discovery" button (or auto-trigger when `iss` is present). Should surface `issuer`, `jwks_uri`, `authorization_endpoint`, supported algs/scopes, and flag any inconsistencies with the decoded token's claims.
+- **Shareable links** — encode the paste content into the URL fragment (`window.location.hash`). A "Copy link" button generates a URL that reopens the tool with the payload pre-loaded. Fragment never hits the server. Useful for async troubleshooting with colleagues.
+
+### Medium priority
+- **SAML signature validation** — fetch the IdP's SAML metadata (by EntityID or URL), extract the signing cert, and verify `<ds:Signature>` using the Web Crypto API. Display verified/unverified status prominently.
+- **Light mode toggle** — dark mode is current default; add a toggle with `localStorage` persistence.
+- **XML syntax highlighting** — color-code element names, attribute names, and values in the XML `<pre>` block. Could use a small tokenizer or a lightweight library like `highlight.js` scoped to XML.
+
+### Lower priority / ideas
+- **SAML metadata parsing** — accept EntityDescriptor XML, display SP/IdP metadata in a structured way (ACS URLs, NameID formats, signing certs, attribute requirements)
+- **JWT JWKS validation** — after OIDC discovery, fetch `jwks_uri` and attempt to verify the JWT signature using the matching key
+- **i18n** — `explanations.ts` is already structured for this; add a locale switcher and alternate record implementations
+
+---
+
+## Code quality rules
+
+Before any structural refactor on a file >300 LOC, remove dead props, unused exports, and debug logs. Commit separately.
+
+After any significant change, run:
 ```bash
-npm create svelte@latest samlguy
-# Choose: Skeleton project, TypeScript, Tailwind
-cd samlguy
-npm install
-npm install -D @sveltejs/adapter-cloudflare
+npx tsc --noEmit && npx eslint . --quiet && npm run coverage
 ```
+All three must pass before reporting work complete.
 
-Update `svelte.config.js` to use the Cloudflare adapter:
-
-```js
-import adapter from '@sveltejs/adapter-cloudflare';
-import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
-
-export default {
-    preprocess: vitePreprocess(),
-    kit: {
-        adapter: adapter()
-    }
-};
-```
+ESLint config note: `svelte/no-navigation-without-resolve` is configured with `ignoreLinks: true` because samlguy.com deploys at the root with no base path, making `resolve()` unnecessary for plain `href="/"` links.
 
 ---
 
-## Features to Build
+## Branding & tone
 
-### 1. SAML Decoder (build first)
+The site should feel like it was made by someone who actually works in IAM. Lean into the samlguy.com name — it can have personality without being a joke.
 
-**Input handling — this is the most important UX piece:**
+- Dark mode as default
+- Monospace font for decoded output (XML, JWT JSON, certificate details)
+- Sans-serif for UI chrome
+- Muted color palette; accent color used sparingly (status badges, expired timestamps)
+- Footer: "Made with ♥ by Kellen 'The SAML Guy' Murphy" linking to kellenmurphy.com
+- No loud colors, no gradients, no marketing copy — the tool does the talking
 
-The input box should accept any of the following and figure out what to do:
-
-- A raw base64+deflate blob (HTTP-Redirect binding)
-- A raw base64 blob (HTTP-POST binding)
-- A query string: `SAMLRequest=<blob>&RelayState=...`
-- A full URL containing a SAMLRequest parameter
-- A raw HTTP log line (e.g. copied from an access log) containing a SAMLRequest — strip the HTTP method, path prefix, status code, etc. and extract just the parameter
-
-Key detail: **always parse out RelayState as a separate labeled field** rather than including it in the decode attempt. This is the #1 failure mode on existing tools.
-
-Handle double URL-encoding gracefully (`%252F` etc.) — iteratively URL-decode until the value inflates cleanly.
-
-**Output to display:**
-
-- Pretty-printed, syntax-highlighted XML
-- Parsed summary panel showing key fields:
-    - Issuer
-    - NameID (value + Format)
-    - Destination
-    - AssertionConsumerServiceURL
-    - InResponseTo (if present)
-    - Binding type detected (Redirect vs POST)
-    - RelayState (shown separately)
-- **Timestamp math**: for `NotBefore`, `NotOnOrAfter`, `SessionNotOnOrAfter`, `AuthnInstant` — show the raw value AND a human-readable relative label ("expired 3 hours ago", "valid for 5 minutes", "active")
-- **Certificate extraction**: if a `<ds:X509Certificate>` is present, decode it and show subject, issuer, expiration, and whether it's currently valid
-- **Attribute statements**: clean table of released attributes and values
-
-### 2. JWT Decoder (build second)
-
-Same smart input handling — accept a raw JWT or a Bearer token header like `Authorization: Bearer <token>`.
-
-**Output:**
-
-- Header and payload decoded and pretty-printed
-- Signature algorithm flagged — call out `alg: none` explicitly as dangerous; note weak vs strong algorithms
-- Timestamp math same as SAML: `iat`, `exp`, `nbf` shown with relative human-readable labels
-- Scope claim parsed into a readable list if present
-- **OIDC Discovery integration** (see below)
-
-### 3. OIDC Discovery (SvelteKit server route)
-
-When a JWT is decoded and an `iss` claim is present, show a button or auto-trigger a fetch to:
-
-```
-GET /api/discover?issuer=<iss value>
-```
-
-This SvelteKit API route proxies a request to `<iss>/.well-known/openid-configuration` server-side (avoiding CORS issues from the browser) and returns the IdP metadata.
-
-Display the discovery result alongside the decoded JWT — highlight whether the token's `aud`, `alg`, and other claims are consistent with what the IdP advertises.
-
-Route lives at `src/routes/api/discover/+server.ts`.
-
-### 4. Shareable Links
-
-Encode the pasted payload into the URL fragment (`#`) so it never hits the server. A "Copy link" button generates a URL that reopens the tool with the payload pre-loaded. Useful for async troubleshooting with colleagues.
-
----
-
-## Suggested Route Structure
-
-```
-src/routes/
-  +layout.svelte         # nav, shared chrome
-  +page.svelte           # landing / SAML decoder (default tab)
-  jwt/
-    +page.svelte         # JWT decoder
-  api/
-    discover/
-      +server.ts         # OIDC discovery proxy
-```
-
-Or use tabs on a single page route — either approach is fine.
-
----
-
-## Decode Logic (pure TS modules)
-
-Keep decode logic in `src/lib/` as framework-agnostic TypeScript so it's testable independently of Svelte:
-
-```
-src/lib/
-  saml.ts       # input detection, URL-decode, base64, inflate, XML parse
-  jwt.ts        # split, base64url decode, parse header/payload
-  cert.ts       # X.509 decode from base64 DER
-  time.ts       # timestamp math and relative label helpers
-```
-
-For SAML inflate: use the `pako` library (`npm install pako`) for deflate/inflate in the browser.
-For XML: use the built-in `DOMParser` — no additional dependency needed.
-For X.509: `@peculiar/x509` is a good lightweight option.
+The identity community will appreciate a tool that clearly understands their workflows.
 
 ---
 
 ## Deployment
 
-- Connect the GitHub repo to **Cloudflare Pages**
+- **Cloudflare Pages** — connected to this GitHub repo; merges to `main` auto-deploy
 - Build command: `npm run build`
 - Output directory: `.svelte-kit/cloudflare`
-- Point **samlguy.com** DNS to the Cloudflare Pages deployment (update from the current forward to kellenmurphy.com)
-
----
-
-## Tone & Branding
-
-The site should feel like it was made by someone who actually works in IAM, not a generic SaaS tool. Lean into the samlguy.com name a little — it can have some personality without being a joke.
-
-Take visual inspiration from kellenmurphy.com: clean, minimal, typographically confident, personal without being flashy. No loud colors or gradients. The kind of thing where the design gets out of the way and lets the tool do the talking.
-
-- Dark mode as default, with a light mode toggle if desired
-- Monospace font for decoded output (XML, JWT JSON, certificate details)
-- Sans-serif for UI chrome — something clean like Inter or IBM Plex Sans
-- Muted color palette — use accent color sparingly, maybe for highlighted fields like NameID or exp
-- A small, understated footer credit: "Made with ♥ by Kellen "The SAML Guy" Murphy" linking to kellenmurphy.com
-
-The identity community will appreciate a tool that clearly understands their workflows and doesn't look like a marketing site.
-
----
-
-## Repository Security Setup
-
-### Dependabot
-
-Create `.github/dependabot.yml`:
-
-```yaml
-version: 2
-updates:
-    - package-ecosystem: 'npm'
-      directory: '/'
-      schedule:
-          interval: 'weekly'
-      open-pull-requests-limit: 10
-      groups:
-          svelte:
-              patterns:
-                  - 'svelte*'
-                  - '@sveltejs/*'
-          cloudflare:
-              patterns:
-                  - '@cloudflare/*'
-                  - 'wrangler'
-
-    - package-ecosystem: 'github-actions'
-      directory: '/'
-      schedule:
-          interval: 'weekly'
-      open-pull-requests-limit: 5
-```
-
-Grouping related deps (Svelte, Cloudflare) means fewer noisy PRs while still keeping things current. The `github-actions` ecosystem entry is important — action dependencies are a supply chain vector people often miss.
-
-### Security Policy
-
-Create `SECURITY.md` at the repo root:
-
-```markdown
-# Security Policy
-
-## Supported Versions
-
-Only the latest deployment of samlguy.com is actively maintained.
-
-## Reporting a Vulnerability
-
-Please do not open public GitHub issues for security vulnerabilities.
-
-Report vulnerabilities via email to: samlguy@kellenmurphy.com
-
-Include:
-
-- Description of the vulnerability
-- Steps to reproduce
-- Potential impact
-- Any suggested remediation
-
-You can expect an acknowledgment within 48 hours and a resolution or status
-update within 7 days.
-
-## Scope
-
-samlguy.com is a client-side decoding tool. All SAML and JWT payloads are
-processed in the browser and are never transmitted to or stored on any server,
-with the exception of the OIDC discovery proxy endpoint (/api/discover), which
-accepts only an issuer URL parameter and makes outbound fetch requests on
-the user's behalf.
-```
-
-### Branch Protection
-
-Configure on GitHub under Settings → Branches for `main`:
-
-- Require pull request before merging (at least 1 approval if collaborators are added later)
-- Require status checks to pass before merging (wire up the CI job below)
-- Require branches to be up to date before merging
-- Do not allow bypassing the above settings
-- Block force pushes
-
-### CI/CD with GitHub Actions
-
-Create `.github/workflows/ci.yml`. Key security principles applied:
-
-- **Pin all actions to a full commit SHA**, not a mutable tag — tags can be moved by a compromised upstream
-- **Minimal permissions** — declare only what each job actually needs
-- **No secrets in PR workflows** — deploy only from `main`, never from PRs (prevents secret exfiltration via malicious PRs)
-- **Environment protection** — use a GitHub Environment called `production` for the deploy job so it requires explicit approval if you want a manual gate
-
-```yaml
-name: CI/CD
-
-on:
-    push:
-        branches: [main]
-    pull_request:
-        branches: [main]
-
-permissions:
-    contents: read
-
-jobs:
-    test:
-        name: Build & Test
-        runs-on: ubuntu-24.04
-        permissions:
-            contents: read
-        steps:
-            - name: Checkout
-              uses: actions/checkout@<PIN TO FULL SHA>
-
-            - name: Setup Node
-              uses: actions/setup-node@<PIN TO FULL SHA>
-              with:
-                  node-version: 20
-                  cache: 'npm'
-
-            - name: Install dependencies
-              run: npm ci
-
-            - name: Audit dependencies
-              run: npm audit --audit-level=high
-
-            - name: Type check
-              run: npm run check
-
-            - name: Build
-              run: npm run build
-
-    deploy:
-        name: Deploy to Cloudflare Pages
-        runs-on: ubuntu-24.04
-        needs: test
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        environment: production
-        permissions:
-            contents: read
-            deployments: write
-        steps:
-            - name: Checkout
-              uses: actions/checkout@<PIN TO FULL SHA>
-
-            - name: Setup Node
-              uses: actions/setup-node@<PIN TO FULL SHA>
-              with:
-                  node-version: 20
-                  cache: 'npm'
-
-            - name: Install dependencies
-              run: npm ci
-
-            - name: Build
-              run: npm run build
-
-            - name: Deploy to Cloudflare Pages
-              uses: cloudflare/wrangler-action@<PIN TO FULL SHA>
-              with:
-                  apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-                  accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-                  command: pages deploy .svelte-kit/cloudflare --project-name=samlguy
-```
-
-**Important**: Replace each `<PIN TO FULL SHA>` with the actual commit SHA for the action version you want. Find them on each action's GitHub releases page. Claude Code can help with this — ask it to look up and pin the current SHA for each action when setting up the workflow.
-
-Store `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` as GitHub repository secrets (Settings → Secrets and variables → Actions). The Cloudflare API token should be scoped to Cloudflare Pages only — not a global token.
-
-### CODEOWNERS
-
-Create `.github/CODEOWNERS`:
-
-```
-* @kellenmurphy
-```
-
-Simple for a solo project but establishes the pattern and ensures any future collaborators require your review.
-
----
-
-## Out of Scope (for now)
-
-- Signature validation (requires the IdP's public key — could be a future feature via metadata fetch)
-- SAML metadata parsing (separate tool idea)
-- User accounts / saved history
+- Cloudflare Worker API routes deploy automatically alongside the Pages site via the adapter
+- `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` stored as GitHub repository secrets; token is scoped to Cloudflare Pages only

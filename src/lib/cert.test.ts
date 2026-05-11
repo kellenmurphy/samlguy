@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { decodeCert } from './cert';
-import { TEST_CERT_B64, EC_CERT_B64, GENTIME_CERT_B64, ED25519_CERT_B64, BIGSERIAL_CERT_B64 } from './fixtures.test-helper';
+import { TEST_CERT_B64, EC_CERT_B64, GENTIME_CERT_B64, ED25519_CERT_B64, BIGSERIAL_CERT_B64, RSA_FALLBACK_CERT_B64, UTCTIME_OLD_CERT_B64, EC_NO_CURVE_CERT_B64, RSA_NO_ZERO_CERT_B64, TITLE_ATTR_CERT_B64 } from './fixtures.test-helper';
 
 describe('decodeCert', () => {
     const cert = decodeCert(TEST_CERT_B64);
@@ -84,6 +84,18 @@ describe('decodeCert — high serial number (0xC8, requires leading-zero strip)'
     });
 });
 
+describe('decodeCert — RSA key size parse fallback', () => {
+    const cert = decodeCert(RSA_FALLBACK_CERT_B64);
+
+    it('returns "RSA" when BIT STRING inner SEQUENCE has no children', () => {
+        expect(cert.keyAlgorithm).toBe('RSA');
+    });
+
+    it('parses subject correctly', () => {
+        expect(cert.subject).toBe('CN=rsa fallback');
+    });
+});
+
 describe('decodeCert — GeneralizedTime (post-2049 dates)', () => {
     const cert = decodeCert(GENTIME_CERT_B64);
 
@@ -97,5 +109,57 @@ describe('decodeCert — GeneralizedTime (post-2049 dates)', () => {
 
     it('reports the cert as not yet valid', () => {
         expect(cert.isValid).toBe(false);
+    });
+});
+
+describe('decodeCert — UTCTime year >= 50 (1900+y branch)', () => {
+    const cert = decodeCert(UTCTIME_OLD_CERT_B64);
+
+    it('parses 1986 from two-digit year 86', () => {
+        expect(cert.validFrom.toISOString()).toBe('1986-01-01T00:00:00.000Z');
+    });
+
+    it('parses 1996 from two-digit year 96', () => {
+        expect(cert.validTo.toISOString()).toBe('1996-01-01T00:00:00.000Z');
+    });
+
+    it('reports the cert as not valid (dates in the past)', () => {
+        expect(cert.isValid).toBe(false);
+    });
+
+    it('parses subject correctly', () => {
+        expect(cert.subject).toBe('CN=utctime old');
+    });
+});
+
+describe('decodeCert — EC with no curve OID in AlgorithmIdentifier', () => {
+    const cert = decodeCert(EC_NO_CURVE_CERT_B64);
+
+    it('returns "EC " when algId has no curve parameter', () => {
+        expect(cert.keyAlgorithm).toBe('EC ');
+    });
+
+    it('parses subject correctly', () => {
+        expect(cert.subject).toBe('CN=ec no curve');
+    });
+});
+
+describe('decodeCert — RSA modulus with no leading zero byte', () => {
+    const cert = decodeCert(RSA_NO_ZERO_CERT_B64);
+
+    it('computes key size without subtracting the leading-zero byte', () => {
+        expect(cert.keyAlgorithm).toBe('RSA-8');
+    });
+
+    it('parses subject correctly', () => {
+        expect(cert.subject).toBe('CN=rsa no zero');
+    });
+});
+
+describe('decodeCert — DN attribute with unknown OID', () => {
+    const cert = decodeCert(TITLE_ATTR_CERT_B64);
+
+    it('falls back to raw OID string for unrecognized attribute type', () => {
+        expect(cert.subject).toBe('2.5.4.12=CEO');
     });
 });

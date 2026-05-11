@@ -24,6 +24,12 @@ export default ts.config(
         }
     },
     {
+        // samlguy.com is always deployed at root with no base path, so plain href="/" is correct
+        rules: {
+            'svelte/no-navigation-without-resolve': ['error', { ignoreLinks: true }]
+        }
+    },
+    {
         ignores: ['build/', '.svelte-kit/', 'dist/']
     }
 );
