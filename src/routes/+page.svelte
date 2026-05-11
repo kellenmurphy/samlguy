@@ -1,6 +1,9 @@
 <script lang="ts">
     import { decodeSaml, decodeAllSaml, type SamlDecodeResult } from '$lib/saml';
+    import { decodeJwt, type JwtDecodeResult } from '$lib/jwt';
     import { decodeAllGeneric, type GenericDecodeResult } from '$lib/generic';
+    import InfoTip from '$lib/InfoTip.svelte';
+    import { SAML_TS_KEY } from '$lib/explanations';
     import { relativeLabel, isExpired } from '$lib/time';
     import type { CertInfo } from '$lib/cert';
 
@@ -14,6 +17,29 @@
     let certInfos = $state<Record<string, CertInfo | false>>({});
     let samlCopiedIdx = $state(-1);
     let genericCopiedIdx = $state(-1);
+    let jwtResult = $state<JwtDecodeResult | null>(null);
+    let jwtCopied = $state(false);
+    let discoveryResult = $state<Record<string, unknown> | null>(null);
+    let discoveryLoading = $state(false);
+    let discoveryError = $state<string | null>(null);
+    let discoveryGeneration = 0;
+
+    const discoveryIssuerMatch = $derived.by(() => {
+        if (!discoveryResult || !jwtResult) return null;
+        const d = discoveryResult.issuer;
+        const t = jwtResult.payload.iss;
+        if (typeof d !== 'string' || typeof t !== 'string') return null;
+        return d === t;
+    });
+
+    const discoveryAlgOk = $derived.by(() => {
+        if (!discoveryResult || !jwtResult) return null;
+        const algs = discoveryResult.id_token_signing_alg_values_supported;
+        if (!Array.isArray(algs)) return null;
+        const tokenAlg = typeof jwtResult.header.alg === 'string' ? jwtResult.header.alg : null;
+        if (!tokenAlg) return null;
+        return algs.some((a) => a === tokenAlg);
+    });
 
     function detect(value: string): InputType {
         const t = value.trim();
@@ -28,12 +54,42 @@
     $effect(() => {
         const value = input.trim();
 
-        if (!value || detected === 'jwt') {
+        if (!value) {
+            results = [];
+            genericResults = [];
+            jwtResult = null;
+            decodeError = null;
+            discoveryResult = null;
+            discoveryError = null;
+            discoveryLoading = false;
+            discoveryGeneration++;
+            return;
+        }
+
+        if (detected === 'jwt') {
             results = [];
             genericResults = [];
             decodeError = null;
-            return;
+            discoveryResult = null;
+            discoveryError = null;
+            discoveryLoading = false;
+            discoveryGeneration++;
+            const timer = setTimeout(() => {
+                try {
+                    jwtResult = decodeJwt(value);
+                } catch (e) {
+                    jwtResult = null;
+                    decodeError = e instanceof Error ? e.message : 'Could not decode JWT';
+                }
+            }, 300);
+            return () => clearTimeout(timer);
         }
+
+        jwtResult = null;
+        discoveryResult = null;
+        discoveryError = null;
+        discoveryLoading = false;
+        discoveryGeneration++;
 
         const timer = setTimeout(() => {
             // If the input contains multiple SAML messages, show them all
@@ -46,7 +102,7 @@
             }
 
             // Single-message path: handles raw blobs without SAMLRequest= prefix
-            let singleError: string | null = null;
+            let singleError!: string | null;
             try {
                 results = [decodeSaml(value)];
                 genericResults = [];
@@ -126,6 +182,37 @@
         setTimeout(() => (genericCopiedIdx = -1), 2000);
     }
 
+    async function copyJwt() {
+        if (!jwtResult) return;
+        await navigator.clipboard.writeText(jwtResult.raw);
+        jwtCopied = true;
+        setTimeout(() => (jwtCopied = false), 2000);
+    }
+
+    async function fetchDiscovery() {
+        const iss =
+            jwtResult && typeof jwtResult.payload.iss === 'string' ? jwtResult.payload.iss : null;
+        if (!iss) return;
+        const gen = ++discoveryGeneration;
+        discoveryLoading = true;
+        discoveryError = null;
+        discoveryResult = null;
+        try {
+            const res = await fetch(`/api/discover?issuer=${encodeURIComponent(iss)}`);
+            if (gen !== discoveryGeneration) return;
+            if (!res.ok) {
+                discoveryError = `Discovery failed (HTTP ${res.status})`;
+            } else {
+                discoveryResult = (await res.json()) as Record<string, unknown>;
+            }
+        } catch (e) {
+            if (gen !== discoveryGeneration) return;
+            discoveryError = e instanceof Error ? e.message : 'Could not reach discovery endpoint';
+        } finally {
+            if (gen === discoveryGeneration) discoveryLoading = false;
+        }
+    }
+
     const ENCODING_LABELS: Record<string, string> = {
         'base64+deflate': 'base64 + DEFLATE',
         base64: 'base64',
@@ -165,14 +252,352 @@
         Decoded entirely in your browser — nothing you paste is sent to any server.
     </p>
 
-    {#if detected === 'jwt' && results.length === 0}
-        <div class="flex items-center gap-3">
-            <span
-                class="rounded-md bg-neutral-200 px-2.5 py-1 text-xs font-medium uppercase tracking-wider text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+    {#if jwtResult}
+        {@const alg = typeof jwtResult.header.alg === 'string' ? jwtResult.header.alg : 'none'}
+        {@const typ = typeof jwtResult.header.typ === 'string' ? jwtResult.header.typ : null}
+        {@const kid = typeof jwtResult.header.kid === 'string' ? jwtResult.header.kid : null}
+        {@const iss = typeof jwtResult.payload.iss === 'string' ? jwtResult.payload.iss : null}
+        {@const sub = typeof jwtResult.payload.sub === 'string' ? jwtResult.payload.sub : null}
+        {@const jti = typeof jwtResult.payload.jti === 'string' ? jwtResult.payload.jti : null}
+        {@const audArr = jwtResult.payload.aud !== undefined
+            ? Array.isArray(jwtResult.payload.aud)
+                ? jwtResult.payload.aud
+                : [jwtResult.payload.aud]
+            : null}
+        {@const hasTimestamps = !!(
+            jwtResult.timestamps.iat ||
+            jwtResult.timestamps.exp ||
+            jwtResult.timestamps.nbf
+        )}
+
+        {#if jwtResult.isAlgNone || jwtResult.isWeakAlg}
+            <div
+                class="rounded-lg border px-4 py-3 text-sm {jwtResult.isAlgNone
+                    ? 'border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400'
+                    : 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400'}"
             >
-                JWT
-            </span>
-            <span class="text-sm text-neutral-500 italic">JWT decode coming soon</span>
+                {#if jwtResult.isAlgNone}
+                    <strong>Dangerous:</strong> <code>alg: none</code> — this token has no signature
+                    and cannot be trusted.
+                {:else}
+                    <strong>Weak algorithm:</strong>
+                    <code>{alg}</code> uses a shared secret (HMAC). Signature cannot be verified without
+                    the secret key.
+                {/if}
+            </div>
+        {/if}
+
+        <!-- Summary -->
+        <div
+            class="overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900"
+        >
+            <div class="border-b border-neutral-200 px-4 py-2.5 dark:border-neutral-800">
+                <span class="text-xs font-semibold uppercase tracking-wider text-neutral-500"
+                    >Summary</span
+                >
+            </div>
+            <dl class="divide-y divide-neutral-100 dark:divide-neutral-800">
+                <div class="flex gap-4 px-4 py-2.5">
+                    <dt class="w-36 shrink-0 text-sm text-neutral-500">Algorithm<InfoTip key="jwt.algorithm" /></dt>
+                    <dd class="flex flex-wrap items-center gap-2">
+                        <span
+                            class="rounded bg-neutral-200 px-1.5 py-0.5 font-mono text-xs text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300"
+                        >
+                            {alg}
+                        </span>
+                        {#if jwtResult.isAlgNone}
+                            <span
+                                class="rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-400"
+                                >Dangerous</span
+                            >
+                        {:else if jwtResult.isWeakAlg}
+                            <span
+                                class="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-400"
+                                >Weak</span
+                            >
+                        {/if}
+                    </dd>
+                </div>
+                {#if typ}
+                    <div class="flex gap-4 px-4 py-2.5">
+                        <dt class="w-36 shrink-0 text-sm text-neutral-500">Type<InfoTip key="jwt.tokenType" /></dt>
+                        <dd class="font-mono text-sm text-neutral-900 dark:text-neutral-100">{typ}</dd>
+                    </div>
+                {/if}
+                {#if kid}
+                    <div class="flex gap-4 px-4 py-2.5">
+                        <dt class="w-36 shrink-0 text-sm text-neutral-500">Key ID<InfoTip key="jwt.keyId" /></dt>
+                        <dd class="break-all font-mono text-sm text-neutral-900 dark:text-neutral-100"
+                            >{kid}</dd
+                        >
+                    </div>
+                {/if}
+                {#if iss}
+                    <div class="flex gap-4 px-4 py-2.5">
+                        <dt class="w-36 shrink-0 text-sm text-neutral-500">Issuer<InfoTip key="jwt.issuer" /></dt>
+                        <dd class="flex flex-wrap items-center gap-3">
+                            <span class="break-all font-mono text-sm text-neutral-900 dark:text-neutral-100">{iss}</span>
+                            {#if !discoveryResult && !discoveryLoading}
+                                <button
+                                    onclick={fetchDiscovery}
+                                    class="shrink-0 rounded px-2 py-0.5 text-xs text-neutral-400 ring-1 ring-neutral-300 transition-colors hover:bg-neutral-100 hover:text-neutral-600 dark:ring-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
+                                >Discover</button>
+                            {:else if discoveryLoading}
+                                <span class="shrink-0 text-xs text-neutral-400">Fetching…</span>
+                            {:else if discoveryResult}
+                                <span class="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/40 dark:text-green-400">Discovered</span>
+                            {/if}
+                        </dd>
+                    </div>
+                {/if}
+                {#if sub}
+                    <div class="flex gap-4 px-4 py-2.5">
+                        <dt class="w-36 shrink-0 text-sm text-neutral-500">Subject<InfoTip key="jwt.subject" /></dt>
+                        <dd class="break-all font-mono text-sm text-neutral-900 dark:text-neutral-100"
+                            >{sub}</dd
+                        >
+                    </div>
+                {/if}
+                {#if audArr}
+                    <div class="flex gap-4 px-4 py-2.5">
+                        <dt class="w-36 shrink-0 text-sm text-neutral-500">Audience<InfoTip key="jwt.audience" /></dt>
+                        <dd class="flex flex-col gap-0.5">
+                            {#each audArr as aud, audIdx (audIdx)}
+                                <span
+                                    class="break-all font-mono text-sm text-neutral-900 dark:text-neutral-100"
+                                    >{String(aud)}</span
+                                >
+                            {/each}
+                        </dd>
+                    </div>
+                {/if}
+                {#if jti}
+                    <div class="flex gap-4 px-4 py-2.5">
+                        <dt class="w-36 shrink-0 text-sm text-neutral-500">JWT ID<InfoTip key="jwt.jwtId" /></dt>
+                        <dd class="break-all font-mono text-sm text-neutral-900 dark:text-neutral-100"
+                            >{jti}</dd
+                        >
+                    </div>
+                {/if}
+            </dl>
+        </div>
+
+        <!-- Timestamps -->
+        {#if hasTimestamps}
+            <div
+                class="overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900"
+            >
+                <div class="border-b border-neutral-200 px-4 py-2.5 dark:border-neutral-800">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-neutral-500"
+                        >Timestamps</span
+                    >
+                </div>
+                <dl class="divide-y divide-neutral-100 dark:divide-neutral-800">
+                    {#if jwtResult.timestamps.iat}
+                        {@const ts = jwtResult.timestamps.iat}
+                        <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-4 py-2.5">
+                            <dt class="w-36 shrink-0 text-sm text-neutral-500">Issued At<InfoTip key="jwt.ts.issuedAt" /></dt>
+                            <dd class="flex flex-wrap items-baseline gap-3">
+                                <span
+                                    class="font-mono text-sm text-neutral-900 dark:text-neutral-100"
+                                    >{ts.date.toISOString()}</span
+                                >
+                                <span
+                                    class="text-xs {ts.expired
+                                        ? 'text-red-600 dark:text-red-400'
+                                        : 'text-green-700 dark:text-green-400'}">{ts.label}</span
+                                >
+                            </dd>
+                        </div>
+                    {/if}
+                    {#if jwtResult.timestamps.nbf}
+                        {@const ts = jwtResult.timestamps.nbf}
+                        <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-4 py-2.5">
+                            <dt class="w-36 shrink-0 text-sm text-neutral-500">Not Before<InfoTip key="jwt.ts.notBefore" /></dt>
+                            <dd class="flex flex-wrap items-baseline gap-3">
+                                <span
+                                    class="font-mono text-sm text-neutral-900 dark:text-neutral-100"
+                                    >{ts.date.toISOString()}</span
+                                >
+                                <span
+                                    class="text-xs {ts.expired
+                                        ? 'text-red-600 dark:text-red-400'
+                                        : 'text-green-700 dark:text-green-400'}">{ts.label}</span
+                                >
+                            </dd>
+                        </div>
+                    {/if}
+                    {#if jwtResult.timestamps.exp}
+                        {@const ts = jwtResult.timestamps.exp}
+                        <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-4 py-2.5">
+                            <dt class="w-36 shrink-0 text-sm text-neutral-500">Expires<InfoTip key="jwt.ts.expires" /></dt>
+                            <dd class="flex flex-wrap items-baseline gap-3">
+                                <span
+                                    class="font-mono text-sm text-neutral-900 dark:text-neutral-100"
+                                    >{ts.date.toISOString()}</span
+                                >
+                                <span
+                                    class="text-xs {ts.expired
+                                        ? 'text-red-600 dark:text-red-400'
+                                        : 'text-green-700 dark:text-green-400'}">{ts.label}</span
+                                >
+                            </dd>
+                        </div>
+                    {/if}
+                </dl>
+            </div>
+        {/if}
+
+        <!-- Scopes -->
+        {#if jwtResult.scopes && jwtResult.scopes.length > 0}
+            <div
+                class="overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900"
+            >
+                <div class="border-b border-neutral-200 px-4 py-2.5 dark:border-neutral-800">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-neutral-500"
+                        >Scopes<InfoTip key="jwt.scopes" /></span
+                    >
+                </div>
+                <div class="flex flex-wrap gap-2 p-4">
+                    {#each jwtResult.scopes as scope (scope)}
+                        <span
+                            class="rounded bg-neutral-200 px-2 py-0.5 font-mono text-xs text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300"
+                            >{scope}</span
+                        >
+                    {/each}
+                </div>
+            </div>
+        {/if}
+
+        <!-- Discovery error -->
+        {#if discoveryError}
+            <div
+                class="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400"
+            >
+                <strong>OIDC Discovery:</strong>
+                {discoveryError}
+            </div>
+        {/if}
+
+        <!-- Discovery results -->
+        {#if discoveryResult}
+            {@const jwksUri = typeof discoveryResult.jwks_uri === 'string' ? discoveryResult.jwks_uri : null}
+            {@const authEp = typeof discoveryResult.authorization_endpoint === 'string' ? discoveryResult.authorization_endpoint : null}
+            {@const tokenEp = typeof discoveryResult.token_endpoint === 'string' ? discoveryResult.token_endpoint : null}
+            {@const userinfoEp = typeof discoveryResult.userinfo_endpoint === 'string' ? discoveryResult.userinfo_endpoint : null}
+            {@const supportedAlgs = Array.isArray(discoveryResult.id_token_signing_alg_values_supported) ? discoveryResult.id_token_signing_alg_values_supported as string[] : null}
+            {@const acrValues = Array.isArray(discoveryResult.acr_values_supported) ? discoveryResult.acr_values_supported as string[] : null}
+            <div
+                class="overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900"
+            >
+                <div class="border-b border-neutral-200 px-4 py-2.5 dark:border-neutral-800">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-neutral-500">OIDC Discovery</span>
+                </div>
+                <dl class="divide-y divide-neutral-100 dark:divide-neutral-800">
+                    <div class="flex gap-4 px-4 py-2.5">
+                        <dt class="w-36 shrink-0 text-sm text-neutral-500">Issuer</dt>
+                        <dd class="flex flex-wrap items-center gap-2">
+                            <span class="break-all font-mono text-sm text-neutral-900 dark:text-neutral-100">{typeof discoveryResult.issuer === 'string' ? discoveryResult.issuer : '—'}</span>
+                            {#if discoveryIssuerMatch === true}
+                                <span class="shrink-0 rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/40 dark:text-green-400">Matches token</span>
+                            {:else if discoveryIssuerMatch === false}
+                                <span class="shrink-0 rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-400">Mismatch</span>
+                            {/if}
+                        </dd>
+                    </div>
+                    {#if jwksUri}
+                        <div class="flex gap-4 px-4 py-2.5">
+                            <dt class="w-36 shrink-0 text-sm text-neutral-500">JWKS URI</dt>
+                            <dd class="break-all font-mono text-sm text-neutral-900 dark:text-neutral-100">
+                                <a href={jwksUri} target="_blank" rel="noopener noreferrer" class="underline decoration-neutral-300 hover:decoration-neutral-500 dark:decoration-neutral-600 dark:hover:decoration-neutral-400">{jwksUri}</a>
+                            </dd>
+                        </div>
+                    {/if}
+                    {#if authEp}
+                        <div class="flex gap-4 px-4 py-2.5">
+                            <dt class="w-36 shrink-0 text-sm text-neutral-500">Auth Endpoint</dt>
+                            <dd class="break-all font-mono text-sm text-neutral-900 dark:text-neutral-100">
+                                <a href={authEp} target="_blank" rel="noopener noreferrer" class="underline decoration-neutral-300 hover:decoration-neutral-500 dark:decoration-neutral-600 dark:hover:decoration-neutral-400">{authEp}</a>
+                            </dd>
+                        </div>
+                    {/if}
+                    {#if tokenEp}
+                        <div class="flex gap-4 px-4 py-2.5">
+                            <dt class="w-36 shrink-0 text-sm text-neutral-500">Token Endpoint</dt>
+                            <dd class="break-all font-mono text-sm text-neutral-900 dark:text-neutral-100">
+                                <a href={tokenEp} target="_blank" rel="noopener noreferrer" class="underline decoration-neutral-300 hover:decoration-neutral-500 dark:decoration-neutral-600 dark:hover:decoration-neutral-400">{tokenEp}</a>
+                            </dd>
+                        </div>
+                    {/if}
+                    {#if userinfoEp}
+                        <div class="flex gap-4 px-4 py-2.5">
+                            <dt class="w-36 shrink-0 text-sm text-neutral-500">UserInfo</dt>
+                            <dd class="break-all font-mono text-sm text-neutral-900 dark:text-neutral-100">
+                                <a href={userinfoEp} target="_blank" rel="noopener noreferrer" class="underline decoration-neutral-300 hover:decoration-neutral-500 dark:decoration-neutral-600 dark:hover:decoration-neutral-400">{userinfoEp}</a>
+                            </dd>
+                        </div>
+                    {/if}
+                    {#if supportedAlgs}
+                        <div class="flex gap-4 px-4 py-2.5">
+                            <dt class="w-36 shrink-0 text-sm text-neutral-500">ID Token Algs</dt>
+                            <dd class="flex flex-wrap gap-1.5">
+                                {#each supportedAlgs as a (a)}
+                                    <span class="rounded px-1.5 py-0.5 font-mono text-xs {a === alg ? (discoveryAlgOk ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400') : 'bg-neutral-200 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300'}">{a}</span>
+                                {/each}
+                                {#if discoveryAlgOk === false}
+                                    <span class="rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-400">Token alg not supported</span>
+                                {/if}
+                            </dd>
+                        </div>
+                    {/if}
+                    {#if acrValues && acrValues.length > 0}
+                        <div class="flex gap-4 px-4 py-2.5">
+                            <dt class="w-36 shrink-0 text-sm text-neutral-500">ACR Values</dt>
+                            <dd class="flex flex-wrap gap-1.5">
+                                {#each acrValues as acr (acr)}
+                                    <span class="rounded bg-neutral-200 px-1.5 py-0.5 font-mono text-xs text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300">{acr}</span>
+                                {/each}
+                            </dd>
+                        </div>
+                    {/if}
+                </dl>
+            </div>
+        {/if}
+
+        <!-- Header + Payload JSON -->
+        <div class="grid gap-4 sm:grid-cols-2">
+            <div>
+                <div class="mb-2">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-neutral-500"
+                        >Header</span
+                    >
+                </div>
+                <pre
+                    class="max-h-64 overflow-auto rounded-lg border border-neutral-200 bg-neutral-50 p-4 font-mono text-xs leading-relaxed text-neutral-800 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300">{JSON.stringify(
+                        jwtResult.header,
+                        null,
+                        2
+                    )}</pre>
+            </div>
+            <div>
+                <div class="mb-2 flex items-center justify-between">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-neutral-500"
+                        >Payload</span
+                    >
+                    <button
+                        onclick={copyJwt}
+                        class="rounded px-2.5 py-1 text-xs text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
+                    >
+                        {jwtCopied ? 'Copied!' : 'Copy token'}
+                    </button>
+                </div>
+                <pre
+                    class="max-h-64 overflow-auto rounded-lg border border-neutral-200 bg-neutral-50 p-4 font-mono text-xs leading-relaxed text-neutral-800 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300">{JSON.stringify(
+                        jwtResult.payload,
+                        null,
+                        2
+                    )}</pre>
+            </div>
         </div>
     {/if}
 
@@ -185,7 +610,7 @@
     {/if}
 
     <!-- Generic fallback results -->
-    {#each genericResults as gr, i}
+    {#each genericResults as gr, i (i)}
         <div class="space-y-3">
             <div class="flex items-center gap-3">
                 <span
@@ -227,7 +652,7 @@
     {/each}
 
     <!-- SAML results -->
-    {#each results as result, i}
+    {#each results as result, i (i)}
         {@const s = result.summary}
 
         {#if results.length > 1}
@@ -256,7 +681,7 @@
             </div>
             <dl class="divide-y divide-neutral-100 dark:divide-neutral-800">
                 <div class="flex gap-4 px-4 py-2.5">
-                    <dt class="w-36 shrink-0 text-sm text-neutral-500">Binding</dt>
+                    <dt class="w-36 shrink-0 text-sm text-neutral-500">Binding<InfoTip key="saml.binding" /></dt>
                     <dd class="text-sm">
                         <span
                             class="rounded bg-neutral-200 px-1.5 py-0.5 font-mono text-xs text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300"
@@ -266,7 +691,7 @@
                     </dd>
                 </div>
                 <div class="flex gap-4 px-4 py-2.5">
-                    <dt class="w-36 shrink-0 text-sm text-neutral-500">Message</dt>
+                    <dt class="w-36 shrink-0 text-sm text-neutral-500">Message<InfoTip key="saml.messageType" /></dt>
                     <dd class="text-sm">
                         <span
                             class="rounded bg-neutral-200 px-1.5 py-0.5 font-mono text-xs text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300"
@@ -277,7 +702,7 @@
                 </div>
                 {#if s.status}
                     <div class="flex gap-4 px-4 py-2.5">
-                        <dt class="w-36 shrink-0 text-sm text-neutral-500">Status</dt>
+                        <dt class="w-36 shrink-0 text-sm text-neutral-500">Status<InfoTip key="saml.status" /></dt>
                         <dd class="flex flex-wrap items-baseline gap-2">
                             <span
                                 class="rounded px-1.5 py-0.5 text-xs font-medium {shortCode(
@@ -303,7 +728,7 @@
                 {/if}
                 {#if s.issuer}
                     <div class="flex gap-4 px-4 py-2.5">
-                        <dt class="w-36 shrink-0 text-sm text-neutral-500">Issuer</dt>
+                        <dt class="w-36 shrink-0 text-sm text-neutral-500">Issuer<InfoTip key="saml.issuer" /></dt>
                         <dd
                             class="break-all font-mono text-sm text-neutral-900 dark:text-neutral-100"
                         >
@@ -313,7 +738,7 @@
                 {/if}
                 {#if s.destination}
                     <div class="flex gap-4 px-4 py-2.5">
-                        <dt class="w-36 shrink-0 text-sm text-neutral-500">Destination</dt>
+                        <dt class="w-36 shrink-0 text-sm text-neutral-500">Destination<InfoTip key="saml.destination" /></dt>
                         <dd
                             class="break-all font-mono text-sm text-neutral-900 dark:text-neutral-100"
                         >
@@ -323,7 +748,7 @@
                 {/if}
                 {#if s.acsUrl}
                     <div class="flex gap-4 px-4 py-2.5">
-                        <dt class="w-36 shrink-0 text-sm text-neutral-500">ACS URL</dt>
+                        <dt class="w-36 shrink-0 text-sm text-neutral-500">ACS URL<InfoTip key="saml.acsUrl" /></dt>
                         <dd
                             class="break-all font-mono text-sm text-neutral-900 dark:text-neutral-100"
                         >
@@ -333,7 +758,7 @@
                 {/if}
                 {#if s.nameId}
                     <div class="flex gap-4 px-4 py-2.5">
-                        <dt class="w-36 shrink-0 text-sm text-neutral-500">NameID</dt>
+                        <dt class="w-36 shrink-0 text-sm text-neutral-500">NameID<InfoTip key="saml.nameId" /></dt>
                         <dd class="flex flex-wrap items-baseline gap-2">
                             <span class="font-mono text-sm text-neutral-900 dark:text-neutral-100">
                                 {s.nameId.value}
@@ -346,7 +771,7 @@
                 {/if}
                 {#if s.inResponseTo}
                     <div class="flex gap-4 px-4 py-2.5">
-                        <dt class="w-36 shrink-0 text-sm text-neutral-500">InResponseTo</dt>
+                        <dt class="w-36 shrink-0 text-sm text-neutral-500">InResponseTo<InfoTip key="saml.inResponseTo" /></dt>
                         <dd
                             class="break-all font-mono text-sm text-neutral-900 dark:text-neutral-100"
                         >
@@ -356,7 +781,7 @@
                 {/if}
                 {#if s.relayState}
                     <div class="flex gap-4 px-4 py-2.5">
-                        <dt class="w-36 shrink-0 text-sm text-neutral-500">RelayState</dt>
+                        <dt class="w-36 shrink-0 text-sm text-neutral-500">RelayState<InfoTip key="saml.relayState" /></dt>
                         <dd
                             class="break-all font-mono text-sm text-neutral-900 dark:text-neutral-100"
                         >
@@ -366,7 +791,7 @@
                 {/if}
                 {#if s.encrypted.assertion || s.encrypted.nameId}
                     <div class="flex gap-4 px-4 py-2.5">
-                        <dt class="w-36 shrink-0 text-sm text-neutral-500">Encrypted</dt>
+                        <dt class="w-36 shrink-0 text-sm text-neutral-500">Encrypted<InfoTip key="saml.encrypted" /></dt>
                         <dd class="flex flex-wrap gap-2">
                             {#if s.encrypted.assertion}
                                 <span
@@ -389,7 +814,7 @@
                     {@const certKey = s.signingCertificate.slice(0, 20)}
                     {@const c = certInfos[certKey]}
                     <div class="flex gap-4 px-4 py-2.5">
-                        <dt class="w-36 shrink-0 text-sm text-neutral-500">Signing cert</dt>
+                        <dt class="w-36 shrink-0 text-sm text-neutral-500">Signing cert<InfoTip key="saml.signingCert" /></dt>
                         <dd class="space-y-1.5">
                             {#if c === false}
                                 <span class="text-sm text-neutral-500"
@@ -447,10 +872,10 @@
                     >
                 </div>
                 <dl class="divide-y divide-neutral-100 dark:divide-neutral-800">
-                    {#each s.timestamps as ts}
+                    {#each s.timestamps as ts (ts.label)}
                         {@const expired = isExpired(ts.date)}
                         <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-4 py-2.5">
-                            <dt class="w-36 shrink-0 text-sm text-neutral-500">{ts.label}</dt>
+                            <dt class="w-36 shrink-0 text-sm text-neutral-500">{ts.label}<InfoTip key={SAML_TS_KEY[ts.label]} /></dt>
                             <dd class="flex flex-wrap items-baseline gap-3">
                                 <span
                                     class="font-mono text-sm text-neutral-900 dark:text-neutral-100"
@@ -477,7 +902,7 @@
             >
                 <div class="border-b border-neutral-200 px-4 py-2.5 dark:border-neutral-800">
                     <span class="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-                        Released Attributes
+                        Released Attributes<InfoTip key="saml.attributes" />
                         <span class="ml-1 font-normal normal-case text-neutral-400"
                             >({s.attributes.length})</span
                         >
@@ -499,7 +924,7 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-neutral-100 dark:divide-neutral-800">
-                            {#each s.attributes as attribute}
+                            {#each s.attributes as attribute (attribute.name)}
                                 <tr>
                                     <td
                                         class="max-w-xs break-all px-4 py-2 font-mono text-xs text-neutral-700 dark:text-neutral-300"

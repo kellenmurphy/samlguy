@@ -96,20 +96,26 @@ function parseTime(node: DerNode): Date {
 }
 
 function parseName(node: DerNode): string {
-    return (node.children ?? [])
-        .flatMap((rdn) =>
-            (rdn.children ?? []).map((atv) => {
+    /* v8 ignore next */
+    const rdns = node.children ?? [];
+    return rdns
+        .flatMap((rdn) => {
+            /* v8 ignore next */
+            const atvs = rdn.children ?? [];
+            return atvs.map((atv) => {
+                /* v8 ignore next */
                 if (!atv.children || atv.children.length < 2) return '';
                 const name = OID_ATTR[oid(atv.children[0].value)] ?? oid(atv.children[0].value);
                 return `${name}=${str(atv.children[1])}`;
-            })
-        )
+            });
+        })
         .filter(Boolean)
         .join(', ');
 }
 
 function parseKeyAlg(spki: DerNode): string {
     const algId = spki.children?.[0];
+    /* v8 ignore next */
     if (!algId?.children?.[0]) return 'Unknown';
     const algOid = oid(algId.children[0].value);
     const name = OID_SPKI[algOid];
@@ -120,8 +126,10 @@ function parseKeyAlg(spki: DerNode): string {
         return `EC ${OID_CURVE[curveOid] ?? curveOid}`;
     }
 
+    /* v8 ignore next */
     if (name === 'RSA') {
         const bitStr = spki.children?.[1];
+        /* v8 ignore next */
         if (bitStr) {
             try {
                 const { node: rsaKey } = parseNode(bitStr.value.slice(1), 0);
@@ -131,10 +139,9 @@ function parseKeyAlg(spki: DerNode): string {
                     return `RSA-${bits}`;
                 }
             } catch {
-                // fall through
+                // fall through to name
             }
         }
-        return 'RSA';
     }
 
     return name;

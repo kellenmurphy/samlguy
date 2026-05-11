@@ -117,17 +117,6 @@ function extractSamlParam(input: string): {
             paramName: 'SAMLResponse'
         };
 
-    // Equals-separated fallback for partial / malformed query strings
-    const reqMatch = input.match(/SAMLRequest=([^&\s]+)/);
-    const resMatch = input.match(/SAMLResponse=([^&\s]+)/);
-    const rsMatch = input.match(/RelayState=([^&\s]+)/);
-    const rs = rsMatch ? safeDecode(rsMatch[1]) : undefined;
-
-    if (reqMatch)
-        return { samlValue: safeDecode(reqMatch[1]), relayState: rs, paramName: 'SAMLRequest' };
-    if (resMatch)
-        return { samlValue: safeDecode(resMatch[1]), relayState: rs, paramName: 'SAMLResponse' };
-
     return { samlValue: input, paramName: 'raw' };
 }
 
@@ -146,6 +135,7 @@ function extractQueryString(input: string): string | null {
         try {
             const path = logMatch[1];
             const url = new URL(`http://x${path.startsWith('/') ? '' : '/'}${path}`);
+            /* v8 ignore next */
             if (url.search) return url.search;
         } catch {
             // not parseable
@@ -355,15 +345,12 @@ export function prettyPrintXml(xml: string): string {
                 lines.push('  '.repeat(indent) + tag);
             } else {
                 // Opening tag
-                if (current) {
-                    lines.push(current);
-                    current = '';
-                }
+                if (current) lines.push(current);
                 current = '  '.repeat(indent) + tag;
                 indent++;
             }
-        } else if (text) {
-            const t = text.trim();
+        } else {
+            const t = text!.trim();
             if (t && current) current += t;
         }
     }

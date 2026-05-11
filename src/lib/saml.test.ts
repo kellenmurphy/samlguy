@@ -318,6 +318,77 @@ describe('decodeSaml — error response with sub-status and message', () => {
     });
 });
 
+// ── extractQueryString / extractSamlParam branch coverage ────────────────────
+
+describe('decodeSaml — URL with non-SAML query params falls through', () => {
+    it('throws when URL has query params but no SAMLRequest or SAMLResponse', () => {
+        expect(() => decodeSaml('https://example.com?foo=bar')).toThrow();
+    });
+});
+
+describe('decodeSaml — HTTP log line with non-slash-prefixed path', () => {
+    it('decodes when path does not start with /', () => {
+        const blob = toRedirectBlob(AUTHN_REQUEST_XML);
+        const r = decodeSaml(`GET sso.php?SAMLRequest=${encodeURIComponent(blob)} HTTP/1.1`);
+        expect(r.summary.issuer).toBe('https://sp.example.com');
+    });
+});
+
+describe('decodeSaml — ?-prefixed raw query string', () => {
+    it('accepts input starting with "?"', () => {
+        const blob = toRedirectBlob(AUTHN_REQUEST_XML);
+        const r = decodeSaml(`?SAMLRequest=${encodeURIComponent(blob)}`);
+        expect(r.summary.issuer).toBe('https://sp.example.com');
+        expect(r.summary.binding).toBe('redirect');
+    });
+});
+
+// ── parseSummary branch coverage ──────────────────────────────────────────────
+
+const NS_SAMLP = 'urn:oasis:names:tc:SAML:2.0:protocol';
+const NS_SAML = 'urn:oasis:names:tc:SAML:2.0:assertion';
+
+describe('decodeSaml — Status element with no StatusCode child', () => {
+    const xml = `<?xml version="1.0"?><samlp:Response xmlns:samlp="${NS_SAMLP}" xmlns:saml="${NS_SAML}" ID="_r" Version="2.0" IssueInstant="2024-01-01T00:00:00Z"><samlp:Status/></samlp:Response>`;
+
+    it('sets status.code to empty string when StatusCode is absent', () => {
+        const r = decodeSaml(xml);
+        expect(r.summary.status?.code).toBe('');
+    });
+});
+
+describe('decodeSaml — StatusCode with no Value attribute', () => {
+    const xml = `<?xml version="1.0"?><samlp:Response xmlns:samlp="${NS_SAMLP}" xmlns:saml="${NS_SAML}" ID="_r" Version="2.0" IssueInstant="2024-01-01T00:00:00Z"><samlp:Status><samlp:StatusCode/></samlp:Status></samlp:Response>`;
+
+    it('sets status.code to empty string when Value attribute is absent', () => {
+        const r = decodeSaml(xml);
+        expect(r.summary.status?.code).toBe('');
+    });
+});
+
+describe('decodeSaml — Attribute with no Name + empty AttributeValue', () => {
+    const xml = `<?xml version="1.0"?><samlp:Response xmlns:samlp="${NS_SAMLP}" xmlns:saml="${NS_SAML}" ID="_r" Version="2.0" IssueInstant="2024-01-01T00:00:00Z"><saml:Assertion ID="_a" Version="2.0" IssueInstant="2024-01-01T00:00:00Z"><saml:AttributeStatement><saml:Attribute><saml:AttributeValue></saml:AttributeValue></saml:Attribute></saml:AttributeStatement></saml:Assertion></samlp:Response>`;
+
+    it('uses empty string for missing Name attribute', () => {
+        const r = decodeSaml(xml);
+        expect(r.summary.attributes[0].name).toBe('');
+    });
+
+    it('uses empty string for empty AttributeValue text content', () => {
+        const r = decodeSaml(xml);
+        expect(r.summary.attributes[0].values[0]).toBe('');
+    });
+});
+
+describe('decodeSaml — NameID with empty text content', () => {
+    const xml = `<?xml version="1.0"?><samlp:Response xmlns:samlp="${NS_SAMLP}" xmlns:saml="${NS_SAML}" ID="_r" Version="2.0" IssueInstant="2024-01-01T00:00:00Z"><saml:Assertion ID="_a" Version="2.0" IssueInstant="2024-01-01T00:00:00Z"><saml:Subject><saml:NameID></saml:NameID></saml:Subject></saml:Assertion></samlp:Response>`;
+
+    it('uses empty string when NameID has no text content', () => {
+        const r = decodeSaml(xml);
+        expect(r.summary.nameId?.value).toBe('');
+    });
+});
+
 // ── decodeAllSaml ─────────────────────────────────────────────────────────────
 
 describe('decodeAllSaml', () => {
@@ -373,5 +444,16 @@ describe('prettyPrintXml', () => {
         const pretty = prettyPrintXml('<root>   <child/>   </root>');
         expect(pretty).not.toContain('>   <');
         expect(pretty).toContain('<child/>');
+    });
+
+    it('flushes a pending open tag when input ends without a closing tag', () => {
+        const pretty = prettyPrintXml('<root><unclosed>');
+        expect(pretty).toContain('<unclosed>');
+    });
+
+    it('drops text that appears after a closing tag with no open tag pending', () => {
+        const pretty = prettyPrintXml('<a>foo</a>tail');
+        expect(pretty).toContain('<a>foo</a>');
+        expect(pretty).not.toContain('tail');
     });
 });
