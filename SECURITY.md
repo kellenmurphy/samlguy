@@ -98,6 +98,12 @@ The CI workflow enforces test coverage via Vitest and uploads results to Codecov
 
 ---
 
+## License
+
+This project is released under the [MIT License](LICENSE). You are free to use, fork, modify, and distribute the code. The only requirement is that the copyright notice is preserved in copies or substantial portions of the software.
+
+---
+
 ## Out of scope
 
 - Vulnerabilities in tokens or assertions pasted by users — the tool is a decoder, not a validator; it does not make trust decisions on behalf of the user

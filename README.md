@@ -175,4 +175,10 @@ Primarily a personal project and community resource, but bug reports and suggest
 
 ---
 
+## License
+
+[MIT](LICENSE) — free to use, modify, and distribute. Attribution appreciated but not required beyond keeping the copyright notice.
+
+---
+
 Made with ♥ by [The SAML Guy](https://kellenmurphy.com)
