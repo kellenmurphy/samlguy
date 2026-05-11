@@ -7,6 +7,29 @@
     <h1 class="text-2xl font-bold">Privacy Policy</h1>
     <p class="mt-1 text-sm text-neutral-500">Effective: May 2025</p>
 
+    <div
+        class="mt-6 flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 dark:border-green-900/60 dark:bg-green-950/30"
+    >
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="mt-0.5 h-4 w-4 shrink-0 text-green-700 dark:text-green-400"
+            aria-hidden="true"
+        >
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        <p class="text-sm font-medium text-green-800 dark:text-green-400">
+            Everything is processed in your browser. Nothing you paste — SAML assertions, JWTs,
+            certificates, or any other identity data — is ever transmitted to or stored on any server.
+        </p>
+    </div>
+
     <div class="mt-8 space-y-6 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
         <section class="space-y-2">
             <h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">
