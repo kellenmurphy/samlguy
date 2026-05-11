@@ -147,6 +147,24 @@
         class="h-48 w-full resize-y rounded-lg border border-neutral-300 bg-neutral-50 px-4 py-3 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder-neutral-600"
     ></textarea>
 
+    <p class="flex items-center gap-1.5 text-xs text-neutral-400 dark:text-neutral-600">
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="h-3 w-3 shrink-0"
+            aria-hidden="true"
+        >
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        Decoded entirely in your browser — nothing you paste is sent to any server.
+    </p>
+
     {#if detected === 'jwt' && results.length === 0}
         <div class="flex items-center gap-3">
             <span

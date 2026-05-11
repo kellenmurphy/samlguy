@@ -98,14 +98,14 @@
 
     <footer class="px-6 py-4">
         <div
-            class="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-neutral-400 dark:text-neutral-600"
+            class="mx-auto flex max-w-5xl flex-col items-center gap-2 text-xs text-neutral-400 dark:text-neutral-600 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-3 sm:gap-y-1"
         >
             <a
                 href="/privacy"
                 class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
                 >Privacy</a
             >
-            <span aria-hidden="true">&middot;</span>
+            <span aria-hidden="true" class="hidden sm:inline">&middot;</span>
             <span>
                 Made with ♥ by <a
                     href="https://kellenmurphy.com"
@@ -113,15 +113,33 @@
                     >Kellen "The SAML Guy" Murphy</a
                 >
             </span>
-            <span aria-hidden="true">&middot;</span>
-            <a
-                href="https://github.com/kellenmurphy/samlguy"
-                class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
-                target="_blank"
-                rel="noopener noreferrer"
-            >
-                GitHub
-            </a>
+            <span aria-hidden="true" class="hidden sm:inline">&middot;</span>
+            <span class="flex items-center gap-2">
+                <a
+                    href="https://github.com/kellenmurphy/samlguy/actions/workflows/ci.yml"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="CI status"
+                >
+                    <img
+                        src="https://img.shields.io/github/actions/workflow/status/kellenmurphy/samlguy/ci.yml?branch=main&style=flat-square&label=CI&labelColor=404040"
+                        alt="CI status"
+                        class="h-4"
+                    />
+                </a>
+                <a
+                    href="https://github.com/kellenmurphy/samlguy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Code coverage"
+                >
+                    <img
+                        src="https://img.shields.io/badge/coverage-88%25-4ade80?style=flat-square&labelColor=404040"
+                        alt="Coverage 88%"
+                        class="h-4"
+                    />
+                </a>
+            </span>
         </div>
     </footer>
 </div>
