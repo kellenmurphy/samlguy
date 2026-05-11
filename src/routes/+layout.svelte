@@ -128,14 +128,14 @@
                     />
                 </a>
                 <a
-                    href="https://github.com/kellenmurphy/samlguy"
+                    href="https://app.codecov.io/gh/kellenmurphy/samlguy"
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Code coverage"
                 >
                     <img
-                        src="https://img.shields.io/badge/coverage-88%25-4ade80?style=flat-square&labelColor=404040"
-                        alt="Coverage 88%"
+                        src="https://img.shields.io/codecov/c/github/kellenmurphy/samlguy?style=flat-square&label=coverage&labelColor=404040"
+                        alt="Code coverage"
                         class="h-4"
                     />
                 </a>
