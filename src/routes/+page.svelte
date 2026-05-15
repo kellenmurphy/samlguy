@@ -5,6 +5,7 @@
     import { decodeAllGeneric, type GenericDecodeResult } from '$lib/generic';
     import InfoTip from '$lib/InfoTip.svelte';
     import { SAML_TS_KEY } from '$lib/explanations';
+    import { encodePayload, decodePayload } from '$lib/hash';
     import { relativeLabel, isExpired } from '$lib/time';
     import type { CertInfo } from '$lib/cert';
 
@@ -53,21 +54,6 @@
 
     const detected = $derived(detect(input));
     const hasResults = $derived(!!(results.length || genericResults.length || jwtResult));
-
-    function encodePayload(s: string): string {
-        const bytes = new TextEncoder().encode(s);
-        let binary = '';
-        for (const b of bytes) binary += String.fromCharCode(b);
-        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-    }
-
-    function decodePayload(s: string): string {
-        const b64 = s.replace(/-/g, '+').replace(/_/g, '/');
-        const binary = atob(b64);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-        return new TextDecoder().decode(bytes);
-    }
 
     onMount(() => {
         const hash = window.location.hash.slice(1);

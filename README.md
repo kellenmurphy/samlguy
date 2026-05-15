@@ -162,12 +162,27 @@ Connected to Cloudflare Pages. Every merge to `main` triggers an automatic build
 
 ## What's planned
 
+### Near-term
+
+- **SAML error decoder** — human-readable explanations for `<samlp:Status>` codes and `StatusMessage` values ("RequesterError / NoAuthnContext — your IdP couldn't satisfy the requested AuthnContext"); already parsed, just needs a lookup table
+- **AuthnContext decoder** — render `<saml:AuthnContextClassRef>` URNs as friendly labels with tooltips covering assurance levels, REFEDS MFA, RAF, and the most common `PasswordProtectedTransport` / `Kerberos` / `TimeSyncToken` values
+- **InCommon attribute annotations** — flag attributes in the attribute table as InCommon Baseline Eligible, R&S, or REFEDS RAF/eppn-scoped; your differentiator vs generic SAML tools
 - **Shareable links** — encode the pasted payload into the URL fragment (`#`) so it never hits the server; a "Copy link" button lets you pre-load a decoder view to share with colleagues
 - **XML syntax highlighting** — color-code element names, attributes, and values in the pretty-printed XML block
+
+### Medium-term
+
+- **Diff view** — paste two assertions side-by-side and highlight what changed; most useful for attribute table and timestamp diffs when debugging why a second login attempt looks different
 - **SAML metadata parsing** — parse `EntityDescriptor` XML into a structured view: signing certs, ACS URLs, NameID formats, supported bindings, contacts
 - **MDQ discovery** — "Discover" button on the SAML Issuer row fetches the IdP's metadata from InCommon's MDQ service (`https://mdq.incommon.org/entities/{entityID}`) — no aggregate download needed; optional MDQ base URL for other federations (eduGAIN, etc.)
 - **SAML signature validation** — verify `<ds:Signature>` against the signing cert retrieved via MDQ; show a verified/failed badge
+- **SP-initiated flow simulator** — given an EntityID, construct and encode a valid AuthnRequest URL for testing IdP behavior without a real SP; note: unsigned only (most IdPs accept this, some require signed requests)
 - **JWT JWKS validation** — after OIDC discovery, fetch `jwks_uri` and verify the JWT signature against the matching key
+
+### Longer-term
+
+- **REFEDS entity category checker** — given an EntityID (via MDQ), show which entity categories apply and whether the IdP's attribute release policy would likely cover them; requires MDQ + metadata parsing
+
 
 ---
 
