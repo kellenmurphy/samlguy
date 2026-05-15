@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from 'svelte';
     import { decodeSaml, decodeAllSaml, type SamlDecodeResult } from '$lib/saml';
     import { decodeJwt, type JwtDecodeResult } from '$lib/jwt';
     import { decodeAllGeneric, type GenericDecodeResult } from '$lib/generic';
@@ -19,6 +20,7 @@
     let genericCopiedIdx = $state(-1);
     let jwtResult = $state<JwtDecodeResult | null>(null);
     let jwtCopied = $state(false);
+    let linkCopied = $state(false);
     let discoveryResult = $state<Record<string, unknown> | null>(null);
     let discoveryLoading = $state(false);
     let discoveryError = $state<string | null>(null);
@@ -50,6 +52,33 @@
     }
 
     const detected = $derived(detect(input));
+    const hasResults = $derived(!!(results.length || genericResults.length || jwtResult));
+
+    function encodePayload(s: string): string {
+        const bytes = new TextEncoder().encode(s);
+        let binary = '';
+        for (const b of bytes) binary += String.fromCharCode(b);
+        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    }
+
+    function decodePayload(s: string): string {
+        const b64 = s.replace(/-/g, '+').replace(/_/g, '/');
+        const binary = atob(b64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return new TextDecoder().decode(bytes);
+    }
+
+    onMount(() => {
+        const hash = window.location.hash.slice(1);
+        if (hash) {
+            try {
+                input = decodePayload(hash);
+            } catch {
+                // ignore malformed hash
+            }
+        }
+    });
 
     $effect(() => {
         const value = input.trim();
@@ -189,6 +218,14 @@
         setTimeout(() => (jwtCopied = false), 2000);
     }
 
+    async function copyLink() {
+        const encoded = encodePayload(input.trim());
+        const url = `${window.location.origin}${window.location.pathname}#${encoded}`;
+        await navigator.clipboard.writeText(url);
+        linkCopied = true;
+        setTimeout(() => (linkCopied = false), 2000);
+    }
+
     async function fetchDiscovery() {
         const iss =
             jwtResult && typeof jwtResult.payload.iss === 'string' ? jwtResult.payload.iss : null;
@@ -221,11 +258,19 @@
 </script>
 
 <div class="space-y-8">
-    <div>
-        <h1 class="text-2xl font-bold">Identity Decoder</h1>
-        <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-            Paste a SAML assertion, JWT, query string, URL, or HTTP log line. We'll figure it out.
-        </p>
+    <div class="flex items-start justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold">Identity Decoder</h1>
+            <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+                Paste a SAML assertion, JWT, query string, URL, or HTTP log line. We'll figure it out.
+            </p>
+        </div>
+        {#if hasResults}
+            <button
+                onclick={copyLink}
+                class="shrink-0 rounded-md px-3 py-1.5 text-sm text-neutral-500 ring-1 ring-neutral-300 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:ring-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
+            >{linkCopied ? 'Copied!' : 'Copy link'}</button>
+        {/if}
     </div>
 
     <textarea
