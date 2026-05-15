@@ -162,10 +162,12 @@ Connected to Cloudflare Pages. Every merge to `main` triggers an automatic build
 
 ## What's planned
 
-- **OIDC Discovery UI** — surface the IdP's discovery document in the JWT results panel and highlight inconsistencies between the token's claims and what the IdP advertises (`aud`, `alg`, JWKS key matching)
 - **Shareable links** — encode the pasted payload into the URL fragment (`#`) so it never hits the server; a "Copy link" button lets you pre-load a decoder view to share with colleagues
-- **SAML signature validation** — verify `<ds:Signature>` against a key fetched live from the IdP's SAML metadata
-- **SAML metadata parsing** — dedicated input path for EntityDescriptor XML
+- **XML syntax highlighting** — color-code element names, attributes, and values in the pretty-printed XML block
+- **SAML metadata parsing** — parse `EntityDescriptor` XML into a structured view: signing certs, ACS URLs, NameID formats, supported bindings, contacts
+- **MDQ discovery** — "Discover" button on the SAML Issuer row fetches the IdP's metadata from InCommon's MDQ service (`https://mdq.incommon.org/entities/{entityID}`) — no aggregate download needed; optional MDQ base URL for other federations (eduGAIN, etc.)
+- **SAML signature validation** — verify `<ds:Signature>` against the signing cert retrieved via MDQ; show a verified/failed badge
+- **JWT JWKS validation** — after OIDC discovery, fetch `jwks_uri` and verify the JWT signature against the matching key
 
 ---
 
