@@ -39,8 +39,10 @@ The page handles:
 1. **`extractSamlParam`** — tries URL parse, HTTP log line regex, colon-format (`SAMLRequest: <value>`), raw query string, fallback to raw value. Extracts RelayState separately.
 2. **`extractQueryString`** — handles full URLs, HTTP GET log lines, raw `?`-prefixed strings, bare `SAMLRequest=` strings.
 3. **`decodeValue`** — iterative URL-decode (handles `%252F` etc.), base64 normalize (standard ↔ base64url), try DEFLATE-inflate (HTTP-Redirect), try plain base64 (HTTP-POST), fail with a clear error.
-4. **`parseSummary`** — extracts all summary fields from the parsed DOM using namespace-aware `getElementsByTagNameNS`. Handles encrypted assertions/NameIDs, signing cert extraction (only from `ds:Signature`, not encryption key certs), attribute statements, timestamps.
-5. **`prettyPrintXml`** — custom indenting printer (no external XML library).
+4. **`parseSummary`** — extracts all summary fields from the parsed DOM using namespace-aware `getElementsByTagNameNS`. Handles encrypted assertions/NameIDs, signing cert extraction (only from `ds:Signature`, not encryption key certs), attribute statements, timestamps, and `authnContext`/`requestedAuthnContext` class references.
+5. **`prettyPrintXml`** — custom indenting printer (no external XML library). Long opening tags (>100 chars) are wrapped via `wrapOpenTag`/`splitAttrs` helpers, aligning continuation lines to the first attribute column.
+6. **`STATUS_DESCRIPTIONS`** / **`STATUS_SPEC_URLS`** — maps all 23 SAML 2.0 status code URNs to human-readable descriptions and links to the SAML Core spec PDF.
+7. **`AUTHN_CONTEXT_LABELS`** / **`AUTHN_CONTEXT_SPEC_URLS`** — maps SAML AuthnContext Class Reference URIs (OASIS, REFEDS, RAF, NIST) to short display labels and spec links.
 
 ### JWT decode library (`src/lib/jwt.ts`)
 
@@ -72,6 +74,14 @@ Hover tooltip on every summary field. Renders a small `?` button; on hover/focus
 ### Shareable link codec (`src/lib/hash.ts`)
 
 `encodePayload(s)` — UTF-8 encodes a string, base64url-encodes the bytes (no padding). `decodePayload(s)` — reverses this. Used in `+page.svelte`: on `onMount`, reads `window.location.hash`, decodes it into the textarea input (wrapped in try/catch for malformed hashes). The "Copy link" button calls `encodePayload(input)` and writes `origin + pathname + '#' + encoded` to the clipboard. The hash fragment is never sent to the server.
+
+### XML syntax highlighter (`src/lib/xml-highlight.ts`)
+
+`highlightXml(xml: string): string` — character-by-character tokenizer that converts raw XML into HTML with `<span>` elements for syntax coloring. No external library. Handles: `<?...?>` prologs, `<!--...-->` comments, closing tags, opening tags with attributes, self-closing tags, and text content. Private helpers: `esc()`, `localName()`, `elSpan()`, `highlightAttrs()`, `highlightOpenTag()`.
+
+`XML_ELEMENT_TIPS` — 43 known SAML element names (assertion, protocol, `ds:`, `xenc:` namespaces) mapped to tooltip descriptions. Known elements get `class="xml-el xml-el-tip" data-el="LocalName"` so the `+page.svelte` `onmouseover` handler can surface contextual tooltips via delegated events. Unknown elements get `class="xml-el"` only.
+
+Dark/light mode colors for the highlight classes are defined in a `<style>` block in `+page.svelte` using `:global()` selectors (Tailwind can't statically analyze class names produced by `{@html}`).
 
 ### Explanations (`src/lib/explanations.ts`)
 
@@ -105,13 +115,14 @@ Run with: `npm run coverage`
 
 **Namespace-aware XML parsing** — all SAML element lookups use `getElementsByTagNameNS` with the correct URNs. This handles documents that use non-standard namespace prefixes, which is common in the wild.
 
+**Custom XML tokenizer (no external library)** — `xml-highlight.ts` is a hand-rolled character scanner rather than wrapping `highlight.js` or similar. Keeps the bundle lean and gives precise control over which elements get `data-el` attributes for tooltip delegation. The same "no external library" philosophy as the X.509 DER parser.
+
 ---
 
 ## Planned features
 
 ### Medium priority
 - **SAML signature validation** — fetch the IdP's SAML metadata (by EntityID or URL), extract the signing cert, and verify `<ds:Signature>` using the Web Crypto API. Display verified/unverified status prominently.
-- **XML syntax highlighting** — color-code element names, attribute names, and values in the XML `<pre>` block. Could use a small tokenizer or a lightweight library like `highlight.js` scoped to XML.
 - **JWT JWKS validation** — after OIDC discovery, fetch `jwks_uri` and attempt to verify the JWT signature against the matching key.
 
 ### Lower priority / ideas
@@ -176,7 +187,8 @@ The site should feel like it was made by someone who actually works in IAM. Lean
 - Monospace font for decoded output (XML, JWT JSON, certificate details)
 - Sans-serif for UI chrome
 - Muted color palette; accent color used sparingly (status badges, expired timestamps)
-- Footer: "Made with ♥ by Kellen 'The SAML Guy' Murphy" linking to kellenmurphy.com
+- Header logo: `<saml:Guy/>` — `<` and `/>` in default text color, `saml:` in muted neutral-500
+- Footer: "Made with ♥ by The SAML Guy" linking to kellenmurphy.com
 - No loud colors, no gradients, no marketing copy — the tool does the talking
 
 The identity community will appreciate a tool that clearly understands their workflows.
