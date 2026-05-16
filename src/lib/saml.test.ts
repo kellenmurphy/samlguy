@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { decodeSaml, decodeAllSaml, prettyPrintXml } from '$lib/saml';
+import { decodeSaml, decodeAllSaml, prettyPrintXml, AUTHN_CONTEXT_LABELS, AUTHN_CONTEXT_SPEC_URLS, STATUS_DESCRIPTIONS, STATUS_SPEC_URLS } from '$lib/saml';
 import {
     AUTHN_REQUEST_XML,
+    AUTHN_REQUEST_WITH_CONTEXT_XML,
+    ERROR_RESPONSE_XML,
     RESPONSE_XML,
     RESPONSE_WITH_SCD_XML,
     toRedirectBlob,
@@ -455,5 +457,258 @@ describe('prettyPrintXml', () => {
         const pretty = prettyPrintXml('<a>foo</a>tail');
         expect(pretty).toContain('<a>foo</a>');
         expect(pretty).not.toContain('tail');
+    });
+
+    it('leaves short tags on a single line without wrapping attributes', () => {
+        const pretty = prettyPrintXml('<root><el a="1" b="2"/></root>');
+        // tag itself must appear intact on one line (no newline within the tag)
+        expect(pretty).toContain('<el a="1" b="2"/>');
+    });
+
+    it('wraps opening tags whose line exceeds 100 chars', () => {
+        const longAttr = 'xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"';
+        const longAttr2 = 'xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"';
+        const xml = `<samlp:Response ${longAttr} ${longAttr2} ID="_r1"></samlp:Response>`;
+        const pretty = prettyPrintXml(xml);
+        const firstLine = pretty.split('\n')[0];
+        expect(firstLine.length).toBeLessThanOrEqual(100);
+        expect(pretty).toContain('\n');
+        expect(pretty).toContain(longAttr2);
+    });
+
+    it('wraps self-closing tags whose line exceeds 100 chars', () => {
+        const xml = `<sc:Code ${`a="${'x'.repeat(40)}"`.repeat(3)}/>`;
+        const pretty = prettyPrintXml(`<root>${xml}</root>`);
+        const codeLine = pretty.split('\n').find(l => l.includes('sc:Code'))!;
+        expect(codeLine.length).toBeLessThanOrEqual(100);
+    });
+
+    it('packs multiple short attributes onto the same continuation line', () => {
+        // tag is long due to namespace, but short attrs should pack together
+        const xml = '<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="_r1" Version="2.0" IssueInstant="2024-01-01T00:00:00Z"></samlp:Response>';
+        const pretty = prettyPrintXml(xml);
+        // ID and Version are short — both should appear on the same continuation line
+        expect(pretty).toMatch(/ID="_r1" Version="2\.0"/);
+    });
+
+    it('wraps a tag with a single attribute if line still exceeds 100 chars', () => {
+        const veryLongName = 'x'.repeat(60);
+        const xml = `<root><el attr="${veryLongName}"/></root>`;
+        const pretty = prettyPrintXml(xml);
+        expect(pretty).toContain(`attr="${veryLongName}"`);
+    });
+
+    it('handles a tag with no attributes (no wrapping)', () => {
+        const pretty = prettyPrintXml('<root><saml:Issuer>text</saml:Issuer></root>');
+        expect(pretty).toContain('<saml:Issuer>text</saml:Issuer>');
+    });
+
+    it('handles standalone (boolean) attributes in long tags', () => {
+        const xml = '<el xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" standalone/>';
+        const pretty = prettyPrintXml(`<root>${xml}</root>`);
+        expect(pretty).toContain('standalone');
+    });
+
+    it('handles self-closing tags with trailing space before />', () => {
+        // space before /> causes splitAttrs to process trailing whitespace
+        const pretty = prettyPrintXml('<root><el a="1" /></root>');
+        expect(pretty).toContain('a="1"');
+    });
+
+    it('handles single-quoted attribute values in long tags', () => {
+        const xml = "<samlp:Response xmlns:samlp='urn:oasis:names:tc:SAML:2.0:protocol' xmlns:saml='urn:oasis:names:tc:SAML:2.0:assertion' ID='_r1'></samlp:Response>";
+        const pretty = prettyPrintXml(xml);
+        expect(pretty).toContain("xmlns:saml='urn:oasis:names:tc:SAML:2.0:assertion'");
+    });
+});
+
+// ── AuthnContext extraction ───────────────────────────────────────────────────
+
+describe('parseSummary — authnContext', () => {
+    const r = decodeSaml(toPostBlob(RESPONSE_XML));
+
+    it('extracts classRef from AuthnStatement/AuthnContext', () => {
+        expect(r.summary.authnContext?.classRef).toBe(
+            'urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport'
+        );
+    });
+
+    it('leaves declRef undefined when not present', () => {
+        expect(r.summary.authnContext?.declRef).toBeUndefined();
+    });
+
+    it('is undefined for messages without an AuthnStatement', () => {
+        const req = decodeSaml(toRedirectBlob(AUTHN_REQUEST_XML));
+        expect(req.summary.authnContext).toBeUndefined();
+    });
+});
+
+// ── RequestedAuthnContext extraction ─────────────────────────────────────────
+
+describe('parseSummary — requestedAuthnContext', () => {
+    const r = decodeSaml(toRedirectBlob(AUTHN_REQUEST_WITH_CONTEXT_XML));
+
+    it('extracts all classRefs', () => {
+        expect(r.summary.requestedAuthnContext?.classRefs).toEqual([
+            'urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport',
+            'https://refeds.org/profile/mfa'
+        ]);
+    });
+
+    it('extracts the Comparison attribute', () => {
+        expect(r.summary.requestedAuthnContext?.comparison).toBe('minimum');
+    });
+
+    it('defaults Comparison to "exact" when attribute is absent', () => {
+        const xml = AUTHN_REQUEST_WITH_CONTEXT_XML.replace(' Comparison="minimum"', '');
+        const r2 = decodeSaml(toRedirectBlob(xml));
+        expect(r2.summary.requestedAuthnContext?.comparison).toBe('exact');
+    });
+
+    it('is undefined for responses without RequestedAuthnContext', () => {
+        const resp = decodeSaml(toPostBlob(RESPONSE_XML));
+        expect(resp.summary.requestedAuthnContext).toBeUndefined();
+    });
+
+    it('filters out empty AuthnContextClassRef elements', () => {
+        const xml = AUTHN_REQUEST_WITH_CONTEXT_XML.replace(
+            'urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport',
+            ''
+        );
+        const r = decodeSaml(toRedirectBlob(xml));
+        expect(r.summary.requestedAuthnContext?.classRefs).toEqual(['https://refeds.org/profile/mfa']);
+    });
+});
+
+// ── Error response status ─────────────────────────────────────────────────────
+
+describe('parseSummary — error response', () => {
+    const r = decodeSaml(toPostBlob(ERROR_RESPONSE_XML));
+
+    it('parses top-level Responder code', () => {
+        expect(r.summary.status?.code).toBe('urn:oasis:names:tc:SAML:2.0:status:Responder');
+    });
+
+    it('parses nested AuthnFailed sub-code', () => {
+        expect(r.summary.status?.subCode).toBe('urn:oasis:names:tc:SAML:2.0:status:AuthnFailed');
+    });
+
+    it('parses StatusMessage', () => {
+        expect(r.summary.status?.message).toBe('The user failed to authenticate.');
+    });
+
+    it('has no authnContext (no assertion)', () => {
+        expect(r.summary.authnContext).toBeUndefined();
+    });
+});
+
+// ── Exported maps ─────────────────────────────────────────────────────────────
+
+describe('AUTHN_CONTEXT_LABELS', () => {
+    it('has a label for PasswordProtectedTransport', () => {
+        expect(AUTHN_CONTEXT_LABELS['urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport']).toBe('Password (HTTPS)');
+    });
+
+    it('has labels for REFEDS MFA and SFA', () => {
+        expect(AUTHN_CONTEXT_LABELS['https://refeds.org/profile/mfa']).toBe('REFEDS MFA');
+        expect(AUTHN_CONTEXT_LABELS['https://refeds.org/profile/sfa']).toBe('REFEDS SFA');
+    });
+
+    it('has labels for REFEDS Assurance Framework entries', () => {
+        expect(AUTHN_CONTEXT_LABELS['https://refeds.org/assurance/IAP/high']).toBe('REFEDS IAP High');
+        expect(AUTHN_CONTEXT_LABELS['https://refeds.org/assurance/ID/eppn-unique-no-reassign']).toBe('REFEDS EPPN (no reassign)');
+    });
+
+    it('has labels for NIST/FICAM entries', () => {
+        expect(AUTHN_CONTEXT_LABELS['http://idmanagement.gov/ns/assurance/aal/2']).toBe('AAL2');
+        expect(AUTHN_CONTEXT_LABELS['http://idmanagement.gov/ns/assurance/ial/1']).toBe('IAL1');
+    });
+
+    it('has no empty label values', () => {
+        for (const [uri, label] of Object.entries(AUTHN_CONTEXT_LABELS)) {
+            expect(label.length, `empty label for ${uri}`).toBeGreaterThan(0);
+        }
+    });
+});
+
+describe('AUTHN_CONTEXT_SPEC_URLS', () => {
+    it('maps SAML 2.0 URNs to the OASIS spec PDF', () => {
+        const ppt = AUTHN_CONTEXT_SPEC_URLS['urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport'];
+        expect(ppt).toContain('oasis-open.org');
+        expect(ppt).toContain('.pdf');
+    });
+
+    it('maps REFEDS MFA to its own URI', () => {
+        expect(AUTHN_CONTEXT_SPEC_URLS['https://refeds.org/profile/mfa']).toBe('https://refeds.org/profile/mfa');
+    });
+
+    it('maps REFEDS Assurance entries to the RAF landing page', () => {
+        expect(AUTHN_CONTEXT_SPEC_URLS['https://refeds.org/assurance/IAP/medium']).toBe('https://refeds.org/assurance');
+        expect(AUTHN_CONTEXT_SPEC_URLS['https://refeds.org/assurance/ID/eppn-unique-no-reassign']).toBe('https://refeds.org/assurance');
+    });
+
+    it('maps NIST/FICAM entries to the NIST 800-63 PDF', () => {
+        const aal2 = AUTHN_CONTEXT_SPEC_URLS['http://idmanagement.gov/ns/assurance/aal/2'];
+        expect(aal2).toContain('nist.gov');
+        expect(aal2).toContain('.pdf');
+    });
+
+    it('every entry in AUTHN_CONTEXT_LABELS has a corresponding spec URL', () => {
+        for (const uri of Object.keys(AUTHN_CONTEXT_LABELS)) {
+            expect(AUTHN_CONTEXT_SPEC_URLS[uri], `missing spec URL for ${uri}`).toBeDefined();
+        }
+    });
+
+    it('all spec URLs are valid HTTPS URLs', () => {
+        for (const [uri, specUrl] of Object.entries(AUTHN_CONTEXT_SPEC_URLS)) {
+            expect(specUrl.startsWith('https://'), `spec URL not HTTPS for ${uri}: ${specUrl}`).toBe(true);
+        }
+    });
+});
+
+describe('STATUS_DESCRIPTIONS', () => {
+    it('has descriptions for top-level codes', () => {
+        expect(STATUS_DESCRIPTIONS['urn:oasis:names:tc:SAML:2.0:status:Requester']).toBeTruthy();
+        expect(STATUS_DESCRIPTIONS['urn:oasis:names:tc:SAML:2.0:status:Responder']).toBeTruthy();
+        expect(STATUS_DESCRIPTIONS['urn:oasis:names:tc:SAML:2.0:status:VersionMismatch']).toBeTruthy();
+    });
+
+    it('has a description for AuthnFailed', () => {
+        expect(STATUS_DESCRIPTIONS['urn:oasis:names:tc:SAML:2.0:status:AuthnFailed']).toBeTruthy();
+    });
+
+    it('has a description for NoAuthnContext', () => {
+        expect(STATUS_DESCRIPTIONS['urn:oasis:names:tc:SAML:2.0:status:NoAuthnContext']).toBeTruthy();
+    });
+
+    it('has no empty description values', () => {
+        for (const [uri, desc] of Object.entries(STATUS_DESCRIPTIONS)) {
+            expect(desc.length, `empty description for ${uri}`).toBeGreaterThan(0);
+        }
+    });
+});
+
+describe('STATUS_SPEC_URLS', () => {
+    it('has a spec URL for every STATUS_DESCRIPTIONS key', () => {
+        for (const uri of Object.keys(STATUS_DESCRIPTIONS)) {
+            expect(STATUS_SPEC_URLS[uri], `missing spec URL for ${uri}`).toBeTruthy();
+        }
+    });
+
+    it('has a spec URL for the Success top-level code', () => {
+        expect(STATUS_SPEC_URLS['urn:oasis:names:tc:SAML:2.0:status:Success']).toBeTruthy();
+    });
+
+    it('all spec URLs are HTTPS', () => {
+        for (const [uri, url] of Object.entries(STATUS_SPEC_URLS)) {
+            expect(url.startsWith('https://'), `non-HTTPS spec URL for ${uri}: ${url}`).toBe(true);
+        }
+    });
+
+    it('all spec URLs point to the SAML Core spec', () => {
+        const SAML_CORE = 'https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf';
+        for (const [uri, url] of Object.entries(STATUS_SPEC_URLS)) {
+            expect(url, `unexpected spec URL for ${uri}`).toBe(SAML_CORE);
+        }
     });
 });

@@ -13,6 +13,8 @@ const EXPECTED_KEYS = [
     'saml.relayState',
     'saml.encrypted',
     'saml.signingCert',
+    'saml.authnContext',
+    'saml.requestedAuthnContext',
     'saml.attributes',
     'saml.ts.authnInstant',
     'saml.ts.sessionNotOnOrAfter',

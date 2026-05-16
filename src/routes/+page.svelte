@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { decodeSaml, decodeAllSaml, type SamlDecodeResult } from '$lib/saml';
+    import { decodeSaml, decodeAllSaml, type SamlDecodeResult, AUTHN_CONTEXT_LABELS, AUTHN_CONTEXT_SPEC_URLS, STATUS_DESCRIPTIONS, STATUS_SPEC_URLS } from '$lib/saml';
     import { decodeJwt, type JwtDecodeResult } from '$lib/jwt';
     import { decodeAllGeneric, type GenericDecodeResult } from '$lib/generic';
     import InfoTip from '$lib/InfoTip.svelte';
@@ -8,6 +8,7 @@
     import { encodePayload, decodePayload } from '$lib/hash';
     import { relativeLabel, isExpired } from '$lib/time';
     import type { CertInfo } from '$lib/cert';
+    import { highlightXml, XML_ELEMENT_TIPS } from '$lib/xml-highlight';
 
     type InputType = 'saml' | 'jwt' | null;
 
@@ -181,6 +182,22 @@
         return urn.startsWith(STATUS_PREFIX) ? urn.slice(STATUS_PREFIX.length) : urn;
     }
 
+    let xmlTip = $state<{ el: string; text: string; x: number; y: number } | null>(null);
+
+    function handleXmlMouseover(e: MouseEvent) {
+        const target = (e.target as Element).closest('[data-el]');
+        if (!target) { xmlTip = null; return; }
+        const local = target.getAttribute('data-el')!;
+        const tip = XML_ELEMENT_TIPS[local];
+        if (!tip) { xmlTip = null; return; }
+        const rect = target.getBoundingClientRect();
+        xmlTip = { el: local, text: tip, x: rect.left, y: rect.bottom + 6 };
+    }
+
+    function handleXmlMouseleave() {
+        xmlTip = null;
+    }
+
     async function copySamlXml(idx: number) {
         const r = results[idx];
         if (!r) return;
@@ -257,7 +274,7 @@
         <div>
             <h1 class="text-2xl font-bold">Identity Decoder</h1>
             <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-                Paste a SAML assertion, JWT, query string, URL, or HTTP log line. We'll figure it out.
+                Paste a SAML assertion, JWT, query string, URL, or HTTP log line. We'll figure it out and try to explain it!
             </p>
         </div>
         {#if hasResults}
@@ -744,25 +761,44 @@
                 {#if s.status}
                     <div class="flex gap-4 px-4 py-2.5">
                         <dt class="w-36 shrink-0 text-sm text-neutral-500">Status<InfoTip key="saml.status" /></dt>
-                        <dd class="flex flex-wrap items-baseline gap-2">
-                            <span
-                                class="rounded px-1.5 py-0.5 text-xs font-medium {shortCode(
-                                    s.status.code
-                                ) === 'Success'
-                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400'
-                                    : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400'}"
-                            >
-                                {shortCode(s.status.code)}
-                            </span>
-                            {#if s.status.subCode}
-                                <span class="font-mono text-xs text-neutral-500"
-                                    >{shortCode(s.status.subCode)}</span
+                        <dd class="flex flex-col gap-1">
+                            <div class="flex flex-wrap items-baseline gap-2">
+                                <span
+                                    class="rounded px-1.5 py-0.5 text-xs font-medium {shortCode(
+                                        s.status.code
+                                    ) === 'Success'
+                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400'
+                                        : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400'}"
                                 >
-                            {/if}
-                            {#if s.status.message}
-                                <span class="text-xs text-neutral-500 italic"
-                                    >{s.status.message}</span
-                                >
+                                    {shortCode(s.status.code)}
+                                </span>
+                                {#if s.status.subCode}
+                                    {@const subUrl = STATUS_SPEC_URLS[s.status.subCode]}
+                                    {#if subUrl}
+                                        <a
+                                            href={subUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="font-mono text-xs text-neutral-500 underline decoration-dotted hover:text-neutral-300"
+                                            >{shortCode(s.status.subCode)}</a
+                                        >
+                                    {:else}
+                                        <span class="font-mono text-xs text-neutral-500"
+                                            >{shortCode(s.status.subCode)}</span
+                                        >
+                                    {/if}
+                                {/if}
+                                {#if s.status.message}
+                                    <span class="text-xs text-neutral-500 italic"
+                                        >{s.status.message}</span
+                                    >
+                                {/if}
+                            </div>
+                            {#if shortCode(s.status.code) !== 'Success'}
+                                {@const desc = STATUS_DESCRIPTIONS[s.status.subCode ?? s.status.code]}
+                                {#if desc}
+                                    <p class="text-xs text-neutral-400 dark:text-neutral-500">{desc}</p>
+                                {/if}
                             {/if}
                         </dd>
                     </div>
@@ -797,6 +833,31 @@
                         </dd>
                     </div>
                 {/if}
+                {#if s.requestedAuthnContext?.classRefs.length}
+                    <div class="flex gap-4 px-4 py-2.5">
+                        <dt class="w-36 shrink-0 text-sm text-neutral-500">Requested AuthnContext<InfoTip key="saml.requestedAuthnContext" /></dt>
+                        <dd class="flex flex-col gap-1">
+                            <div class="flex flex-wrap items-baseline gap-2">
+                                {#each s.requestedAuthnContext.classRefs as ref (ref)}
+                                    <span class="rounded bg-neutral-200 px-1.5 py-0.5 font-mono text-xs text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300">
+                                        {AUTHN_CONTEXT_LABELS[ref] ?? ref}
+                                    </span>
+                                {/each}
+                                <span class="text-xs text-neutral-500">{s.requestedAuthnContext.comparison}</span>
+                            </div>
+                            {#each s.requestedAuthnContext.classRefs as ref (ref)}
+                                {#if ref in AUTHN_CONTEXT_LABELS}
+                                    {@const specUrl = AUTHN_CONTEXT_SPEC_URLS[ref] ?? safeHref(ref)}
+                                    {#if specUrl}
+                                        <a href={specUrl} target="_blank" rel="noopener noreferrer" class="font-mono text-xs text-neutral-400 break-all transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300">{ref}</a>
+                                    {:else}
+                                        <span class="font-mono text-xs text-neutral-400 dark:text-neutral-500 break-all">{ref}</span>
+                                    {/if}
+                                {/if}
+                            {/each}
+                        </dd>
+                    </div>
+                {/if}
                 {#if s.nameId}
                     <div class="flex gap-4 px-4 py-2.5">
                         <dt class="w-36 shrink-0 text-sm text-neutral-500">NameID<InfoTip key="saml.nameId" /></dt>
@@ -807,6 +868,29 @@
                             <span class="text-xs text-neutral-500"
                                 >{shortFormat(s.nameId.format)}</span
                             >
+                        </dd>
+                    </div>
+                {/if}
+                {#if s.authnContext?.classRef}
+                    <div class="flex gap-4 px-4 py-2.5">
+                        <dt class="w-36 shrink-0 text-sm text-neutral-500">AuthnContext<InfoTip key="saml.authnContext" /></dt>
+                        <dd class="flex flex-col gap-1">
+                            <div class="flex flex-wrap items-baseline gap-2">
+                                <span class="rounded bg-neutral-200 px-1.5 py-0.5 font-mono text-xs text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300">
+                                    {AUTHN_CONTEXT_LABELS[s.authnContext.classRef] ?? s.authnContext.classRef}
+                                </span>
+                                {#if s.authnContext.declRef}
+                                    <span class="font-mono text-xs text-neutral-500">{s.authnContext.declRef}</span>
+                                {/if}
+                            </div>
+                            {#if s.authnContext.classRef in AUTHN_CONTEXT_LABELS}
+                                {@const specUrl = AUTHN_CONTEXT_SPEC_URLS[s.authnContext.classRef] ?? safeHref(s.authnContext.classRef)}
+                                {#if specUrl}
+                                    <a href={specUrl} target="_blank" rel="noopener noreferrer" class="font-mono text-xs text-neutral-400 break-all transition-colors hover:text-neutral-600 dark:text-neutral-500 dark:hover:text-neutral-300">{s.authnContext.classRef}</a>
+                                {:else}
+                                    <span class="font-mono text-xs text-neutral-400 dark:text-neutral-500 break-all">{s.authnContext.classRef}</span>
+                                {/if}
+                            {/if}
                         </dd>
                     </div>
                 {/if}
@@ -1001,8 +1085,63 @@
                     {samlCopiedIdx === i ? 'Copied!' : 'Copy'}
                 </button>
             </div>
+            <!-- eslint-disable svelte/no-at-html-tags -->
             <pre
-                class="max-h-96 overflow-auto rounded-lg border border-neutral-200 bg-neutral-50 p-4 font-mono text-xs leading-relaxed text-neutral-800 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300">{result.xml}</pre>
+                class="overflow-x-auto rounded-lg border border-neutral-200 bg-neutral-50 p-4 font-mono text-xs leading-relaxed text-neutral-800 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300"
+                onmouseover={handleXmlMouseover}
+                onmouseleave={handleXmlMouseleave}
+            >{@html highlightXml(result.xml)}</pre>
+            <!-- eslint-enable svelte/no-at-html-tags -->
         </div>
     {/each}
 </div>
+
+{#if xmlTip}
+    <div
+        class="xml-tip"
+        style="left: {Math.min(xmlTip.x, window.innerWidth - 320)}px; top: {xmlTip.y}px"
+        role="tooltip"
+    >
+        <span class="xml-tip-el">&lt;{xmlTip.el}&gt;</span>
+        {xmlTip.text}
+    </div>
+{/if}
+
+<style>
+    :global(.xml-punct) { color: #6b7280; }
+    :global(.xml-el) { color: #60a5fa; }
+    :global(.xml-el-tip) { cursor: help; text-decoration: underline dotted; text-decoration-thickness: 1px; }
+    :global(.xml-attr-name) { color: #34d399; }
+    :global(.xml-attr-val) { color: #fb923c; }
+    :global(.xml-comment) { color: #6b7280; font-style: italic; }
+    :global(.xml-prolog) { color: #9ca3af; font-style: italic; }
+
+    :global(html:not(.dark) .xml-punct) { color: #4b5563; }
+    :global(html:not(.dark) .xml-el) { color: #2563eb; }
+    :global(html:not(.dark) .xml-attr-name) { color: #059669; }
+    :global(html:not(.dark) .xml-attr-val) { color: #ea580c; }
+    :global(html:not(.dark) .xml-comment) { color: #6b7280; }
+    :global(html:not(.dark) .xml-prolog) { color: #9ca3af; }
+
+    .xml-tip {
+        position: fixed;
+        z-index: 50;
+        max-width: 18rem;
+        border-radius: 0.375rem;
+        background: #1f2937;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+        line-height: 1.4;
+        color: #e5e7eb;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+        pointer-events: none;
+    }
+
+    .xml-tip-el {
+        display: block;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.7rem;
+        color: #93c5fd;
+        margin-bottom: 0.25rem;
+    }
+</style>
