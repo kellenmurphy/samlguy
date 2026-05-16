@@ -100,6 +100,10 @@ All commits to this repository are signed with an SSH key managed by 1Password. 
 
 Git is configured globally with `gpg.format = ssh` and `commit.gpgsign = true`, so signing is automatic and does not require per-commit flags. The private key never leaves 1Password; signing requests are handled by the 1Password SSH agent.
 
+### CodeQL
+
+A CodeQL workflow runs on every push and pull request to `main`, and weekly on Mondays. It uses the `security-extended` query suite for JavaScript/TypeScript, which covers OWASP Top 10 and additional security patterns beyond the default set. Results are uploaded to GitHub's code scanning dashboard as SARIF findings. The action is SHA-pinned to v3.
+
 ### OSSF Scorecard
 
 A [Scorecard](https://securityscorecards.dev) workflow runs weekly and on every push to `main`. It evaluates supply-chain security practices (pinned dependencies, branch protection, token permissions, code review, vulnerability disclosure) and publishes results to the GitHub code scanning dashboard. Results are also published publicly to the OSSF scorecard index.
