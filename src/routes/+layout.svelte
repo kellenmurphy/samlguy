@@ -97,34 +97,35 @@
     </main>
 
     <footer class="px-6 py-4">
-        <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[10px] text-neutral-400 dark:text-neutral-600">
-            <a href="/privacy" class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400">Privacy</a>
-            <span aria-hidden="true">&middot;</span>
-            <a
-                href="https://github.com/kellenmurphy/samlguy/security"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
-                >Security</a
-            >
-            <span aria-hidden="true">&middot;</span>
+        <div class="mx-auto flex max-w-5xl flex-col items-center gap-y-1 text-[10px] text-neutral-400 dark:text-neutral-600">
             <span>Made with ♥ by <a href="https://kellenmurphy.com" class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400">The SAML Guy</a></span>
-            <span aria-hidden="true">&middot;</span>
-            <a
-                href="https://github.com/kellenmurphy/samlguy"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
-                >Source</a
-            >
-            <span aria-hidden="true">&middot;</span>
-            <a
-                href="https://github.com/kellenmurphy/samlguy/blob/main/LICENSE"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
-                >MIT License</a
-            >
+            <div class="flex items-center gap-x-3">
+                <a href="/privacy" class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400">Privacy</a>
+                <span aria-hidden="true">&middot;</span>
+                <a
+                    href="https://github.com/kellenmurphy/samlguy/security"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
+                    >Security</a
+                >
+                <span aria-hidden="true">&middot;</span>
+                <a
+                    href="https://github.com/kellenmurphy/samlguy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
+                    >Source</a
+                >
+                <span aria-hidden="true">&middot;</span>
+                <a
+                    href="https://github.com/kellenmurphy/samlguy/blob/main/LICENSE"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
+                    >MIT License</a
+                >
+            </div>
         </div>
     </footer>
 </div>
