@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.1.0](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.0.0...samlguy-v1.1.0) (2026-05-16)
+
+
+### Features
+
+* add release-please for automated changelog and GitHub releases ([74ff54f](https://github.com/kellenmurphy/samlguy/commit/74ff54f10c1328b81630a285dada4b0767a14555))
+
+
+### Bug Fixes & Dependencies
+
+* automate release PR approval, merge, and CI trigger ([8dd5876](https://github.com/kellenmurphy/samlguy/commit/8dd5876cb77590857b8d2d8bb7a6f442a0e633ff))
+* automate release PR approval, merge, and CI trigger ([9e7f2f3](https://github.com/kellenmurphy/samlguy/commit/9e7f2f3ff30e45a9781d26630ca2eac61ec8d6aa))
+* **ci:** add --repo flag to gh commands in release-please workflow ([e464d81](https://github.com/kellenmurphy/samlguy/commit/e464d81027a025b419d039a6de602c75d4f5aaf3))
+* **ci:** add --repo flag to gh commands in release-please workflow ([5a4131d](https://github.com/kellenmurphy/samlguy/commit/5a4131d4dd096daab615e9dd4c489deb2c42b4f8))
+* release automation, security headers, and doc updates ([3d2c15e](https://github.com/kellenmurphy/samlguy/commit/3d2c15ed31f149c83d34a91de63f539af27adad1))
+* release automation, security headers, and doc updates ([d390500](https://github.com/kellenmurphy/samlguy/commit/d3905008857a066dcdb90aa723bf31562f220bc9))
+
 ## [1.0.0](https://github.com/kellenmurphy/samlguy/releases/tag/v1.0.0) (2026-05-16)
 
 ### Features
