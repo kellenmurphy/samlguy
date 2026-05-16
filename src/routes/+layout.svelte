@@ -41,13 +41,9 @@
 >
     <header class="px-6 py-4">
         <div class="mx-auto flex max-w-5xl items-center justify-between">
-            <a href="/" class="font-mono text-base font-semibold tracking-tight">
-                <span class="text-neutral-500 dark:text-neutral-500">&lt;</span>samlguy.com<span
-                    class="text-neutral-500 dark:text-neutral-500"
-                >
-                    /&gt;</span
-                >
-            </a>
+            <a href="/" class="font-mono text-base font-semibold tracking-tight"
+                >&lt;<span class="text-neutral-500 dark:text-neutral-500">saml:</span>Guy/&gt;</a
+            >
             <button
                 onclick={toggleTheme}
                 aria-label="Toggle theme"
