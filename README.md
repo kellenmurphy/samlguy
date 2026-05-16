@@ -79,7 +79,19 @@ Every field in every summary panel has a **?** hover tooltip explaining what the
 
 ### OIDC Discovery
 
-When working with a JWT, the `/api/discover` endpoint (a Cloudflare Worker) accepts an issuer URL and fetches the corresponding `.well-known/openid-configuration` server-side, avoiding CORS constraints. The route validates that the issuer uses HTTPS before making any outbound request.
+When working with a JWT, a **Discover** button appears next to the `iss` claim. This calls the `/api/discover` endpoint (a Cloudflare Worker) which fetches the issuer's `.well-known/openid-configuration` server-side, avoiding CORS constraints. The results panel surfaces the issuer, JWKS URI, auth/token/userinfo endpoints, supported signing algorithms (with a match/mismatch badge against the token's `alg`), and ACR values. The issuer is validated to use HTTPS before any outbound request is made.
+
+---
+
+### Shareable links
+
+A **Copy link** button appears whenever a decode result is displayed. It base64url-encodes the current input into the URL fragment (`#...`) and copies the full URL to the clipboard. Opening that URL pre-populates the input and decodes immediately. The fragment is never sent to any server — the encoding and decoding happen entirely in the browser.
+
+---
+
+### Light / dark mode
+
+A toggle in the header switches between dark mode (default) and light mode. The preference is persisted in `localStorage`.
 
 ---
 
@@ -138,6 +150,7 @@ src/
     cert.ts             # X.509 DER/ASN.1 parser: subject, issuer, key algorithm, validity
     time.ts             # timestamp math and relative label helpers
     generic.ts          # fallback decoder for unrecognized base64/JSON/XML blobs
+    hash.ts             # base64url encode/decode for shareable URL fragments
     explanations.ts     # externalized hover tooltip text for all summary fields
     InfoTip.svelte      # hover tooltip component
   routes/
@@ -169,7 +182,6 @@ Connected to Cloudflare Pages. Every merge to `main` triggers an automatic build
 - **SAML error decoder** — human-readable explanations for `<samlp:Status>` codes and `StatusMessage` values ("RequesterError / NoAuthnContext — your IdP couldn't satisfy the requested AuthnContext"); already parsed, just needs a lookup table
 - **AuthnContext decoder** — render `<saml:AuthnContextClassRef>` URNs as friendly labels with tooltips covering assurance levels, REFEDS MFA, RAF, and the most common `PasswordProtectedTransport` / `Kerberos` / `TimeSyncToken` values
 - **InCommon attribute annotations** — flag attributes in the attribute table as InCommon Baseline Eligible, R&S, or REFEDS RAF/eppn-scoped; your differentiator vs generic SAML tools
-- **Shareable links** — encode the pasted payload into the URL fragment (`#`) so it never hits the server; a "Copy link" button lets you pre-load a decoder view to share with colleagues
 - **XML syntax highlighting** — color-code element names, attributes, and values in the pretty-printed XML block
 
 ### Medium-term

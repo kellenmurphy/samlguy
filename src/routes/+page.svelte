@@ -236,6 +236,15 @@
         }
     }
 
+    function safeHref(url: string | null): string | null {
+        if (!url) return null;
+        try {
+            return new URL(url).protocol === 'https:' ? url : null;
+        } catch {
+            return null;
+        }
+    }
+
     const ENCODING_LABELS: Record<string, string> = {
         'base64+deflate': 'base64 + DEFLATE',
         base64: 'base64',
@@ -260,6 +269,7 @@
     </div>
 
     <textarea
+        id="input"
         bind:value={input}
         placeholder="Paste anything — SAMLRequest, SAMLResponse, JWT, Authorization header, query string, full URL..."
         class="h-48 w-full resize-y rounded-lg border border-neutral-300 bg-neutral-50 px-4 py-3 font-mono text-sm text-neutral-900 placeholder-neutral-400 focus:border-neutral-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder-neutral-600"
@@ -512,10 +522,10 @@
 
         <!-- Discovery results -->
         {#if discoveryResult}
-            {@const jwksUri = typeof discoveryResult.jwks_uri === 'string' ? discoveryResult.jwks_uri : null}
-            {@const authEp = typeof discoveryResult.authorization_endpoint === 'string' ? discoveryResult.authorization_endpoint : null}
-            {@const tokenEp = typeof discoveryResult.token_endpoint === 'string' ? discoveryResult.token_endpoint : null}
-            {@const userinfoEp = typeof discoveryResult.userinfo_endpoint === 'string' ? discoveryResult.userinfo_endpoint : null}
+            {@const jwksUri = safeHref(typeof discoveryResult.jwks_uri === 'string' ? discoveryResult.jwks_uri : null)}
+            {@const authEp = safeHref(typeof discoveryResult.authorization_endpoint === 'string' ? discoveryResult.authorization_endpoint : null)}
+            {@const tokenEp = safeHref(typeof discoveryResult.token_endpoint === 'string' ? discoveryResult.token_endpoint : null)}
+            {@const userinfoEp = safeHref(typeof discoveryResult.userinfo_endpoint === 'string' ? discoveryResult.userinfo_endpoint : null)}
             {@const supportedAlgs = Array.isArray(discoveryResult.id_token_signing_alg_values_supported) ? discoveryResult.id_token_signing_alg_values_supported as string[] : null}
             {@const acrValues = Array.isArray(discoveryResult.acr_values_supported) ? discoveryResult.acr_values_supported as string[] : null}
             <div
