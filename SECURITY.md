@@ -10,7 +10,9 @@ Only the latest deployment of samlguy.com is actively maintained.
 
 Please do not open public GitHub issues for security vulnerabilities.
 
-Report via email to: **samlguy@kellenmurphy.com**
+**Preferred:** Use GitHub's private vulnerability reporting — [Report a vulnerability](https://github.com/kellenmurphy/samlguy/security/advisories/new). Reports submitted this way are visible only to the maintainer until a Security Advisory is published.
+
+**Alternate:** Email **me@kellenmurphy.com** if you prefer not to use GitHub.
 
 Include:
 
@@ -115,6 +117,10 @@ A [Scorecard](https://securityscorecards.dev) workflow runs weekly and on every 
 ### Test coverage
 
 The CI workflow enforces test coverage via Vitest and uploads results to Codecov. All library modules (`src/lib/`) maintain 100% statement, branch, function, and line coverage. A drop in coverage fails the build.
+
+### Fuzzing
+
+Property-based fuzz tests (`src/lib/fuzz.test.ts`) run against every parser on every CI build using [fast-check](https://github.com/dubzzz/fast-check). The core invariant tested: for any arbitrary input — random strings, arbitrary byte sequences encoded as base64, or malformed base64 — each parser either returns a valid result or throws an `Error` instance. A non-Error throw (string, plain object, `undefined`) is treated as a test failure. This exercises the SAML decoder, JWT decoder, X.509 DER/ASN.1 parser, and generic fallback decoder against inputs they would never receive in normal use.
 
 ---
 
