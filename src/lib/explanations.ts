@@ -7,7 +7,7 @@ export const FIELD_EXPLANATIONS: Record<string, string> = {
         'The SAML message type. AuthnRequest / SAMLRequest initiates a login; LogoutRequest initiates single logout. Response / SAMLResponse carries the assertion with the authentication result and released attributes.',
 
     'saml.status':
-        'The outcome of the SAML exchange. Success means the IdP authenticated the user. Common failures: AuthnFailed (bad credentials), NoAuthnContext (cannot satisfy the requested authentication context), RequestDenied (policy block), Responder (IdP-side error).',
+        'The outcome of the SAML exchange. Success means the IdP authenticated the user and issued a valid assertion. Error responses carry a top-level code (Requester for SP-side problems, Responder for IdP-side) and usually a more specific sub-code.',
 
     'saml.issuer':
         'The EntityID of the party that issued this message — the IdP for a Response, the SP for a Request. Must match the EntityID in the issuer\'s SAML metadata. A mismatch indicates misconfiguration or a spoofing attempt.',
@@ -32,6 +32,12 @@ export const FIELD_EXPLANATIONS: Record<string, string> = {
 
     'saml.signingCert':
         'The X.509 certificate whose private key signed this message. The relying party should verify the signature using the public key from the issuer\'s SAML metadata. An expired or unknown certificate outside a trusted metadata feed is a security concern.',
+
+    'saml.authnContext':
+        'The Authentication Context Class Reference — a URI that describes how the user authenticated at the IdP. Common values: Password (HTTPS) means username/password over TLS; Kerberos means a Kerberos ticket was used; REFEDS MFA means the session satisfies the REFEDS Multi-Factor Authentication profile, widely used in research and education federations.',
+
+    'saml.requestedAuthnContext':
+        'The SP\'s requirements for how the user must authenticate. The Comparison attribute controls matching: "exact" requires one of the listed classes precisely; "minimum" accepts any class at least as strong; "better" requires strictly stronger; "maximum" requires no stronger. If the IdP cannot satisfy the requirement, it returns NoAuthnContext.',
 
     'saml.attributes':
         'Attribute statements contain claims about the authenticated user released by the IdP — such as email, display name, group memberships, or entitlements. Which attributes are released is governed by IdP policy and the SP\'s metadata. These values typically drive authorization decisions at the SP.',
