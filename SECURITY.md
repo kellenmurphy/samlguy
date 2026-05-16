@@ -70,6 +70,11 @@ Current pins in `.github/workflows/scorecard.yml`:
 - `actions/upload-artifact` — SHA-pinned (v7.0.1)
 - `github/codeql-action/upload-sarif` — SHA-pinned
 
+Current pins in `.github/workflows/codeql.yml`:
+- `actions/checkout` — SHA-pinned
+- `github/codeql-action/init` — SHA-pinned (v3.28.13)
+- `github/codeql-action/analyze` — SHA-pinned (v3.28.13)
+
 Dependabot is configured to open weekly PRs when new versions of these actions are released, keeping SHA rotation low-friction.
 
 ### Minimal token permissions
@@ -110,6 +115,16 @@ A CodeQL workflow runs on every push and pull request to `main`, and weekly on M
 
 A [Scorecard](https://securityscorecards.dev) workflow runs weekly and on every push to `main`. It evaluates supply-chain security practices (pinned dependencies, branch protection, token permissions, code review, vulnerability disclosure) and publishes results to the GitHub code scanning dashboard. Results are also published publicly to the OSSF scorecard index.
 
+### Branch protection
+
+The `main` branch is protected with the following rules enforced for all contributors including administrators:
+
+- **Required status checks** — the `Build & Test` CI job must pass before any merge is allowed; the branch must be up to date with `main` before merging (strict mode)
+- **Required signatures** — every commit merged to `main` must carry a verified cryptographic signature
+- **Required pull request review** — at least one approval is required; stale approvals are dismissed on new pushes; code owner review is required
+- **No force pushes** — force-pushing to `main` is blocked
+- **No branch deletion** — `main` cannot be deleted
+
 ### CODEOWNERS
 
 `.github/CODEOWNERS` requires `@kellenmurphy` to approve any pull request that touches any file. This ensures no code is merged without review if collaborators are added in the future.
@@ -121,6 +136,14 @@ The CI workflow enforces test coverage via Vitest and uploads results to Codecov
 ### Fuzzing
 
 Property-based fuzz tests (`src/lib/fuzz.test.ts`) run against every parser on every CI build using [fast-check](https://github.com/dubzzz/fast-check). The core invariant tested: for any arbitrary input — random strings, arbitrary byte sequences encoded as base64, or malformed base64 — each parser either returns a valid result or throws an `Error` instance. A non-Error throw (string, plain object, `undefined`) is treated as a test failure. This exercises the SAML decoder, JWT decoder, X.509 DER/ASN.1 parser, and generic fallback decoder against inputs they would never receive in normal use.
+
+---
+
+## Versioning and releases
+
+This project follows [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`). Each release is tagged in the repository with a `v`-prefixed version tag (e.g. `v1.0.0`). Tags are signed with the same SSH key used for commit signing.
+
+Since samlguy.com deploys continuously from `main`, the production deployment always reflects the latest tagged release or the commits immediately following it. Security fixes are released as patch versions and deployed immediately on merge to `main`.
 
 ---
 
