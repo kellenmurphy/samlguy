@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.1](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.1.0...samlguy-v1.1.1) (2026-05-16)
+
+
+### Bug Fixes & Dependencies
+
+* **ci:** trigger CI via label instead of workflow dispatch ([347af49](https://github.com/kellenmurphy/samlguy/commit/347af49faceba4257637f24055b49aa26d875c2a))
+* **ci:** trigger CI via label; bump dev deps ([9ec17d9](https://github.com/kellenmurphy/samlguy/commit/9ec17d9bd43f5486df1df9b73efa763a20bdf368))
+* **deps:** bump dev dependencies to latest ([7fc3a22](https://github.com/kellenmurphy/samlguy/commit/7fc3a22cf3d9c9f81bb964b093eaf11925ca0a69))
+
 ## [1.1.0](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.0.0...samlguy-v1.1.0) (2026-05-16)
 
 
