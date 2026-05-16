@@ -62,6 +62,12 @@ Current pins in `.github/workflows/ci.yml`:
 - `cloudflare/wrangler-action` — SHA-pinned
 - `codecov/codecov-action` — SHA-pinned
 
+Current pins in `.github/workflows/scorecard.yml`:
+- `actions/checkout` — SHA-pinned
+- `ossf/scorecard-action` — SHA-pinned (v2.4.3)
+- `actions/upload-artifact` — SHA-pinned (v7.0.1)
+- `github/codeql-action/upload-sarif` — SHA-pinned
+
 Dependabot is configured to open weekly PRs when new versions of these actions are released, keeping SHA rotation low-friction.
 
 ### Minimal token permissions
@@ -87,6 +93,16 @@ The CI workflow runs `npm audit --audit-level=high` on every push and pull reque
 Dependabot runs weekly for:
 - **npm packages** — grouped (Svelte ecosystem together, Cloudflare tools together) to reduce PR noise while keeping everything current
 - **GitHub Actions** — separate ecosystem entry, because action dependencies are a supply chain vector that is easy to neglect
+
+### Commit signing
+
+All commits to this repository are signed with an SSH key managed by 1Password. The signing key (`ssh-ed25519`, labeled `wfx6yz`) is registered on GitHub as a signing key, allowing GitHub to display a "Verified" badge on each commit.
+
+Git is configured globally with `gpg.format = ssh` and `commit.gpgsign = true`, so signing is automatic and does not require per-commit flags. The private key never leaves 1Password; signing requests are handled by the 1Password SSH agent.
+
+### OSSF Scorecard
+
+A [Scorecard](https://securityscorecards.dev) workflow runs weekly and on every push to `main`. It evaluates supply-chain security practices (pinned dependencies, branch protection, token permissions, code review, vulnerability disclosure) and publishes results to the GitHub code scanning dashboard. Results are also published publicly to the OSSF scorecard index.
 
 ### CODEOWNERS
 
