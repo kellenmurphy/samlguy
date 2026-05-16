@@ -97,64 +97,34 @@
     </main>
 
     <footer class="px-6 py-4">
-        <div
-            class="mx-auto flex max-w-5xl flex-col items-center gap-2 text-xs text-neutral-400 dark:text-neutral-600 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-3 sm:gap-y-1"
-        >
+        <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[10px] text-neutral-400 dark:text-neutral-600">
+            <a href="/privacy" class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400">Privacy</a>
+            <span aria-hidden="true">&middot;</span>
             <a
-                href="/privacy"
+                href="https://github.com/kellenmurphy/samlguy/security"
+                target="_blank"
+                rel="noopener noreferrer"
                 class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
-                >Privacy</a
+                >Security</a
             >
-            <span aria-hidden="true" class="hidden sm:inline">&middot;</span>
-            <span>
-                Made with ♥ by <a
-                    href="https://kellenmurphy.com"
-                    class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
-                    >The SAML Guy</a
-                >
-            </span>
-            <span aria-hidden="true" class="hidden sm:inline">&middot;</span>
-            <span class="flex items-center gap-2">
-                <a
-                    href="https://github.com/kellenmurphy/samlguy"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="GitHub repository"
-                >
-                    <svg
-                        viewBox="0 0 16 16"
-                        fill="currentColor"
-                        class="h-4 w-4 text-neutral-900 dark:text-neutral-100"
-                        aria-hidden="true"
-                    >
-                        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
-                    </svg>
-                </a>
-                <a
-                    href="https://github.com/kellenmurphy/samlguy/actions/workflows/ci.yml"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="CI status"
-                >
-                    <img
-                        src="https://img.shields.io/github/actions/workflow/status/kellenmurphy/samlguy/ci.yml?branch=main&style=flat-square&label=CI&labelColor=404040"
-                        alt="CI status"
-                        class="h-4"
-                    />
-                </a>
-                <a
-                    href="https://app.codecov.io/gh/kellenmurphy/samlguy"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="Code coverage"
-                >
-                    <img
-                        src="https://img.shields.io/codecov/c/github/kellenmurphy/samlguy?style=flat-square&label=coverage&labelColor=404040"
-                        alt="Code coverage"
-                        class="h-4"
-                    />
-                </a>
-            </span>
+            <span aria-hidden="true">&middot;</span>
+            <span>Made with ♥ by <a href="https://kellenmurphy.com" class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400">The SAML Guy</a></span>
+            <span aria-hidden="true">&middot;</span>
+            <a
+                href="https://github.com/kellenmurphy/samlguy"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
+                >Source</a
+            >
+            <span aria-hidden="true">&middot;</span>
+            <a
+                href="https://github.com/kellenmurphy/samlguy/blob/main/LICENSE"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
+                >MIT License</a
+            >
         </div>
     </footer>
 </div>
