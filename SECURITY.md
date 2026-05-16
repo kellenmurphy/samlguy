@@ -70,6 +70,9 @@ Current pins in `.github/workflows/scorecard.yml`:
 - `actions/upload-artifact` — SHA-pinned (v7.0.1)
 - `github/codeql-action/upload-sarif` — SHA-pinned
 
+Current pins in `.github/workflows/release-please.yml`:
+- `googleapis/release-please-action` — SHA-pinned (v4)
+
 Current pins in `.github/workflows/codeql.yml`:
 - `actions/checkout` — SHA-pinned
 - `github/codeql-action/init` — SHA-pinned (v3.28.13)
