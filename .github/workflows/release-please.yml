@@ -29,6 +29,6 @@ jobs:
               run: |
                   PR_NUMBER=$(echo '${{ steps.release.outputs.pr }}' | jq -r '.number')
                   PR_BRANCH=$(echo '${{ steps.release.outputs.pr }}' | jq -r '.headBranchName')
-                  gh workflow run ci.yml --ref "$PR_BRANCH"
-                  gh pr review "$PR_NUMBER" --approve --body "Approved by release-please automation."
-                  gh pr merge --auto --merge "$PR_NUMBER"
+                  gh workflow run ci.yml --ref "$PR_BRANCH" --repo "$GITHUB_REPOSITORY"
+                  gh pr review "$PR_NUMBER" --approve --body "Approved by release-please automation." --repo "$GITHUB_REPOSITORY"
+                  gh pr merge --auto --merge "$PR_NUMBER" --repo "$GITHUB_REPOSITORY"
