@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.2](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.1.1...samlguy-v1.1.2) (2026-05-16)
+
+
+### Bug Fixes & Dependencies
+
+* footer layout and CI token permissions ([07ef730](https://github.com/kellenmurphy/samlguy/commit/07ef7307cfe15984798587c4ec2ddfff73552633))
+* **ui:** stack footer attribution above links ([440b5a1](https://github.com/kellenmurphy/samlguy/commit/440b5a16d68289df926f365dbaae91d91357bcae))
+
 ## [1.1.1](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.1.0...samlguy-v1.1.1) (2026-05-16)
 
 
