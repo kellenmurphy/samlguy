@@ -51,7 +51,7 @@ The page handles:
 
 ### X.509 certificate parser (`src/lib/cert.ts`)
 
-**Pure custom DER/ASN.1 parser — no external library.** (`@peculiar/x509` is in package.json but is unused and should be removed.) Parses: subject DN, issuer DN, validity dates (both UTCTime and GeneralizedTime), serial number, and key algorithm (RSA with bit length, EC with named curve). Handles unknown OIDs gracefully.
+**Pure custom DER/ASN.1 parser — no external library.** Parses: subject DN, issuer DN, validity dates (both UTCTime and GeneralizedTime), serial number, and key algorithm (RSA with bit length, EC with named curve). Handles unknown OIDs gracefully.
 
 ### Time helpers (`src/lib/time.ts`)
 
@@ -63,11 +63,15 @@ The page handles:
 
 ### OIDC discovery proxy (`src/routes/api/discover/+server.ts`)
 
-Cloudflare Worker. Accepts `?issuer=<url>`, validates HTTPS, fetches `{issuer}/.well-known/openid-configuration`, returns the discovery document. Rejects non-HTTPS issuers with HTTP 400. **The API is deployed but the JWT UI does not yet call it** — wiring up the UI is a planned feature.
+Cloudflare Worker. Accepts `?issuer=<url>`, validates HTTPS, fetches `{issuerUrl.href}/.well-known/openid-configuration`, returns the discovery document. Rejects non-HTTPS issuers with HTTP 400. Called from the JWT results panel when `iss` is present — surfaces issuer match and supported algorithm checks against the decoded token.
 
 ### InfoTip component (`src/lib/InfoTip.svelte`)
 
 Hover tooltip on every summary field. Renders a small `?` button; on hover/focus, calculates the button's `getBoundingClientRect()` and renders the tooltip using `position: fixed` to escape the `overflow-hidden` card containers (absolute positioning would be clipped). The tooltip resets `uppercase`, `tracking-wider`, and `font-semibold` via `normal-case tracking-normal font-normal` to handle inheriting from section header spans.
+
+### Shareable link codec (`src/lib/hash.ts`)
+
+`encodePayload(s)` — UTF-8 encodes a string, base64url-encodes the bytes (no padding). `decodePayload(s)` — reverses this. Used in `+page.svelte`: on `onMount`, reads `window.location.hash`, decodes it into the textarea input (wrapped in try/catch for malformed hashes). The "Copy link" button calls `encodePayload(input)` and writes `origin + pathname + '#' + encoded` to the clipboard. The hash fragment is never sent to the server.
 
 ### Explanations (`src/lib/explanations.ts`)
 
@@ -105,19 +109,48 @@ Run with: `npm run coverage`
 
 ## Planned features
 
-### High priority
-- **OIDC Discovery UI** — the `/api/discover` endpoint is live; the JWT results panel needs a "Fetch discovery" button (or auto-trigger when `iss` is present). Should surface `issuer`, `jwks_uri`, `authorization_endpoint`, supported algs/scopes, and flag any inconsistencies with the decoded token's claims.
-- **Shareable links** — encode the paste content into the URL fragment (`window.location.hash`). A "Copy link" button generates a URL that reopens the tool with the payload pre-loaded. Fragment never hits the server. Useful for async troubleshooting with colleagues.
-
 ### Medium priority
 - **SAML signature validation** — fetch the IdP's SAML metadata (by EntityID or URL), extract the signing cert, and verify `<ds:Signature>` using the Web Crypto API. Display verified/unverified status prominently.
-- **Light mode toggle** — dark mode is current default; add a toggle with `localStorage` persistence.
 - **XML syntax highlighting** — color-code element names, attribute names, and values in the XML `<pre>` block. Could use a small tokenizer or a lightweight library like `highlight.js` scoped to XML.
+- **JWT JWKS validation** — after OIDC discovery, fetch `jwks_uri` and attempt to verify the JWT signature against the matching key.
 
 ### Lower priority / ideas
 - **SAML metadata parsing** — accept EntityDescriptor XML, display SP/IdP metadata in a structured way (ACS URLs, NameID formats, signing certs, attribute requirements)
-- **JWT JWKS validation** — after OIDC discovery, fetch `jwks_uri` and attempt to verify the JWT signature using the matching key
 - **i18n** — `explanations.ts` is already structured for this; add a locale switcher and alternate record implementations
+
+---
+
+## Commit message conventions
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/). Release-please reads commit messages to determine version bumps and populate `CHANGELOG.md`. Every commit to `main` (directly or via PR merge) must follow this format:
+
+```
+type(scope): short description
+
+Optional body explaining why, not what.
+```
+
+### Types and their effects
+
+| Type | Version bump | Changelog section |
+|------|-------------|-------------------|
+| `feat` | minor (1.x.0) | Features |
+| `fix` | patch (1.0.x) | Bug Fixes & Dependencies |
+| `perf` | patch | Performance |
+| `security` | none (display only) | Security — use `fix` if a bump is needed |
+| `docs` | none | Documentation (visible) |
+| `chore` | none | Miscellaneous (hidden) |
+| `ci` | none | CI/CD (hidden) |
+
+Breaking changes: add `!` after the type (`feat!:` or `fix!:`) **or** include a `BREAKING CHANGE:` footer. Either triggers a major bump (x.0.0).
+
+### Scope (optional)
+
+Scope goes in parentheses: `fix(deps):`, `feat(saml):`, `ci(release):`. Dependabot is configured to produce `fix(deps):` for npm updates and `chore(ci):` for Actions updates — both fit the changelog config automatically.
+
+### Commits that don't trigger changelog entries
+
+Commits that don't match any of the above types (e.g. `Add something` with no type prefix) are ignored by release-please entirely — no bump, no changelog entry. Always use a type prefix.
 
 ---
 

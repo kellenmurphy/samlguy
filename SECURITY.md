@@ -38,6 +38,7 @@ All SAML and JWT decoding is entirely client-side. Tokens and assertions are nev
 3. JWT: base64url-decoded in JavaScript, JSON parsed
 4. X.509 certificates embedded in SAML are parsed with a custom pure-JavaScript DER/ASN.1 parser
 5. Results are rendered in the DOM — nothing leaves the browser
+6. Shareable links encode the paste content into the URL fragment (`#...`) using base64url; fragments are never transmitted to the server by the browser, so shared links carry the same privacy guarantee as direct paste
 
 ### What runs server-side
 
@@ -93,6 +94,17 @@ The Cloudflare API token stored as a repository secret is scoped to Cloudflare P
 ### Production deploy gate
 
 The deploy job targets a GitHub Environment named `production`. This provides a configuration point for adding manual approval requirements, allowed-branch restrictions, or deployment protection rules in the future without changing any workflow code.
+
+### HTTP security headers
+
+A `_headers` file at the project root is processed by `@sveltejs/adapter-cloudflare` and deployed to every Cloudflare Pages response:
+
+- `X-Content-Type-Options: nosniff` — prevents MIME-type sniffing
+- `X-Frame-Options: DENY` — blocks the site from being embedded in an iframe (clickjacking mitigation)
+- `Referrer-Policy: no-referrer` — suppresses the `Referer` header on all outbound navigation; prevents token or payload data from leaking via URL referrers if a user clicks an external link
+- `Permissions-Policy` — disables camera, microphone, and geolocation access
+
+The adapter additionally appends `Cache-Control: public, immutable, max-age=31536000` on all `/_app/immutable/*` assets and `Cache-Control: no-cache` on mutable app assets.
 
 ### Dependency auditing
 

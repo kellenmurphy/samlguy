@@ -19,7 +19,7 @@ export const GET: RequestHandler = async ({ url }) => {
         error(400, 'issuer must use HTTPS');
     }
 
-    const discoveryUrl = `${issuer.replace(/\/$/, '')}/.well-known/openid-configuration`;
+    const discoveryUrl = `${issuerUrl.href.replace(/\/$/, '')}/.well-known/openid-configuration`;
 
     const response = await fetch(discoveryUrl, {
         headers: { Accept: 'application/json' }

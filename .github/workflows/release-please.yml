@@ -22,10 +22,13 @@ jobs:
                   config-file: release-please-config.json
                   manifest-file: .release-please-manifest.json
 
-            - name: Approve and enable auto-merge on release PR
+            - name: Trigger CI, approve, and enable auto-merge on release PR
               if: ${{ steps.release.outputs.pr }}
               env:
                   GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
               run: |
-                  gh pr review "${{ steps.release.outputs.pr }}" --approve --body "Approved by release-please automation."
-                  gh pr merge --auto --merge "${{ steps.release.outputs.pr }}"
+                  PR_NUMBER=$(echo '${{ steps.release.outputs.pr }}' | jq -r '.number')
+                  PR_BRANCH=$(echo '${{ steps.release.outputs.pr }}' | jq -r '.headBranchName')
+                  gh workflow run ci.yml --ref "$PR_BRANCH"
+                  gh pr review "$PR_NUMBER" --approve --body "Approved by release-please automation."
+                  gh pr merge --auto --merge "$PR_NUMBER"
