@@ -1,5 +1,7 @@
 # samlguy
 
+[![CI](https://github.com/kellenmurphy/samlguy/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kellenmurphy/samlguy/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/kellenmurphy/samlguy/graph/badge.svg)](https://codecov.io/gh/kellenmurphy/samlguy) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12859/badge)](https://www.bestpractices.dev/projects/12859)
+
 **SAML assertion and JWT decoder for the IAM community.**
 
 Visit [samlguy.com](https://samlguy.com) — paste whatever messy thing you grabbed from a log file, a network tab, or a browser plugin and the tool figures out what it is and (attempts to) decode it.

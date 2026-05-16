@@ -143,14 +143,26 @@
                     />
                 </a>
                 <a
-                    href="https://app.codecov.io/gh/kellenmurphy/samlguy"
+                    href="https://codecov.io/gh/kellenmurphy/samlguy"
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Code coverage"
                 >
                     <img
-                        src="https://img.shields.io/codecov/c/github/kellenmurphy/samlguy?style=flat-square&label=coverage&labelColor=404040"
+                        src="https://codecov.io/gh/kellenmurphy/samlguy/graph/badge.svg"
                         alt="Code coverage"
+                        class="h-4"
+                    />
+                </a>
+                <a
+                    href="https://www.bestpractices.dev/projects/12859"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="OpenSSF Best Practices"
+                >
+                    <img
+                        src="https://www.bestpractices.dev/projects/12859/badge"
+                        alt="OpenSSF Best Practices"
                         class="h-4"
                     />
                 </a>
