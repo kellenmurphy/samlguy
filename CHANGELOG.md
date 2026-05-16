@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.2.0](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.1.2...samlguy-v1.2.0) (2026-05-16)
+
+
+### Features
+
+* AuthnContext labels, status descriptions, XML highlighting, and shareable links ([944a870](https://github.com/kellenmurphy/samlguy/commit/944a87088f9c58bce592c1813c0adea13a9ae672))
+* **saml:** add AuthnContext labels, status descriptions, spec links, and XML line wrapping ([5551b29](https://github.com/kellenmurphy/samlguy/commit/5551b291d4dc73e46e8db825415a54570e9701f6))
+* **ui:** add XML syntax highlighting with hoverable element tooltips ([424f8a5](https://github.com/kellenmurphy/samlguy/commit/424f8a5a369e9bdaab295e0d67ef31b2762a08ec))
+
+
+### Bug Fixes & Dependencies
+
+* **ui:** update logo to &lt;saml:Guy/&gt; with white brackets ([28ec246](https://github.com/kellenmurphy/samlguy/commit/28ec246d6986448669b964f00c27cf5815e51abb))
+
+
+### Documentation
+
+* update CLAUDE.md and README for shipped features ([f46a343](https://github.com/kellenmurphy/samlguy/commit/f46a34361863b26ca0236047854a7ac44961ad2c))
+
 ## [1.1.2](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.1.1...samlguy-v1.1.2) (2026-05-16)
 
 
