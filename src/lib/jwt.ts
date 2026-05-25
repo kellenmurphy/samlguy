@@ -50,7 +50,7 @@ function parseScopes(payload: Record<string, unknown>): string[] | null {
 }
 
 export function decodeJwt(input: string): JwtDecodeResult {
-    const trimmed = input.trim().replace(/^Bearer\s+/i, '');
+    const trimmed = input.trim().replace(/^Authorization:\s+/i, '').replace(/^Bearer\s+/i, '');
     const parts = trimmed.split('.');
     if (parts.length !== 3)
         throw new Error('Invalid JWT: expected 3 dot-separated parts');

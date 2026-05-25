@@ -105,6 +105,12 @@ describe('decodeJwt — Bearer prefix', () => {
         const result = decodeJwt('bearer ' + RS256_FULL);
         expect(result.raw).toBe(RS256_FULL);
     });
+
+    it('strips full "Authorization: Bearer " HTTP header line', () => {
+        const result = decodeJwt('Authorization: Bearer ' + RS256_FULL);
+        expect(result.raw).toBe(RS256_FULL);
+        expect(result.header.alg).toBe('RS256');
+    });
 });
 
 describe('decodeJwt — alg:none', () => {

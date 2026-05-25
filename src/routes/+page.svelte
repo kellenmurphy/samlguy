@@ -6,9 +6,11 @@
     import InfoTip from '$lib/InfoTip.svelte';
     import { SAML_TS_KEY } from '$lib/explanations';
     import { encodePayload, decodePayload } from '$lib/hash';
+    import { getAttributeInfo, eppnScopedStatus } from '$lib/attributes';
     import { relativeLabel, isExpired } from '$lib/time';
     import type { CertInfo } from '$lib/cert';
     import { highlightXml, XML_ELEMENT_TIPS } from '$lib/xml-highlight';
+    import { EXAMPLES, EXAMPLE_CATEGORIES } from '$lib/examples';
 
     type InputType = 'saml' | 'jwt' | null;
 
@@ -27,6 +29,19 @@
     let discoveryLoading = $state(false);
     let discoveryError = $state<string | null>(null);
     let discoveryGeneration = 0;
+    let showExamples = $state(false);
+    let examplesRef: HTMLElement | undefined;
+
+    $effect(() => {
+        if (!showExamples) return;
+        const handleClick = (e: MouseEvent) => {
+            if (!examplesRef?.contains(e.target as Node)) {
+                showExamples = false;
+            }
+        };
+        document.addEventListener('mousedown', handleClick);
+        return () => document.removeEventListener('mousedown', handleClick);
+    });
 
     const discoveryIssuerMatch = $derived.by(() => {
         if (!discoveryResult || !jwtResult) return null;
@@ -277,12 +292,58 @@
                 Paste a SAML assertion, JWT, query string, URL, or HTTP log line. We'll figure it out and try to explain it!
             </p>
         </div>
-        {#if hasResults}
+        <div bind:this={examplesRef} class="relative flex shrink-0 items-center gap-2">
             <button
-                onclick={copyLink}
-                class="shrink-0 rounded-md px-3 py-1.5 text-sm text-neutral-500 ring-1 ring-neutral-300 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:ring-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
-            >{linkCopied ? 'Copied!' : 'Copy link'}</button>
-        {/if}
+                onclick={() => (showExamples = !showExamples)}
+                class="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm text-neutral-500 ring-1 ring-neutral-300 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:ring-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
+            >
+                Examples
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    class="h-4 w-4 transition-transform {showExamples ? 'rotate-180' : ''}"
+                    aria-hidden="true"
+                >
+                    <path
+                        fill-rule="evenodd"
+                        d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                        clip-rule="evenodd"
+                    />
+                </svg>
+            </button>
+            {#if hasResults}
+                <button
+                    onclick={copyLink}
+                    class="rounded-md px-3 py-1.5 text-sm text-neutral-500 ring-1 ring-neutral-300 transition-colors hover:bg-neutral-100 hover:text-neutral-700 dark:ring-neutral-700 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
+                >{linkCopied ? 'Copied!' : 'Copy link'}</button>
+            {/if}
+            {#if showExamples}
+                <div class="absolute right-0 top-full z-20 mt-1 min-w-60 overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-900">
+                    {#each EXAMPLE_CATEGORIES as category, i (category)}
+                        {@const catExamples = EXAMPLES.filter((e) => e.category === category)}
+                        {#if catExamples.length > 0}
+                            {#if i > 0}
+                                <div class="border-t border-neutral-100 dark:border-neutral-800"></div>
+                            {/if}
+                            <div class="px-3 pb-0.5 pt-2">
+                                <p class="text-xs font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">{category}</p>
+                            </div>
+                            {#each catExamples as example (example.label)}
+                                <button
+                                    onclick={() => {
+                                        input = example.payload();
+                                        showExamples = false;
+                                    }}
+                                    class="block w-full px-3 py-1.5 text-left text-sm text-neutral-700 hover:bg-neutral-50 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                                >{example.label}</button>
+                            {/each}
+                            <div class="pb-1"></div>
+                        {/if}
+                    {/each}
+                </div>
+            {/if}
+        </div>
     </div>
 
     <textarea
@@ -1050,14 +1111,35 @@
                         </thead>
                         <tbody class="divide-y divide-neutral-100 dark:divide-neutral-800">
                             {#each s.attributes as attribute (attribute.name)}
+                                {@const attrInfo = getAttributeInfo(attribute.name)}
+                                {@const scopedStatus = eppnScopedStatus(attribute.name, attribute.values)}
                                 <tr>
-                                    <td
-                                        class="max-w-xs break-all px-4 py-2 font-mono text-xs text-neutral-700 dark:text-neutral-300"
-                                    >
-                                        {attribute.name}
+                                    <td class="px-4 py-2 text-xs text-neutral-700 dark:text-neutral-300">
+                                        <div class="font-mono whitespace-nowrap">{attribute.name}</div>
+                                        {#if (attrInfo?.categories.length ?? 0) > 0 || scopedStatus !== null}
+                                            <div class="mt-1 flex flex-wrap gap-1">
+                                                {#if attrInfo?.categories.includes('rs')}
+                                                    <span
+                                                        class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400"
+                                                        title="REFEDS Research & Scholarship attribute bundle — applies to IdPs and SPs that have registered the R&S entity category in their metadata"
+                                                    >R&amp;S</span>
+                                                {/if}
+                                                {#if scopedStatus === 'scoped'}
+                                                    <span
+                                                        class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-400"
+                                                        title="Properly scoped ePPN — satisfies REFEDS RAF eppn-unique-no-reassign requirements"
+                                                    >eppn-scoped</span>
+                                                {:else if scopedStatus === 'unscoped'}
+                                                    <span
+                                                        class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
+                                                        title="Unscoped ePPN — eduPersonPrincipalName should contain @scope per InCommon requirements"
+                                                    >⚠ unscoped</span>
+                                                {/if}
+                                            </div>
+                                        {/if}
                                     </td>
                                     <td class="px-4 py-2 text-xs text-neutral-500">
-                                        {attribute.friendlyName ?? ''}
+                                        {attribute.friendlyName ?? attrInfo?.friendlyName ?? ''}
                                     </td>
                                     <td
                                         class="px-4 py-2 font-mono text-xs text-neutral-900 dark:text-neutral-100"

@@ -40,7 +40,7 @@ export const FIELD_EXPLANATIONS: Record<string, string> = {
         'The SP\'s requirements for how the user must authenticate. The Comparison attribute controls matching: "exact" requires one of the listed classes precisely; "minimum" accepts any class at least as strong; "better" requires strictly stronger; "maximum" requires no stronger. If the IdP cannot satisfy the requirement, it returns NoAuthnContext.',
 
     'saml.attributes':
-        'Attribute statements contain claims about the authenticated user released by the IdP — such as email, display name, group memberships, or entitlements. Which attributes are released is governed by IdP policy and the SP\'s metadata. These values typically drive authorization decisions at the SP.',
+        'Attribute statements contain claims about the authenticated user released by the IdP — such as email, display name, group memberships, or entitlements. Which attributes are released is governed by IdP policy and the SP\'s metadata. These values typically drive authorization decisions at the SP. Badges: R&S = part of the REFEDS Research & Scholarship attribute bundle (applies to IdPs and SPs that have registered the R&S entity category in their metadata); eppn-scoped = eduPersonPrincipalName value is properly scoped (user@scope) per REFEDS RAF eppn-unique requirements.',
 
     // ── SAML timestamps ───────────────────────────────────────────────────────
     'saml.ts.authnInstant':
