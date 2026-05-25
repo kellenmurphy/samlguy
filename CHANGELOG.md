@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.6](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.2.5...samlguy-v1.2.6) (2026-05-25)
+
+
+### Bug Fixes & Dependencies
+
+* **deps-dev:** bump prettier-plugin-svelte from 3.5.2 to 4.0.1 ([76302e2](https://github.com/kellenmurphy/samlguy/commit/76302e2d3ed11553c3cb09a8f3d554583a71c737))
+* **deps-dev:** bump prettier-plugin-svelte from 3.5.2 to 4.0.1 ([647c018](https://github.com/kellenmurphy/samlguy/commit/647c018f3329c65a269980330d684889b684101c))
+
 ## [1.2.5](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.2.4...samlguy-v1.2.5) (2026-05-25)
 
 
