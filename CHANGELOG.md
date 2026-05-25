@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.1](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.2.0...samlguy-v1.2.1) (2026-05-25)
+
+
+### Bug Fixes & Dependencies
+
+* **deps-dev:** bump @types/node from 25.8.0 to 25.9.1 ([0b663b6](https://github.com/kellenmurphy/samlguy/commit/0b663b689d8da83664b46e5bb4a6fbce9c844546))
+* **deps-dev:** bump @types/node from 25.8.0 to 25.9.1 ([d93898f](https://github.com/kellenmurphy/samlguy/commit/d93898fdcc5c5e910151668d41ac7bbd5d626704))
+
 ## [1.2.0](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.1.2...samlguy-v1.2.0) (2026-05-16)
 
 
