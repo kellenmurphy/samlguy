@@ -24,11 +24,11 @@ But it's not just SAML! It's equally useful for OAuth 2.0 / OIDC work. Access to
 
 ## Features
 
-**Input** — paste just about anything: raw base64+DEFLATE or base64 blob, query string, full URL, raw HTTP log line, JWT, or `Authorization: Bearer` header. Multiple SAML messages in one paste are handled. RelayState is always extracted separately; double URL-encoding is unwound automatically. `ctrl-a` in your logs and paste away — it'll make sense of it.
+**Input** — paste just about anything: raw base64+DEFLATE or base64 blob, query string, full URL, raw HTTP log line, JWT, or `Authorization: Bearer` header. Multiple SAML messages in one paste are handled. RelayState is always extracted separately; double URL-encoding is unwound automatically. `ctrl-a` in your logs and paste away — it'll make sense of it. An **Examples** button loads any of 10 pre-built, dynamically-generated payloads (SAMLResponse, SAMLRequest, JWT, Authorization header, query string, POST binding form value, and full redirect URL) as one-click starting points.
 
-**SAML** — binding type, message type, status with human-readable description and spec link, issuer, NameID, timestamps with relative labels ("expired 3 hours ago"), AuthnContext class reference with friendly label and assurance-level tooltip (OASIS, REFEDS, RAF, NIST), attribute table, signing cert details (key algorithm, validity), and syntax-highlighted XML with hover tips on all known SAML element names.
+**SAML** — binding type, message type, status with human-readable description and spec link, issuer, NameID, timestamps with relative labels ("expired 3 hours ago"), AuthnContext class reference with friendly label and assurance-level tooltip (OASIS, REFEDS, RAF, NIST), attribute table with **InCommon attribute annotations** (R&S and eppn-scoped/unscoped badges from an embedded attribute registry; friendly names filled in even when the assertion omits them), signing cert details (key algorithm, validity), and syntax-highlighted XML with hover tips on all known SAML element names.
 
-**JWT** — algorithm with safety flags (`alg: none` danger badge, HMAC weak badge), claims summary, timestamps with relative labels, scope/scp badge list, raw JSON header and payload. OIDC discovery fetches the issuer's `.well-known/openid-configuration` server-side (Cloudflare Worker, avoids CORS) and checks algorithm support against the token's `alg`.
+**JWT** — algorithm with safety flags (`alg: none` danger badge, HMAC weak badge), claims summary, timestamps with relative labels, scope/scp badge list, raw JSON header and payload. OIDC discovery fetches the issuer's `.well-known/openid-configuration` server-side (Cloudflare Worker, avoids CORS) and checks algorithm support against the token's `alg`. Accepts bare JWTs, `Bearer <token>`, or full `Authorization: Bearer <token>` header lines.
 
 **Everything else** — contextual `?` tooltips on every field covering the SAML spec, JWT/OIDC standards, and trust fabric conventions. Shareable links base64url-encode the input into the URL fragment — never sent to the server. Dark mode default with `localStorage` persistence.
 
@@ -74,6 +74,8 @@ src/
     generic.ts          # fallback decoder for unrecognized base64/JSON/XML blobs
     hash.ts             # base64url encode/decode for shareable URL fragments
     xml-highlight.ts    # custom XML tokenizer: syntax-colored HTML spans + element tooltips
+    attributes.ts       # InCommon attribute registry: R&S categories, eppn-scoped detection
+    examples.ts         # 10 dynamically-generated example payloads (SAML, JWT, query strings, URLs)
     explanations.ts     # externalized hover tooltip text for all summary fields
     InfoTip.svelte      # hover tooltip component
   routes/
@@ -98,7 +100,6 @@ src/
 
 ## What's Planned
 
-- **InCommon attribute annotations** — flag attributes in the attribute table as InCommon Baseline Eligible, R&S, or REFEDS RAF/eppn-scoped; a clear differentiator vs generic SAML tools
 - **Diff view** — paste two assertions side-by-side and highlight what changed; most useful for attribute table and timestamp diffs when debugging why a second login attempt looks different
 - **SAML metadata parsing** — parse `EntityDescriptor` XML into a structured view: signing certs, ACS URLs, NameID formats, supported bindings, contacts
 - **MDQ discovery** — "Discover" button on the SAML Issuer row fetches the IdP's metadata from InCommon's MDQ service (`https://mdq.incommon.org/entities/{entityID}`) — no aggregate download needed; optional MDQ base URL for other federations (eduGAIN, etc.)
