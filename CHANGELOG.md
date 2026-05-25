@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.1](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.3.0...samlguy-v1.3.1) (2026-05-25)
+
+
+### Bug Fixes & Dependencies
+
+* **examples:** remove incorrect POST binding query string example ([984cc30](https://github.com/kellenmurphy/samlguy/commit/984cc30a536cadfe18d84a72113f29ece2c085c9))
+* **examples:** remove incorrect POST binding query string example ([264e1ca](https://github.com/kellenmurphy/samlguy/commit/264e1ca30d3c133550064111d7230a6beec16338))
+
 ## [1.3.0](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.2.7...samlguy-v1.3.0) (2026-05-25)
 
 
