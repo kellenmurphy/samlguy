@@ -104,14 +104,6 @@ describe('EXAMPLES', () => {
         expect(decodeSaml(url!.payload()).summary.binding).toBe('redirect');
     });
 
-    it('POST binding example uses post binding', () => {
-        const post = EXAMPLES.find(
-            (e) => e.category === 'Query string' && e.label.includes('POST')
-        );
-        expect(post).toBeDefined();
-        expect(decodeSaml(post!.payload()).summary.binding).toBe('post');
-    });
-
     it('MFA SAMLResponse has REFEDS MFA authn context', () => {
         const mfa = EXAMPLES.find(
             (e) => e.category === 'SAMLResponse' && e.label.includes('MFA')

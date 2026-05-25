@@ -37,15 +37,6 @@ function encodeRedirectBinding(xml: string): string {
     return encodeURIComponent(btoa(binary));
 }
 
-function encodePostBinding(xml: string): string {
-    const bytes = new TextEncoder().encode(xml);
-    let binary = '';
-    for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i]);
-    }
-    return btoa(binary);
-}
-
 function b64url(obj: object): string {
     return btoa(JSON.stringify(obj))
         .replace(/=/g, '')
@@ -228,11 +219,6 @@ export const EXAMPLES: Example[] = [
         category: 'Query string',
         payload: () =>
             `SAMLRequest=${encodeRedirectBinding(samlRequest())}&RelayState=%2Fdashboard`,
-    },
-    {
-        label: 'POST binding form value',
-        category: 'Query string',
-        payload: () => `SAMLResponse=${encodeURIComponent(encodePostBinding(samlResponse()))}`,
     },
     {
         label: 'IdP redirect binding URL',
