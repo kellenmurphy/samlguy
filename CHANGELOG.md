@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.5](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.2.4...samlguy-v1.2.5) (2026-05-25)
+
+
+### Bug Fixes & Dependencies
+
+* **deps-dev:** bump vite from 8.0.13 to 8.0.14 ([e8f3498](https://github.com/kellenmurphy/samlguy/commit/e8f349864d87b2d08da5a3e3b0d14ed47912e913))
+* **deps-dev:** bump vite from 8.0.13 to 8.0.14 ([c4f8719](https://github.com/kellenmurphy/samlguy/commit/c4f8719503494727c6196e94667cd376e842252b))
+
 ## [1.2.4](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.2.3...samlguy-v1.2.4) (2026-05-25)
 
 
