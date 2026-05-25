@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.3](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.2.2...samlguy-v1.2.3) (2026-05-25)
+
+
+### Bug Fixes & Dependencies
+
+* **deps-dev:** bump the svelte group across 1 directory with 2 updates ([ab6991f](https://github.com/kellenmurphy/samlguy/commit/ab6991f5a51b13836e621c6cb41bef7b113595db))
+* **deps-dev:** bump the svelte group across 1 directory with 2 updates ([ac95bd4](https://github.com/kellenmurphy/samlguy/commit/ac95bd43bff0ee72696a05c081fd365881faa1ed))
+
 ## [1.2.2](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.2.1...samlguy-v1.2.2) (2026-05-25)
 
 
