@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.2](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.2.1...samlguy-v1.2.2) (2026-05-25)
+
+
+### Bug Fixes & Dependencies
+
+* **deps-dev:** bump vitest from 4.1.6 to 4.1.7 ([1e92ecf](https://github.com/kellenmurphy/samlguy/commit/1e92ecf83b27602c5d5b3dc04cf0cf5c139fb0e7))
+* **deps-dev:** bump vitest from 4.1.6 to 4.1.7 ([69d5ee7](https://github.com/kellenmurphy/samlguy/commit/69d5ee7f6a0269bbf06a3a390ac596b6c396bd89))
+
 ## [1.2.1](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.2.0...samlguy-v1.2.1) (2026-05-25)
 
 
