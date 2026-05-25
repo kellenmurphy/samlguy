@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.3.0](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.2.7...samlguy-v1.3.0) (2026-05-25)
+
+
+### Features
+
+* InCommon attribute annotations, Examples button, and Authorization header fix ([7b85bd5](https://github.com/kellenmurphy/samlguy/commit/7b85bd5271c323d98f26ce7879a62dd691a7e793))
+* **saml:** add InCommon R&S and eppn-scoped badge annotations to the attribute table ([13f4ae6](https://github.com/kellenmurphy/samlguy/commit/13f4ae685399e114d93977c9827bb2f13a3603e3))
+* **ui:** add attribute badge UI and Examples button with 10 dynamic payloads ([c0b1677](https://github.com/kellenmurphy/samlguy/commit/c0b1677eaf0907430e8781b98f9b9ce88b6a4b33))
+
+
+### Bug Fixes & Dependencies
+
+* **jwt:** handle full Authorization: Bearer header line in decodeJwt ([a73e733](https://github.com/kellenmurphy/samlguy/commit/a73e7339687205465c6b8a03752b2beb30003d05))
+
+
+### Documentation
+
+* update README for attribute annotations and Examples button ([c0ff7a5](https://github.com/kellenmurphy/samlguy/commit/c0ff7a54670dd35ea06310eb923e635145efa377))
+
 ## [1.2.7](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.2.6...samlguy-v1.2.7) (2026-05-25)
 
 
