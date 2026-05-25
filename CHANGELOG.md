@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.4](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.2.3...samlguy-v1.2.4) (2026-05-25)
+
+
+### Bug Fixes & Dependencies
+
+* **deps-dev:** bump typescript-eslint from 8.59.3 to 8.59.4 ([71d9d99](https://github.com/kellenmurphy/samlguy/commit/71d9d9975f68ed2fcfa1836f72f27244488f725f))
+* **deps-dev:** bump typescript-eslint from 8.59.3 to 8.59.4 ([81e6fee](https://github.com/kellenmurphy/samlguy/commit/81e6fee44eb56c1d65a2ebb03d250a0a9bebca02))
+
 ## [1.2.3](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.2.2...samlguy-v1.2.3) (2026-05-25)
 
 
