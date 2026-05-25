@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.7](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.2.6...samlguy-v1.2.7) (2026-05-25)
+
+
+### Bug Fixes & Dependencies
+
+* **deps-dev:** bump wrangler from 4.92.0 to 4.94.0 in the cloudflare group across 1 directory ([33eaa94](https://github.com/kellenmurphy/samlguy/commit/33eaa9451e5b13fc1848786bf69ed1cba6ea0fc0))
+* **deps-dev:** bump wrangler in the cloudflare group across 1 directory ([519a8f2](https://github.com/kellenmurphy/samlguy/commit/519a8f2ab8fa581427699996132ebcd50ee23d88))
+
 ## [1.2.6](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.2.5...samlguy-v1.2.6) (2026-05-25)
 
 
