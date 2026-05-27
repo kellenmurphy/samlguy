@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.3](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.3.2...samlguy-v1.3.3) (2026-05-27)
+
+
+### Bug Fixes & Dependencies
+
+* **deps-dev:** bump wrangler in the cloudflare group ([#69](https://github.com/kellenmurphy/samlguy/issues/69)) ([d65dcec](https://github.com/kellenmurphy/samlguy/commit/d65dcec70c1b9710c253407def342a1a15ae39ba))
+
 ## [1.3.2](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.3.1...samlguy-v1.3.2) (2026-05-26)
 
 
