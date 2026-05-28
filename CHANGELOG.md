@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.5](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.3.4...samlguy-v1.3.5) (2026-05-28)
+
+
+### Bug Fixes & Dependencies
+
+* **deps-dev:** bump eslint-plugin-svelte from 3.17.1 to 3.18.0 ([#72](https://github.com/kellenmurphy/samlguy/issues/72)) ([21811a8](https://github.com/kellenmurphy/samlguy/commit/21811a84f2cc306486b3cb2b9f50613a3244d6c8))
+
 ## [1.3.4](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.3.3...samlguy-v1.3.4) (2026-05-28)
 
 
