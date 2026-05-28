@@ -23,6 +23,8 @@ Include:
 
 You can expect an acknowledgement within 48 hours and a resolution or status update within 7 days.
 
+**Disclosure policy:** Reported vulnerabilities are kept confidential until a fix is deployed. The default embargo window is 90 days from initial report, though critical issues affecting user data will be patched and disclosed faster. After a fix ships, a GitHub Security Advisory will be published. CVE assignment will be requested for vulnerabilities with a CVSS score of 7.0 or higher.
+
 ---
 
 ## Threat model
@@ -31,7 +33,7 @@ You can expect an acknowledgement within 48 hours and a resolution or status upd
 
 | Adversary | Goal | Primary controls |
 |---|---|---|
-| Malicious paste / shared link | Trigger XSS via crafted SAML or JWT content rendered in the DOM | Svelte's default text escaping, `esc()` in the XML highlighter, CSP (planned) |
+| Malicious paste / shared link | Trigger XSS via crafted SAML or JWT content rendered in the DOM | Svelte's default text escaping, `esc()` in the XML highlighter, CSP (`default-src 'self'`, no `unsafe-inline`, hash-pinned inline scripts) |
 | Compromised npm package | Inject malicious code into the build or CI environment | GuardDog, OSV-Scanner, Grype, `npm audit`, SHA-pinned actions, `npm ci` lockfile enforcement |
 | Compromised upstream GitHub Action | Substitute malicious CI code via a tampered version tag | All actions pinned to commit SHA, Dependabot rotates pins daily |
 | SSRF via OIDC proxy | Use the discovery Worker to reach internal infrastructure | `redirect: 'error'`, 5-second timeout, 100 KB cap, response validation |
@@ -83,6 +85,41 @@ The Worker does not receive, log, or store any JWT token. It receives only the i
 - **100 KB response cap** — the `Content-Length` header is checked before reading the body, and the body itself is capped at 100,000 bytes; oversized responses are rejected with 502
 - **Response validation** — the body must be valid JSON, must be a non-null object, and must contain an `issuer` field (required by RFC 8414); anything else returns 502
 - **Origin restriction** — responses include `Access-Control-Allow-Origin: https://samlguy.com`, preventing other browser origins from using the Worker as a free fetch proxy; this does not prevent the outbound request itself, only cross-origin response reads
+- **Method restriction** — only `GET` is exported from the endpoint; SvelteKit returns `405 Method Not Allowed` with an `Allow: GET, HEAD` header for any other method automatically
+
+---
+
+## Runtime protections
+
+### Content Security Policy
+
+CSP is configured via `kit.csp` in `svelte.config.js` using `mode: 'hash'` and delivered as a `Content-Security-Policy` HTTP response header on every request (not a meta tag — the Cloudflare Worker SSR path sets headers directly, which means `frame-ancestors` is respected):
+
+- `default-src 'self'` — baseline: only same-origin resources allowed
+- `script-src 'self' <hashes>` — no `unsafe-inline`; SvelteKit automatically hashes its bootstrap script per render; the theme-detection script in `app.html` is covered by a manually computed static hash
+- `style-src 'self'` — all styles compile to external files; no inline `<style>` tags remain in the rendered HTML
+- `connect-src 'self'` — fetch calls (OIDC discovery proxy) are same-origin
+- `img-src 'self'` — favicon and assets only
+- `font-src 'none'` — no external fonts loaded
+- `object-src 'none'` — blocks plugins
+- `base-uri 'self'` — prevents base tag injection
+- `form-action 'self'` — prevents form hijacking
+- `frame-ancestors 'none'` — blocks the page from being embedded in any frame; delivered as an HTTP header so this directive is enforced (meta-tag CSP does not support `frame-ancestors`)
+- `upgrade-insecure-requests` — instructs browsers to upgrade any HTTP sub-resource requests to HTTPS
+
+No `report-uri` or `report-to` directive is currently configured; CSP violations in production are silent. A future improvement is a lightweight violation-reporting endpoint that drops the `document-uri` field (which would contain the URL fragment and therefore the user's paste) before logging.
+
+### HTTP security headers
+
+A `_headers` file at the project root is processed by `@sveltejs/adapter-cloudflare` and deployed to every Cloudflare Pages response:
+
+- `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload` — instructs browsers to use HTTPS exclusively for two years; `preload` makes the domain eligible for inclusion in browser HSTS preload lists
+- `X-Content-Type-Options: nosniff` — prevents MIME-type sniffing
+- `X-Frame-Options: DENY` — legacy framing protection for browsers that do not support CSP `frame-ancestors`; modern browsers use the CSP directive above
+- `Referrer-Policy: no-referrer` — suppresses the `Referer` header on all outbound navigation; prevents token or payload data from leaking via URL referrers if a user clicks an external link
+- `Permissions-Policy` — disables camera, microphone, and geolocation access
+
+The adapter additionally appends `Cache-Control: public, immutable, max-age=31536000` on all `/_app/immutable/*` assets and `Cache-Control: no-cache` on mutable app assets.
 
 ---
 
@@ -140,18 +177,6 @@ The Cloudflare API token stored as a repository secret is scoped to Cloudflare P
 ### Production deploy gate
 
 The deploy job targets a GitHub Environment named `production`. This provides a configuration point for adding manual approval requirements, allowed-branch restrictions, or deployment protection rules in the future without changing any workflow code.
-
-### HTTP security headers
-
-A `_headers` file at the project root is processed by `@sveltejs/adapter-cloudflare` and deployed to every Cloudflare Pages response:
-
-- `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload` — instructs browsers to use HTTPS exclusively for two years; `preload` makes the domain eligible for inclusion in browser HSTS preload lists
-- `X-Content-Type-Options: nosniff` — prevents MIME-type sniffing
-- `X-Frame-Options: DENY` — blocks the site from being embedded in an iframe (clickjacking mitigation)
-- `Referrer-Policy: no-referrer` — suppresses the `Referer` header on all outbound navigation; prevents token or payload data from leaking via URL referrers if a user clicks an external link
-- `Permissions-Policy` — disables camera, microphone, and geolocation access
-
-The adapter additionally appends `Cache-Control: public, immutable, max-age=31536000` on all `/_app/immutable/*` assets and `Cache-Control: no-cache` on mutable app assets.
 
 ### Dependency auditing
 
