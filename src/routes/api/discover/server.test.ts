@@ -43,6 +43,18 @@ describe('GET /api/discover', () => {
         ).rejects.toMatchObject({ status: 400 });
     });
 
+    it('returns 400 for an IPv6 literal issuer', async () => {
+        await expect(
+            GET(makeEvent({ issuer: 'https://[::1]/' }))
+        ).rejects.toMatchObject({ status: 400 });
+    });
+
+    it('returns 400 for an IPv4 literal issuer', async () => {
+        await expect(
+            GET(makeEvent({ issuer: 'https://169.254.169.254/' }))
+        ).rejects.toMatchObject({ status: 400 });
+    });
+
     // --- Fetch failures ---
 
     it('returns 504 when the discovery fetch times out (AbortError thrown directly)', async () => {
