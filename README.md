@@ -111,7 +111,7 @@ src/
 
 ## Contributing
 
-This started as a personal passion project for [The SAML Guy](https://kellenmurphy.com) to mess with a nifty tech stack (Svelte). Bug reports and suggestions are welcome via [GitHub Issues](https://github.com/kellenmurphy/samlguy/issues). For security vulnerabilities, please follow the [responsible disclosure process](SECURITY.md) rather than opening a public issue.
+This started as a personal passion project for [The SAML Guy](https://kellenmurphy.com) to mess with a nifty tech stack (Svelte). Bug reports and suggestions are welcome via [GitHub Issues](https://github.com/kellenmurphy/samlguy/issues). See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution guidelines. For security vulnerabilities, please follow the [responsible disclosure process](SECURITY.md) rather than opening a public issue.
 
 
 ## License
