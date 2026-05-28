@@ -50,10 +50,51 @@ jobs:
             - name: Build
               run: npm run build
 
+    guarddog:
+        name: GuardDog Supply Chain Scan
+        runs-on: ubuntu-24.04
+        permissions:
+            contents: read
+            security-events: write
+        steps:
+            - name: Checkout
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+            - name: Setup uv
+              # astral-sh/setup-uv v8.1.0
+              uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+
+            - name: Scan with GuardDog
+              run: uvx guarddog npm verify package-lock.json --output-format sarif > guarddog.sarif
+
+            - name: Upload GuardDog SARIF
+              if: always()
+              # github/codeql-action v3.28.13
+              uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa
+              with:
+                  sarif_file: guarddog.sarif
+                  category: guarddog
+
+    dependency-review:
+        name: Dependency Review
+        runs-on: ubuntu-24.04
+        if: github.event_name == 'pull_request'
+        permissions:
+            contents: read
+        steps:
+            - name: Checkout
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+            - name: Dependency Review
+              # actions/dependency-review-action v5.0.0
+              uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294
+              with:
+                  fail-on-severity: moderate
+
     deploy:
         name: Deploy to Cloudflare Pages
         runs-on: ubuntu-24.04
-        needs: test
+        needs: [test, guarddog]
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         environment: production
         permissions:
