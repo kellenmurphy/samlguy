@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.6](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.3.5...samlguy-v1.3.6) (2026-05-28)
+
+
+### Documentation
+
+* **security:** correct token permissions and branch protection descriptions ([#77](https://github.com/kellenmurphy/samlguy/issues/77)) ([0fd12e1](https://github.com/kellenmurphy/samlguy/commit/0fd12e1c1247797c35ab0ad19ebb02ff4ac5fb01))
+
 ## [1.3.5](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.3.4...samlguy-v1.3.5) (2026-05-28)
 
 
