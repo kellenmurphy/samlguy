@@ -45,11 +45,19 @@ All SAML and JWT decoding is entirely client-side. Tokens and assertions are nev
 The only server-side code is the OIDC discovery proxy at `/api/discover`, running as a Cloudflare Worker. It:
 
 - Accepts a single `issuer` query parameter
-- Validates the issuer is a valid HTTPS URL (non-HTTPS requests are rejected with HTTP 400)
-- Makes a server-side `GET` to `{issuer}/.well-known/openid-configuration` to retrieve the IdP's discovery document (avoiding browser CORS constraints)
+- Validates the issuer is a valid HTTPS URL (non-HTTPS issuers are rejected with HTTP 400)
+- Fetches `{issuer}/.well-known/openid-configuration` server-side to avoid browser CORS constraints
 - Returns the discovery document JSON to the browser
 
 The Worker does not receive, log, or store any JWT token. It receives only the issuer URL. Outbound requests are only made to `https://` endpoints.
+
+**SSRF mitigations in the Worker:**
+
+- **Redirects are not followed** — the fetch is made with `redirect: 'error'`; any redirect (including a redirect from HTTPS to an internal address) results in a 502 error
+- **5-second timeout** — an `AbortController` cancels the fetch after 5 seconds; a timed-out request returns 504
+- **100 KB response cap** — the `Content-Length` header is checked before reading the body, and the body itself is capped at 100,000 bytes; oversized responses are rejected with 502
+- **Response validation** — the body must be valid JSON, must be a non-null object, and must contain an `issuer` field (required by RFC 8414); anything else returns 502
+- **CORS restriction** — responses include `Access-Control-Allow-Origin: https://samlguy.com`, restricting browser cross-origin access to the production origin only
 
 ---
 
