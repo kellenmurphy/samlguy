@@ -122,7 +122,13 @@ Dependabot is configured to open daily PRs when new versions of these actions ar
 
 ### Minimal token permissions
 
-The CI workflow declares `permissions: contents: read` at the workflow level, restricting the default `GITHUB_TOKEN` to read-only. The deploy job additionally requests `deployments: write` (required by the Cloudflare Pages action) and nothing more. No job can write to the repository, create issues, or make API calls beyond what is explicitly declared.
+All workflows use explicit `permissions` blocks rather than relying on GitHub's write-all default. The CI workflow sets the following at the workflow level, which serves as the baseline for all jobs:
+
+- `actions: read` — required for the OSV-Scanner reusable workflow (GitHub constrains reusable workflow callers: the calling workflow must include any permissions granted to the called workflow)
+- `contents: read`
+- `security-events: write` — required for SARIF upload to GitHub Code Scanning across multiple jobs; also needed at workflow level for the OSV-Scanner reusable workflow call
+
+Individual jobs override this baseline to the minimum they require. The deploy job additionally requests `deployments: write` (Cloudflare Pages action), `id-token: write` (OIDC for sigstore attestation), and `attestations: write` (GitHub attestation API). No job can write to the repository, create issues, or make API calls beyond what is explicitly declared.
 
 ### No secrets in PR workflows
 
@@ -210,7 +216,7 @@ This means the provenance of every deployed bundle is verifiable: given the arti
 
 The `main` branch is protected with the following rules enforced for all contributors including administrators:
 
-- **Required status checks** — the `Build & Test` CI job must pass before any merge is allowed; the branch must be up to date with `main` before merging (strict mode)
+- **Required status checks** — `Build & Test`, `GuardDog Supply Chain Scan`, `OSV Scanner / osv-scan`, `SBOM & Grype Scan`, and `Dependency Review` must all pass before any merge is allowed; the branch must be up to date with `main` before merging (strict mode)
 - **Required signatures** — every commit merged to `main` must carry a verified cryptographic signature
 - **Required pull request review** — at least one approval is required; stale approvals are dismissed on new pushes; code owner review is required
 - **No force pushes** — force-pushing to `main` is blocked
