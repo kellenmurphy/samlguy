@@ -62,8 +62,14 @@ All GitHub Actions are pinned to a full commit SHA, not a mutable version tag. V
 Current pins in `.github/workflows/ci.yml`:
 - `actions/checkout` — SHA-pinned
 - `actions/setup-node` — SHA-pinned
+- `astral-sh/setup-uv` — SHA-pinned (v8.1.0)
 - `cloudflare/wrangler-action` — SHA-pinned
 - `codecov/codecov-action` — SHA-pinned
+- `github/codeql-action/upload-sarif` — SHA-pinned (v3.28.13)
+- `actions/dependency-review-action` — SHA-pinned (v5.0.0)
+- `google/osv-scanner-action` reusable workflow — SHA-pinned (v2.3.8)
+- `anchore/sbom-action` — SHA-pinned (v0.24.0)
+- `anchore/scan-action` — SHA-pinned (v7.4.0)
 
 Current pins in `.github/workflows/scorecard.yml`:
 - `actions/checkout` — SHA-pinned
@@ -79,7 +85,7 @@ Current pins in `.github/workflows/codeql.yml`:
 - `github/codeql-action/init` — SHA-pinned (v3.28.13)
 - `github/codeql-action/analyze` — SHA-pinned (v3.28.13)
 
-Dependabot is configured to open weekly PRs when new versions of these actions are released, keeping SHA rotation low-friction.
+Dependabot is configured to open daily PRs when new versions of these actions are released, keeping SHA rotation low-friction.
 
 ### Minimal token permissions
 
@@ -108,12 +114,12 @@ The adapter additionally appends `Cache-Control: public, immutable, max-age=3153
 
 ### Dependency auditing
 
-The CI workflow runs `npm audit --audit-level=high` on every push and pull request. The build fails if any high or critical vulnerabilities are present in the transitive dependency tree.
+The CI workflow runs `npm audit --audit-level=moderate` on every push and pull request. The build fails if any moderate, high, or critical vulnerabilities are present in the transitive dependency tree.
 
 ### Dependabot
 
-Dependabot runs weekly for:
-- **npm packages** — grouped (Svelte ecosystem together, Cloudflare tools together) to reduce PR noise while keeping everything current
+Dependabot runs daily for:
+- **npm packages** — grouped (Svelte ecosystem together, Cloudflare tools together) to reduce PR noise while keeping everything current. Commits use the `chore(deps)` prefix so routine dependency bumps do not trigger unnecessary patch releases via release-please.
 - **GitHub Actions** — separate ecosystem entry, because action dependencies are a supply chain vector that is easy to neglect
 
 ### Commit signing
@@ -125,6 +131,32 @@ Git is configured globally with `gpg.format = ssh` and `commit.gpgsign = true`, 
 ### CodeQL
 
 A CodeQL workflow runs on every push and pull request to `main`, and weekly on Mondays. It uses the `security-extended` query suite for JavaScript/TypeScript, which covers OWASP Top 10 and additional security patterns beyond the default set. Results are uploaded to GitHub's code scanning dashboard as SARIF findings. The action is SHA-pinned to v3.
+
+### GuardDog
+
+[GuardDog](https://github.com/DataDog/guarddog) (Datadog, Apache 2.0) runs on every push and pull request. It analyzes all packages referenced in `package-lock.json` for behavioral supply chain attack indicators: install/postinstall scripts that should not be present, obfuscated code, high-entropy strings, outbound network calls in lifecycle hooks, and typosquatting patterns. Unlike database-driven scanners, GuardDog detects malicious behavior regardless of whether a CVE has been filed.
+
+GuardDog runs entirely within the CI runner — no data is sent to any external service. Findings are reported as SARIF and uploaded to the GitHub code scanning dashboard. The job must pass before deploy is allowed.
+
+### OSV-Scanner
+
+[OSV-Scanner](https://google.github.io/osv-scanner/) (Google, Apache 2.0) runs on every push and pull request via Google's official reusable workflow. It queries the [Open Source Vulnerabilities](https://osv.dev) database, which aggregates CVE, GitHub Security Advisories (GHSA), and OSV records — a broader set of sources than npm's advisory feed alone. Findings are automatically uploaded to the GitHub code scanning dashboard as SARIF. The job must pass before deploy is allowed.
+
+### SBOM and Grype
+
+On every push and pull request:
+
+- **Syft** ([anchore/sbom-action](https://github.com/anchore/sbom-action), Apache 2.0) generates a Software Bill of Materials in SPDX-JSON format and uploads it as a workflow artifact. This provides an auditable inventory of every package in the build and supports compliance requirements that expect a machine-readable SBOM.
+
+- **Grype** ([anchore/scan-action](https://github.com/anchore/scan-action), Apache 2.0) scans the Syft-generated SBOM for known vulnerabilities at medium severity or higher. Findings are uploaded to the GitHub code scanning dashboard as SARIF. The job must pass before deploy is allowed.
+
+### Dependency Review
+
+The [dependency-review-action](https://github.com/actions/dependency-review-action) runs on pull requests only. It compares the dependency diff introduced by the PR against GitHub's vulnerability database and fails the check if any newly added package carries a moderate or higher CVE. This catches vulnerable dependencies at PR time, before they land in `main`, complementing the full-tree scans that run on push.
+
+### GitHub Code Scanning
+
+All SARIF-producing tools (CodeQL, GuardDog, OSV-Scanner, Grype, OSSF Scorecard) upload their findings to GitHub's code scanning dashboard (Security → Code scanning). This provides a single triage surface across all scanners, with per-file, per-line annotation on pull requests. Each tool registers under its own `category` so findings are de-duplicated and attributable to their source.
 
 ### OSSF Scorecard
 
