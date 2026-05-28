@@ -9,7 +9,9 @@ on:
     workflow_dispatch:
 
 permissions:
+    actions: read
     contents: read
+    security-events: write
 
 jobs:
     test:
@@ -31,7 +33,7 @@ jobs:
               run: npm ci
 
             - name: Audit dependencies
-              run: npm audit --audit-level=high
+              run: npm audit --audit-level=moderate
 
             - name: Type check
               run: npm run check
@@ -50,15 +52,99 @@ jobs:
             - name: Build
               run: npm run build
 
+    guarddog:
+        name: GuardDog Supply Chain Scan
+        runs-on: ubuntu-24.04
+        permissions:
+            contents: read
+            security-events: write
+        steps:
+            - name: Checkout
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+            - name: Setup uv
+              # astral-sh/setup-uv v8.1.0
+              uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+
+            - name: Scan with GuardDog
+              run: uvx guarddog npm verify package-lock.json --output-format sarif > guarddog.sarif
+
+            - name: Upload GuardDog SARIF
+              if: always()
+              # github/codeql-action v3.28.13
+              uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa
+              with:
+                  sarif_file: guarddog.sarif
+                  category: guarddog
+
+    osv-scanner:
+        name: OSV Scanner
+        # google/osv-scanner-action v2.3.8
+        uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@9a498708959aeaef5ef730655706c5a1df1edbc2
+        with:
+            scan-args: |-
+                --lockfile=package-lock.json
+
+    sbom:
+        name: SBOM & Grype Scan
+        runs-on: ubuntu-24.04
+        permissions:
+            contents: read
+            security-events: write
+        steps:
+            - name: Checkout
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+            - name: Generate SBOM with Syft
+              # anchore/sbom-action v0.24.0
+              uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610
+              with:
+                  format: spdx-json
+                  output-file: sbom.spdx.json
+
+            - name: Scan with Grype
+              # anchore/scan-action v7.4.0
+              id: grype
+              uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2
+              with:
+                  sbom: sbom.spdx.json
+                  fail-build: true
+                  severity-cutoff: medium
+
+            - name: Upload Grype SARIF
+              if: always()
+              # github/codeql-action v3.28.13
+              uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa
+              with:
+                  sarif_file: ${{ steps.grype.outputs.sarif }}
+                  category: grype
+
+    dependency-review:
+        name: Dependency Review
+        runs-on: ubuntu-24.04
+        if: github.event_name == 'pull_request'
+        permissions:
+            contents: read
+        steps:
+            - name: Checkout
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+            - name: Dependency Review
+              # actions/dependency-review-action v5.0.0
+              uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294
+              with:
+                  fail-on-severity: moderate
+
     deploy:
         name: Deploy to Cloudflare Pages
         runs-on: ubuntu-24.04
-        needs: test
+        needs: [test, guarddog, osv-scanner, sbom]
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         environment: production
         permissions:
             contents: read
             deployments: write
+            id-token: write
         steps:
             - name: Checkout
               uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
@@ -74,6 +160,12 @@ jobs:
 
             - name: Build
               run: npm run build
+
+            - name: Attest build provenance
+              # actions/attest-build-provenance v4.1.0
+              uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32
+              with:
+                  subject-path: .svelte-kit/cloudflare
 
             - name: Deploy to Cloudflare Pages
               # cloudflare/wrangler-action v3.15.0
