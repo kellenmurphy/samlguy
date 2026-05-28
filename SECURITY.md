@@ -25,6 +25,26 @@ You can expect an acknowledgement within 48 hours and a resolution or status upd
 
 ---
 
+## Threat model
+
+### Adversaries and assets
+
+| Adversary | Goal | Primary controls |
+|---|---|---|
+| Malicious paste / shared link | Trigger XSS via crafted SAML or JWT content rendered in the DOM | Svelte's default text escaping, `esc()` in the XML highlighter, CSP (planned) |
+| Compromised npm package | Inject malicious code into the build or CI environment | GuardDog, OSV-Scanner, Grype, `npm audit`, SHA-pinned actions, `npm ci` lockfile enforcement |
+| Compromised upstream GitHub Action | Substitute malicious CI code via a tampered version tag | All actions pinned to commit SHA, Dependabot rotates pins daily |
+| SSRF via OIDC proxy | Use the discovery Worker to reach internal infrastructure | `redirect: 'error'`, 5-second timeout, 100 KB cap, response validation |
+| Compromised maintainer account | Push unsigned or unreviewed code to `main` | Required commit signatures, branch protection, CODEOWNERS review, scoped API tokens |
+| Information leakage | Exfiltrate SAML assertions or JWT payloads | All decoding is client-side; no server ever receives token content; no logging; CORS restriction on the Worker |
+
+### Out of scope
+
+- Vulnerabilities in the tokens or assertions themselves — this tool is a decoder, not a validator; it makes no trust decisions on the user's behalf
+- Denial-of-service against the OIDC discovery proxy at volume — rate limiting is delegated to Cloudflare's edge
+
+---
+
 ## How the application works
 
 Understanding the data flow helps scope what a vulnerability in this project could affect.
@@ -34,11 +54,15 @@ Understanding the data flow helps scope what a vulnerability in this project cou
 All SAML and JWT decoding is entirely client-side. Tokens and assertions are never transmitted to or stored on any server. The full decode path:
 
 1. Input is detected (SAML vs JWT) and parsed in JavaScript
-2. SAML: base64-decoded, optionally DEFLATE-inflated, XML parsed with the browser's built-in `DOMParser`
+2. SAML: base64-decoded, optionally DEFLATE-inflated, XML parsed with the browser's built-in `DOMParser` (modern browser `DOMParser` ignores DOCTYPE declarations and external entity references entirely — XXE is not a concern in this context)
 3. JWT: base64url-decoded in JavaScript, JSON parsed
 4. X.509 certificates embedded in SAML are parsed with a custom pure-JavaScript DER/ASN.1 parser
 5. Results are rendered in the DOM — nothing leaves the browser
-6. Shareable links encode the paste content into the URL fragment (`#...`) using base64url; fragments are never transmitted to the server by the browser, so shared links carry the same privacy guarantee as direct paste
+6. Shareable links encode the paste content into the URL fragment (`#...`) using base64url; fragments are never sent to the server by the browser in HTTP requests, so the server never sees the payload
+
+**URL fragment privacy caveats:** The privacy guarantee applies to the server, not to the device or the recipient. Browser history syncs fragments across devices; browser extensions can read them; and sharing a link with another person gives that person the full payload — which is the point, but worth being explicit about. Any future addition of client-side telemetry or error reporting would need to explicitly exclude `window.location.href` to preserve this property. There are no analytics or error-reporting scripts in the current codebase.
+
+**No client-side storage:** The application uses no cookies, no `localStorage`, no `sessionStorage`, and no `IndexedDB`. Nothing the user pastes persists on their device beyond the current browser session. The only persistent representation of a payload is the URL fragment, which is user-controlled.
 
 ### What runs server-side
 
@@ -78,6 +102,7 @@ Current pins in `.github/workflows/ci.yml`:
 - `google/osv-scanner-action` reusable workflow — SHA-pinned (v2.3.8)
 - `anchore/sbom-action` — SHA-pinned (v0.24.0)
 - `anchore/scan-action` — SHA-pinned (v7.4.0)
+- `actions/attest-build-provenance` — SHA-pinned (v4.1.0)
 
 Current pins in `.github/workflows/scorecard.yml`:
 - `actions/checkout` — SHA-pinned
@@ -113,6 +138,7 @@ The deploy job targets a GitHub Environment named `production`. This provides a 
 
 A `_headers` file at the project root is processed by `@sveltejs/adapter-cloudflare` and deployed to every Cloudflare Pages response:
 
+- `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload` — instructs browsers to use HTTPS exclusively for two years; `preload` makes the domain eligible for inclusion in browser HSTS preload lists
 - `X-Content-Type-Options: nosniff` — prevents MIME-type sniffing
 - `X-Frame-Options: DENY` — blocks the site from being embedded in an iframe (clickjacking mitigation)
 - `Referrer-Policy: no-referrer` — suppresses the `Referer` header on all outbound navigation; prevents token or payload data from leaking via URL referrers if a user clicks an external link
@@ -122,7 +148,11 @@ The adapter additionally appends `Cache-Control: public, immutable, max-age=3153
 
 ### Dependency auditing
 
-The CI workflow runs `npm audit --audit-level=moderate` on every push and pull request. The build fails if any moderate, high, or critical vulnerabilities are present in the transitive dependency tree.
+The CI workflow runs `npm audit --audit-level=moderate` on every push and pull request. The build fails if any moderate, high, or critical vulnerabilities are present in the transitive dependency tree. Dependencies are installed with `npm ci` (not `npm install`), which installs exactly what is recorded in `package-lock.json` and fails if there is any discrepancy — preventing lockfile drift and ensuring reproducible installs.
+
+### Secret scanning
+
+GitHub secret scanning and push protection are both enabled on this repository. Push protection prevents commits containing detected secrets from being accepted by GitHub, including commits from repository owners. This is a server-side control independent of local git configuration.
 
 ### Dependabot
 
@@ -170,6 +200,12 @@ All SARIF-producing tools (CodeQL, GuardDog, OSV-Scanner, Grype, OSSF Scorecard)
 
 A [Scorecard](https://securityscorecards.dev) workflow runs weekly and on every push to `main`. It evaluates supply-chain security practices (pinned dependencies, branch protection, token permissions, code review, vulnerability disclosure) and publishes results to the GitHub code scanning dashboard. Results are also published publicly to the OSSF scorecard index.
 
+### Build provenance attestation
+
+The deploy job generates a [SLSA](https://slsa.dev) provenance attestation for the compiled Cloudflare Pages bundle using [`actions/attest-build-provenance`](https://github.com/actions/attest-build-provenance). The attestation is signed via sigstore's Fulcio CA using the workflow's OIDC identity and recorded in the repository's attestation log. It cryptographically ties the deployed artifact back to the exact workflow run, commit SHA, and repository that produced it.
+
+This means the provenance of every deployed bundle is verifiable: given the artifact, anyone can confirm which commit triggered the build and that it passed through the expected CI pipeline — not a maintainer's local machine or an alternative workflow.
+
 ### Branch protection
 
 The `main` branch is protected with the following rules enforced for all contributors including administrators:
@@ -186,7 +222,7 @@ The `main` branch is protected with the following rules enforced for all contrib
 
 ### Test coverage
 
-The CI workflow enforces test coverage via Vitest and uploads results to Codecov. All library modules (`src/lib/`) maintain 100% statement, branch, function, and line coverage. A drop in coverage fails the build.
+The CI workflow enforces test coverage via Vitest and uploads results to Codecov. All modules under `src/lib/` and `src/routes/api/` maintain 100% statement, branch, function, and line coverage. A drop in coverage fails the build.
 
 ### Fuzzing
 
@@ -206,9 +242,3 @@ Since samlguy.com deploys continuously from `main`, the production deployment al
 
 This project is released under the [MIT License](LICENSE). You are free to use, fork, modify, and distribute the code. The only requirement is that the copyright notice is preserved in copies or substantial portions of the software.
 
----
-
-## Out of scope
-
-- Vulnerabilities in tokens or assertions pasted by users — the tool is a decoder, not a validator; it does not make trust decisions on behalf of the user
-- Denial of service against the OIDC discovery proxy via large volumes of requests (rate limiting is delegated to Cloudflare)
