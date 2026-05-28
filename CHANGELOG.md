@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.4](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.3.3...samlguy-v1.3.4) (2026-05-28)
+
+
+### Bug Fixes & Dependencies
+
+* **deps-dev:** bump svelte from 5.55.9 to 5.55.10 in the svelte group ([#71](https://github.com/kellenmurphy/samlguy/issues/71)) ([a9972cb](https://github.com/kellenmurphy/samlguy/commit/a9972cb1f5649c5dd10ae68ce27d96ad0b61441a))
+
 ## [1.3.3](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.3.2...samlguy-v1.3.3) (2026-05-27)
 
 
