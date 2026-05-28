@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.7](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.3.6...samlguy-v1.3.7) (2026-05-28)
+
+
+### Bug Fixes & Dependencies
+
+* **discover:** reject IP-literal issuers; fix CORS and logging docs ([#79](https://github.com/kellenmurphy/samlguy/issues/79)) ([67ac50e](https://github.com/kellenmurphy/samlguy/commit/67ac50e76218bf6bf0536d1dcf3154ff6c115b94))
+
 ## [1.3.6](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.3.5...samlguy-v1.3.6) (2026-05-28)
 
 
