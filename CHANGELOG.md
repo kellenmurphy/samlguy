@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.3.7...samlguy-v1.4.0) (2026-05-28)
+
+
+### Features
+
+* **security:** implement Content Security Policy ([#82](https://github.com/kellenmurphy/samlguy/issues/82)) ([ed26434](https://github.com/kellenmurphy/samlguy/commit/ed2643412d85686938fa3f8e98dea566db38e8e3))
+
 ## [1.3.7](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.3.6...samlguy-v1.3.7) (2026-05-28)
 
 
