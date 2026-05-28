@@ -214,7 +214,7 @@ This means the provenance of every deployed bundle is verifiable: given the arti
 
 ### Branch protection
 
-The `main` branch is protected with the following rules enforced for all contributors including administrators:
+The `main` branch is protected with the following rules enforced for all contributors:
 
 - **Required status checks** — `Build & Test`, `GuardDog Supply Chain Scan`, `OSV Scanner / osv-scan`, `SBOM & Grype Scan`, and `Dependency Review` must all pass before any merge is allowed; the branch must be up to date with `main` before merging (strict mode)
 - **Required signatures** — every commit merged to `main` must carry a verified cryptographic signature
