@@ -23,6 +23,14 @@ export const GET: RequestHandler = async ({ url }) => {
         error(400, 'issuer must use HTTPS');
     }
 
+    // Reject IP address literals (IPv4 and IPv6) regardless of range.
+    // Legitimate OIDC issuers always have domain names. Cloudflare Workers
+    // lack RFC 1918 reachability, but closing the class is better than
+    // relying on infrastructure assumptions.
+    if (issuerUrl.hostname.startsWith('[') || /^\d{1,3}(\.\d{1,3}){3}$/.test(issuerUrl.hostname)) {
+        error(400, 'issuer must use a domain name, not an IP address');
+    }
+
     const discoveryUrl = `${issuerUrl.href.replace(/\/$/, '')}/.well-known/openid-configuration`;
 
     const controller = new AbortController();

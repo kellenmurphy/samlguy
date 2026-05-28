@@ -36,7 +36,7 @@ You can expect an acknowledgement within 48 hours and a resolution or status upd
 | Compromised upstream GitHub Action | Substitute malicious CI code via a tampered version tag | All actions pinned to commit SHA, Dependabot rotates pins daily |
 | SSRF via OIDC proxy | Use the discovery Worker to reach internal infrastructure | `redirect: 'error'`, 5-second timeout, 100 KB cap, response validation |
 | Compromised maintainer account | Push unsigned or unreviewed code to `main` | Required commit signatures, branch protection, CODEOWNERS review, scoped API tokens |
-| Information leakage | Exfiltrate SAML assertions or JWT payloads | All decoding is client-side; no server ever receives token content; no logging; CORS restriction on the Worker |
+| Information leakage | Exfiltrate SAML assertions or JWT payloads | All decoding is client-side; no server ever receives token content; Worker code logs nothing; `Referrer-Policy: no-referrer` prevents issuer URLs from leaking via outbound navigation |
 
 ### Out of scope
 
@@ -73,15 +73,16 @@ The only server-side code is the OIDC discovery proxy at `/api/discover`, runnin
 - Fetches `{issuer}/.well-known/openid-configuration` server-side to avoid browser CORS constraints
 - Returns the discovery document JSON to the browser
 
-The Worker does not receive, log, or store any JWT token. It receives only the issuer URL. Outbound requests are only made to `https://` endpoints.
+The Worker does not receive, log, or store any JWT token. It receives only the issuer URL. The Worker code itself logs nothing; Cloudflare's platform logs contain only request metadata (timing, status, the `?issuer=` query string) and never any token content, because no token content is ever sent to the Worker.
 
 **SSRF mitigations in the Worker:**
 
-- **Redirects are not followed** — the fetch is made with `redirect: 'error'`; any redirect (including a redirect from HTTPS to an internal address) results in a 502 error
+- **No IP-literal issuers** — the hostname is checked after URL parsing; any IPv4 or IPv6 literal is rejected with 400 before a fetch is attempted
+- **Redirects are not followed** — the fetch is made with `redirect: 'error'`; any redirect results in a 502 error
 - **5-second timeout** — an `AbortController` cancels the fetch after 5 seconds; a timed-out request returns 504
 - **100 KB response cap** — the `Content-Length` header is checked before reading the body, and the body itself is capped at 100,000 bytes; oversized responses are rejected with 502
 - **Response validation** — the body must be valid JSON, must be a non-null object, and must contain an `issuer` field (required by RFC 8414); anything else returns 502
-- **CORS restriction** — responses include `Access-Control-Allow-Origin: https://samlguy.com`, restricting browser cross-origin access to the production origin only
+- **Origin restriction** — responses include `Access-Control-Allow-Origin: https://samlguy.com`, preventing other browser origins from using the Worker as a free fetch proxy; this does not prevent the outbound request itself, only cross-origin response reads
 
 ---
 
