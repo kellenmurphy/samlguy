@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.4.0...samlguy-v1.4.1) (2026-06-03)
+
+
+### Bug Fixes & Dependencies
+
+* **ci:** drop unused deployments:write permission from deploy job ([#99](https://github.com/kellenmurphy/samlguy/issues/99)) ([20a61df](https://github.com/kellenmurphy/samlguy/commit/20a61df76fad8f4ba1cfba67b5ac1a0e05ca3270))
+
 ## [1.4.0](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.3.7...samlguy-v1.4.0) (2026-05-28)
 
 
