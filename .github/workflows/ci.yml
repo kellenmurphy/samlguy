@@ -21,7 +21,7 @@ jobs:
             contents: read
         steps:
             - name: Checkout
-              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
 
             - name: Setup Node
               uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
@@ -60,11 +60,11 @@ jobs:
             security-events: write
         steps:
             - name: Checkout
-              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
 
             - name: Setup uv
               # astral-sh/setup-uv v8.1.0
-              uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+              uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
 
             - name: Scan with GuardDog
               run: uvx guarddog npm verify package-lock.json --output-format sarif > guarddog.sarif
@@ -72,7 +72,7 @@ jobs:
             - name: Upload GuardDog SARIF
               if: always()
               # github/codeql-action v3.28.13
-              uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa
+              uses: github/codeql-action/upload-sarif@87557b9c84dde89fdd9b10e88954ac2f4248e463
               with:
                   sarif_file: guarddog.sarif
                   category: guarddog
@@ -93,7 +93,7 @@ jobs:
             security-events: write
         steps:
             - name: Checkout
-              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
 
             - name: Generate SBOM with Syft
               # anchore/sbom-action v0.24.0
@@ -114,7 +114,7 @@ jobs:
             - name: Upload Grype SARIF
               if: always()
               # github/codeql-action v3.28.13
-              uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa
+              uses: github/codeql-action/upload-sarif@87557b9c84dde89fdd9b10e88954ac2f4248e463
               with:
                   sarif_file: ${{ steps.grype.outputs.sarif }}
                   category: grype
@@ -127,7 +127,7 @@ jobs:
             contents: read
         steps:
             - name: Checkout
-              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
 
             - name: Dependency Review
               # actions/dependency-review-action v5.0.0
@@ -148,7 +148,7 @@ jobs:
             attestations: write
         steps:
             - name: Checkout
-              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+              uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
 
             - name: Setup Node
               uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
