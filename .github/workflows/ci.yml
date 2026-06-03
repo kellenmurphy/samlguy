@@ -143,7 +143,6 @@ jobs:
         environment: production
         permissions:
             contents: read
-            deployments: write
             id-token: write
             attestations: write
         steps:
