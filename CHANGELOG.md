@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.5.0](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.4.1...samlguy-v1.5.0) (2026-06-07)
+
+
+### Features
+
+* link the footer to the current release version ([13f23b9](https://github.com/kellenmurphy/samlguy/commit/13f23b96673d9a660771416657dbe2eefb9452b6))
+* **metadata:** decode SAML metadata with health checks ([c26b772](https://github.com/kellenmurphy/samlguy/commit/c26b772f7b940ab9f57e5ddcfbf5f758637ef97a))
+* **metadata:** SAML metadata decoder with health checks ([74566bd](https://github.com/kellenmurphy/samlguy/commit/74566bd5bf98857965289d3e090a426f17ac166c))
+
+
+### Bug Fixes & Dependencies
+
+* **metadata:** avoid ReDoS in isMetadata detection ([d0abd2e](https://github.com/kellenmurphy/samlguy/commit/d0abd2eee3dbcc86a69c00cfb26b0a0d278739fa))
+
 ## [1.4.1](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.4.0...samlguy-v1.4.1) (2026-06-03)
 
 
