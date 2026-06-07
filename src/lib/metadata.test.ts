@@ -160,6 +160,8 @@ describe('isMetadata', () => {
         ['EntitiesDescriptor aggregate', '<md:EntitiesDescriptor>'],
         ['with XML prolog', '<?xml version="1.0"?>\n<md:EntityDescriptor>'],
         ['with leading comment', '<!-- exported --> <md:EntityDescriptor>'],
+        ['with prolog and multiple comments', '<?xml version="1.0"?><!--a--> <!--b--><md:EntityDescriptor>'],
+        ['with a BOM', '\uFEFF<md:EntityDescriptor>'],
         ['self-closing', '<md:EntityDescriptor/>']
     ])('detects %s', (_label, input) => {
         expect(isMetadata(input)).toBe(true);
@@ -170,9 +172,18 @@ describe('isMetadata', () => {
         ['plain text', 'just some text'],
         ['a JWT', 'eyJhbG.eyJzdWI.sig'],
         ['a SAMLResponse', '<samlp:Response xmlns:samlp="urn:x">'],
-        ['unrelated XML', '<EntityThing/>']
+        ['unrelated XML', '<EntityThing/>'],
+        ['an unterminated prolog', '<?xml version="1.0"'],
+        ['an unterminated comment', '<!-- never closed <md:EntityDescriptor>']
     ])('rejects %s', (_label, input) => {
         expect(isMetadata(input)).toBe(false);
+    });
+
+    it('does not hang on a ReDoS-style comment payload', () => {
+        const evil = '<!--' + '--><!--'.repeat(50_000) + 'x';
+        const start = performance.now();
+        expect(isMetadata(evil)).toBe(false);
+        expect(performance.now() - start).toBeLessThan(500);
     });
 });
 

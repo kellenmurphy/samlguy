@@ -136,13 +136,34 @@ function langList(parent: Element, ns: string, localName: string): LangString[] 
 
 // ── Detection ───────────────────────────────────────────────────────────────────
 
-// Matches an optional BOM, XML prolog, and leading comments, then requires the first
-// element to be EntityDescriptor or EntitiesDescriptor (with any namespace prefix).
-const METADATA_ROOT =
-    /^\uFEFF?\s*(?:<\?xml[^>]*\?>\s*)?(?:<!--[\s\S]*?-->\s*)*<(?:[\w.-]+:)?(?:EntityDescriptor|EntitiesDescriptor)[\s/>]/;
+// The first element (with any namespace prefix) must be EntityDescriptor / EntitiesDescriptor.
+const METADATA_ROOT_EL = /^<(?:[\w.-]+:)?(?:EntityDescriptor|EntitiesDescriptor)[\s/>]/;
 
+// Skip an optional BOM, XML prolog, and any leading comments with a linear scan, then check
+// the first element. Done by index rather than one big regex to avoid catastrophic
+// backtracking (ReDoS) on inputs like "<!--" followed by many "--><!--" repetitions.
 export function isMetadata(raw: string): boolean {
-    return METADATA_ROOT.test(raw);
+    let i = raw.charCodeAt(0) === 0xfeff ? 1 : 0;
+    const skipWs = () => {
+        while (i < raw.length && /\s/.test(raw[i])) i++;
+    };
+    skipWs();
+
+    if (raw.startsWith('<?', i)) {
+        const end = raw.indexOf('?>', i + 2);
+        if (end === -1) return false;
+        i = end + 2;
+        skipWs();
+    }
+
+    while (raw.startsWith('<!--', i)) {
+        const end = raw.indexOf('-->', i + 4);
+        if (end === -1) return false;
+        i = end + 3;
+        skipWs();
+    }
+
+    return METADATA_ROOT_EL.test(raw.slice(i));
 }
 
 // ── Parsing ───────────────────────────────────────────────────────────────────
