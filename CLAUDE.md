@@ -44,6 +44,19 @@ The page handles:
 6. **`STATUS_DESCRIPTIONS`** / **`STATUS_SPEC_URLS`** — maps all 23 SAML 2.0 status code URNs to human-readable descriptions and links to the SAML Core spec PDF.
 7. **`AUTHN_CONTEXT_LABELS`** / **`AUTHN_CONTEXT_SPEC_URLS`** — maps SAML AuthnContext Class Reference URIs (OASIS, REFEDS, RAF, NIST) to short display labels and spec links.
 
+### SAML metadata library (`src/lib/metadata.ts`)
+
+**Pure DOM parsing, no external library** (same philosophy as `saml.ts`). Routed ahead of the SAML-message decode path in `+page.svelte`.
+
+1. **`isMetadata(raw)`** — regex check that the first element (after an optional BOM, XML prolog, and comments) is `EntityDescriptor` or `EntitiesDescriptor`, with any namespace prefix.
+2. **`parseMetadata(raw)`** — parses the first `EntityDescriptor` into a structured `EntityMetadata` (entity ID, `validUntil`, `cacheDuration`, `mdrpi` registration authority, `mdattr` entity categories, organization, contacts, and `idp`/`sp` `RoleDescriptor`s). Single-entity scope: when wrapped in an `EntitiesDescriptor` aggregate it returns the first entity plus an `aggregateCount` so the UI can show a "first of N" banner. Throws on invalid XML or no `EntityDescriptor`.
+3. Per role it extracts protocol support, signing flags (`WantAuthnRequestsSigned` / `AuthnRequestsSigned` / `WantAssertionsSigned`), `KeyDescriptor` certs (signing/encryption, decoded via the shared `cert.ts` parser), NameID formats, SSO/SLO/ACS endpoints (binding, location, index, default), `shibmd:Scope`, SP `RequestedAttribute`s (friendly names via `attributes.ts`), and `mdui:UIInfo` display info.
+4. **`BINDING_LABELS`** / **`ENTITY_CATEGORY_LABELS`** / **`ENTITY_CATEGORY_SPEC_URLS`** — map binding URNs (incl. legacy Shibboleth 1.0 / SimpleSign) and entity-category URIs (R&S, CoCo, SIRTFI, Registered-by-InCommon, …) to short labels and spec links, same shape as the `saml.ts` label maps. **`entityCategoryKind(uri)`** coarsely classifies a category (`rs` / `coco` / `assurance` / `access` / `registration` / `other`) so the UI can colour badges by type.
+
+### SAML metadata health checks (`src/lib/metadata-checks.ts`)
+
+`checkMetadata(result, rawXml)` returns a list of `MetadataCheck { severity, title, detail }` for the federation problems that are detectable from a single pasted document: expired / expiring / missing / unparseable `validUntil`; metadata that carries no document-level `ds:Signature` or is signed with SHA-1; certificates pasted with PEM armor (`-----BEGIN CERTIFICATE-----`); roles with no certificate or no signing cert; plaintext (HTTP) endpoints; `entityID` whitespace or trailing-slash mismatches; misspelled entity-category URIs via a `MISSPELLED_CATEGORIES` map (e.g. `refeds.org/sirtf` → `sirtfi`); and lingering SAML 1.x / Shibboleth 1.0 protocol support. It re-parses `rawXml` only to detect the document signature (which `parseMetadata` does not model). Checks needing the partner's side (entityID/ACS mismatch, attribute release) or a network round-trip (reachable logos, the "cert cliff", refresh Content-Type) are deliberately out of scope. Rendered as a "Health Checks" panel above the entity summary in `+page.svelte`.
+
 ### JWT decode library (`src/lib/jwt.ts`)
 
 `decodeJwt(input)` — strips `Bearer` prefix, splits on `.`, base64url-decodes header and payload, returns typed `JwtDecodeResult` with:
@@ -126,7 +139,8 @@ Run with: `npm run coverage`
 - **JWT JWKS validation** — after OIDC discovery, fetch `jwks_uri` and attempt to verify the JWT signature against the matching key.
 
 ### Lower priority / ideas
-- **SAML metadata parsing** — accept EntityDescriptor XML, display SP/IdP metadata in a structured way (ACS URLs, NameID formats, signing certs, attribute requirements)
+- **MDQ discovery** — fetch an entity's metadata from InCommon's MDQ service by EntityID and feed it into the metadata view (`src/lib/metadata.ts`)
+- **REFEDS entity category checker** — cross-check an SP's `RequestedAttribute`s against entity categories already parsed by the metadata view
 - **i18n** — `explanations.ts` is already structured for this; add a locale switcher and alternate record implementations
 
 ---

@@ -9,7 +9,7 @@
 
 Paste whatever messy thing you grabbed from a log file, a network tab, or a browser plugin and the universal identity decoder at [samlguy.com](https://samlguy.com) figures out what it is and decodes it — no pre-processing, no binding-type dropdowns, no manually stripping RelayState first.
 
-SAML assertions get a full summary panel with binding type, message type, status code (with human-readable explanation and spec link), issuer, NameID, timestamps with relative labels, attribute statement table, signing certificate details, AuthnContext class with label and assurance-level tooltip, and syntax-highlighted pretty-printed XML with per-element hover tips. JWTs get header and payload decoded with algorithm safety flags, timestamps, scope badges, and an OIDC discovery flow that surfaces issuer metadata and algorithm match status.
+SAML assertions get a full summary panel with binding type, message type, status code (with human-readable explanation and spec link), issuer, NameID, timestamps with relative labels, attribute statement table, signing certificate details, AuthnContext class with label and assurance-level tooltip, and syntax-highlighted pretty-printed XML with per-element hover tips. JWTs get header and payload decoded with algorithm safety flags, timestamps, scope badges, and an OIDC discovery flow that surfaces issuer metadata and algorithm match status. Paste a SAML **`EntityDescriptor`** and it's parsed into a structured view — roles, certificates, endpoints, NameID formats, requested attributes, entity categories, and contacts.
 
 Think [jwt.io](https://jwt.io), but for the full modern IAM stack — built by someone who actually works in identity, for everyone else who does too.
 
@@ -24,9 +24,11 @@ But it's not just SAML! It's equally useful for OAuth 2.0 / OIDC work. Access to
 
 ## Features
 
-**Input** — paste just about anything: raw base64+DEFLATE or base64 blob, query string, full URL, raw HTTP log line, JWT, or `Authorization: Bearer` header. Multiple SAML messages in one paste are handled. RelayState is always extracted separately; double URL-encoding is unwound automatically. `ctrl-a` in your logs and paste away — it'll make sense of it. An **Examples** button loads any of 10 pre-built, dynamically-generated payloads (SAMLResponse, SAMLRequest, JWT, Authorization header, query string, POST binding form value, and full redirect URL) as one-click starting points.
+**Input** — paste just about anything: raw base64+DEFLATE or base64 blob, query string, full URL, raw HTTP log line, JWT, or `Authorization: Bearer` header. Multiple SAML messages in one paste are handled. RelayState is always extracted separately; double URL-encoding is unwound automatically. `ctrl-a` in your logs and paste away — it'll make sense of it. An **Examples** button loads any of 11 pre-built, dynamically-generated payloads (SAMLResponse, SAMLRequest, IdP/SP metadata, JWT, Authorization header, query string, and full redirect URL) as one-click starting points.
 
 **SAML** — binding type, message type, status with human-readable description and spec link, issuer, NameID, timestamps with relative labels ("expired 3 hours ago"), AuthnContext class reference with friendly label and assurance-level tooltip (OASIS, REFEDS, RAF, NIST), attribute table with **InCommon attribute annotations** (R&S and eppn-scoped/unscoped badges from an embedded attribute registry; friendly names filled in even when the assertion omits them), signing cert details (key algorithm, validity), and syntax-highlighted XML with hover tips on all known SAML element names.
+
+**SAML metadata** — paste an `EntityDescriptor` (or a single entity from an `EntitiesDescriptor` aggregate) and it's parsed into a structured view: entity ID, registration authority, `validUntil` with a relative label, and colour-coded **entity category badges** (Research & Scholarship, SIRTFI, Code of Conduct, Registered-by-InCommon, …) linked to their spec pages. Each IdP/SP role lists its signing requirements, SSO/SLO/ACS endpoints with human-readable binding labels and default/index flags, supported NameID formats, `shibmd:Scope`, and signing/encryption certificates decoded with the same X.509 parser as assertions. SP roles show their **requested attributes** with friendly names and required/optional flags; MDUI display info, organization, and contacts are surfaced too — alongside the syntax-highlighted XML. A **health-checks** panel flags the common federation footguns that are detectable from the document itself: expired/missing `validUntil`, unsigned metadata or a SHA-1 signature, certificates pasted with PEM headers, missing signing certs, plaintext (HTTP) endpoints, entityID whitespace/trailing-slash mismatches, misspelled entity-category URIs (e.g. `refeds.org/sirtf`), and lingering SAML 1.x support. Entity-category badges are colour-coded by kind and link out to their REFEDS / GÉANT / federation specifications.
 
 **JWT** — algorithm with safety flags (`alg: none` danger badge, HMAC weak badge), claims summary, timestamps with relative labels, scope/scp badge list, raw JSON header and payload. OIDC discovery fetches the issuer's `.well-known/openid-configuration` server-side (Cloudflare Worker, avoids CORS) and checks algorithm support against the token's `alg`. Accepts bare JWTs, `Bearer <token>`, or full `Authorization: Bearer <token>` header lines.
 
@@ -68,6 +70,8 @@ npm run preview     # preview production build locally
 src/
   lib/
     saml.ts             # input detection, URL-decode, base64, inflate, XML parse, summary extraction
+    metadata.ts         # SAML metadata parser: EntityDescriptor roles, certs, endpoints, categories
+    metadata-checks.ts  # static health checks: expiry, signing, cert hygiene, endpoints, entityID
     jwt.ts              # JWT decode: base64url, header/payload, alg flags, timestamps, scopes
     cert.ts             # X.509 DER/ASN.1 parser: subject, issuer, key algorithm, validity
     time.ts             # timestamp math and relative label helpers
@@ -75,7 +79,7 @@ src/
     hash.ts             # base64url encode/decode for shareable URL fragments
     xml-highlight.ts    # custom XML tokenizer: syntax-colored HTML spans + element tooltips
     attributes.ts       # InCommon attribute registry: R&S categories, eppn-scoped detection
-    examples.ts         # 10 dynamically-generated example payloads (SAML, JWT, query strings, URLs)
+    examples.ts         # 11 dynamically-generated example payloads (SAML, metadata, JWT, URLs)
     explanations.ts     # externalized hover tooltip text for all summary fields
     InfoTip.svelte      # hover tooltip component
   routes/
@@ -101,12 +105,11 @@ src/
 ## What's Planned
 
 - **Diff view** — paste two assertions side-by-side and highlight what changed; most useful for attribute table and timestamp diffs when debugging why a second login attempt looks different
-- **SAML metadata parsing** — parse `EntityDescriptor` XML into a structured view: signing certs, ACS URLs, NameID formats, supported bindings, contacts
-- **MDQ discovery** — "Discover" button on the SAML Issuer row fetches the IdP's metadata from InCommon's MDQ service (`https://mdq.incommon.org/entities/{entityID}`) — no aggregate download needed; optional MDQ base URL for other federations (eduGAIN, etc.)
-- **SAML signature validation** — verify `<ds:Signature>` against the signing cert retrieved via MDQ; show a verified/failed badge
+- **MDQ discovery** — "Discover" button on the SAML Issuer row fetches the IdP's metadata from InCommon's MDQ service (`https://mdq.incommon.org/entities/{entityID}`) and feeds it into the metadata view — no aggregate download needed; optional MDQ base URL for other federations (eduGAIN, etc.)
+- **SAML signature validation** — verify `<ds:Signature>` against the signing cert retrieved via MDQ (or from the pasted metadata); show a verified/failed badge
 - **SP-initiated flow simulator** — given an EntityID, construct and encode a valid AuthnRequest URL for testing IdP behavior without a real SP; note: unsigned only (most IdPs accept this, some require signed requests)
 - **JWT JWKS validation** — after OIDC discovery, fetch `jwks_uri` and verify the JWT signature against the matching key
-- **REFEDS entity category checker** — given an EntityID (via MDQ), show which entity categories apply and whether the IdP's attribute release policy would likely cover them; requires MDQ + metadata parsing
+- **REFEDS entity category checker** — given an EntityID (via MDQ), check whether the IdP's attribute release policy would likely cover the SP's requested attributes; builds on the entity-category and requested-attribute parsing already in the metadata view
 
 
 ## Contributing

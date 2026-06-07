@@ -1,6 +1,7 @@
 <script lang="ts">
     import '../app.css';
     import { onMount } from 'svelte';
+    import { version } from '$app/environment';
     import type { Snippet } from 'svelte';
 
     let { children }: { children: Snippet } = $props();
@@ -104,6 +105,14 @@
                     rel="noopener noreferrer"
                     class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
                     >Security</a
+                >
+                <span aria-hidden="true">&middot;</span>
+                <a
+                    href="https://github.com/kellenmurphy/samlguy/releases/tag/samlguy-v{version}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="font-mono transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
+                    >v{version}</a
                 >
                 <span aria-hidden="true">&middot;</span>
                 <a

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { EXAMPLES, EXAMPLE_CATEGORIES, type ExampleCategory } from './examples';
 import { decodeSaml } from './saml';
 import { decodeJwt } from './jwt';
+import { isMetadata, parseMetadata } from './metadata';
 
 describe('EXAMPLES', () => {
     it('has at least one entry for every declared category', () => {
@@ -123,6 +124,17 @@ describe('EXAMPLES', () => {
         expect(result.summary.requestedAuthnContext?.classRefs).toContain(
             'https://refeds.org/profile/mfa'
         );
+    });
+
+    it('Metadata examples are detected and parse via parseMetadata', () => {
+        const metaExamples = EXAMPLES.filter((e) => e.category === 'Metadata');
+        expect(metaExamples.length).toBeGreaterThan(0);
+        for (const ex of metaExamples) {
+            const payload = ex.payload();
+            expect(isMetadata(payload)).toBe(true);
+            expect(() => parseMetadata(payload)).not.toThrow();
+            expect(parseMetadata(payload).entity.entityId).toMatch(/^https:\/\//);
+        }
     });
 
     it('OIDC ID token example has typ JWT in header', () => {

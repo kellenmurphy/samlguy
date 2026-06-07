@@ -99,6 +99,63 @@ export const XML_ELEMENT_TIPS: Record<string, string> = {
         'The encryption algorithm used. Typically AES-128-CBC or AES-256-GCM for assertion content; RSA-OAEP for the wrapped session key.',
     CipherData: 'Container for the encrypted bytes.',
     CipherValue: 'The Base64-encoded ciphertext — the actual encrypted assertion or session key content.',
+
+    // ── SAML metadata ─────────────────────────────────────────────────────────
+    EntitiesDescriptor:
+        'A container for multiple EntityDescriptors — a federation metadata aggregate. Federations like InCommon publish all member IdPs and SPs in one signed EntitiesDescriptor.',
+    EntityDescriptor:
+        'Metadata describing a single SAML entity (an IdP, an SP, or both), keyed by its entityID. Carries the roles, certificates, endpoints, and contacts that relying parties need to interoperate with it.',
+    Extensions:
+        'A container for metadata extension elements outside the core SAML schema — UIInfo, RegistrationInfo, EntityAttributes, shibmd:Scope, and similar federation enrichments.',
+    IDPSSODescriptor:
+        'The Identity Provider role: declares the SSO/SLO endpoints, signing and encryption keys, supported NameID formats, and protocols the IdP offers.',
+    SPSSODescriptor:
+        'The Service Provider role: declares the Assertion Consumer Service endpoints, keys, NameID formats, signing requirements, and requested attributes for this SP.',
+    KeyDescriptor:
+        'A public key published for this role, with an optional use attribute — "signing" for verifying the entity\'s signatures, "encryption" for encrypting content to it. No use means the key serves both purposes.',
+    SingleSignOnService:
+        'An IdP endpoint that receives AuthnRequests, bound to a specific binding (HTTP-Redirect or HTTP-POST). SPs send their authentication requests here.',
+    SingleLogoutService:
+        'An endpoint that receives Single Logout messages. ResponseLocation, if present, is a distinct URL for asynchronous logout responses.',
+    AssertionConsumerService:
+        'An SP endpoint where the IdP delivers the SAMLResponse, identified by index. The IdP must only POST assertions to an ACS URL listed in signed metadata.',
+    ArtifactResolutionService:
+        'A SOAP endpoint used in the HTTP-Artifact binding to dereference an artifact into the full SAML message. Indexed and typically marked with a default.',
+    AttributeConsumingService:
+        'Declares the named service and the set of attributes this SP requests from the IdP. IdP administrators consult it when deciding attribute release.',
+    ServiceName:
+        'A human-readable, optionally localized name for the SP service, used in consent and discovery interfaces.',
+    ServiceDescription:
+        'A human-readable, optionally localized description of the SP service.',
+    RequestedAttribute:
+        'An attribute this SP requests, by Name (usually an OID-style URN) and FriendlyName. isRequired="true" marks it as essential to the service.',
+    NameIDFormat:
+        'A NameID format this entity supports — e.g. persistent (opaque, stable per SP), transient (per-session), or emailAddress.',
+    Organization:
+        'The human-readable organization responsible for this entity — its name, display name, and URL, optionally localized.',
+    OrganizationName: 'The formal, machine-oriented organization name.',
+    OrganizationDisplayName: 'The organization name shown to users in discovery and consent screens.',
+    OrganizationURL: "A link to the organization's website.",
+    ContactPerson:
+        'A published contact for this entity, typed by contactType — technical, support, administrative, billing, or other. A security/SIRTFI contact is the point of contact for incident response.',
+    Company: 'The company or organization the contact belongs to.',
+    GivenName: 'The contact\'s given (first) name.',
+    SurName: 'The contact\'s surname (last name).',
+    EmailAddress: "The contact's email address, often prefixed with mailto:.",
+    TelephoneNumber: "The contact's telephone number.",
+    UIInfo:
+        'User-interface metadata (mdui) — display name, description, and logo shown for this entity in discovery services and consent screens, often localized per language.',
+    DisplayName: 'A localized, user-facing display name for the entity.',
+    Description: 'A localized, user-facing description of the entity.',
+    InformationURL: 'A localized link to more information about the entity.',
+    PrivacyStatementURL: "A localized link to the entity's privacy statement.",
+    Logo: 'A logo for the entity, with width and height, shown in discovery and consent interfaces.',
+    Scope:
+        'The domain suffix this IdP is authoritative for (shibmd:Scope). Scoped attribute values like eduPersonPrincipalName (user@domain) must match this scope; SPs should reject values that do not.',
+    RegistrationInfo:
+        'Identifies the federation registrar (registrationAuthority) that registered this metadata — the basis for inter-federation (eduGAIN) trust.',
+    EntityAttributes:
+        'Carries entity category and assurance tags as SAML Attributes — e.g. Research & Scholarship, SIRTFI, or Code of Conduct — that drive IdP attribute-release policy.',
 };
 
 function esc(s: string): string {
