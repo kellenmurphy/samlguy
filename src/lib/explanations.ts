@@ -58,6 +58,58 @@ export const FIELD_EXPLANATIONS: Record<string, string> = {
     'saml.ts.subjectConfirmationNotOnOrAfter':
         'The window during which the bearer can be confirmed as the assertion\'s subject. Often matches Conditions NotOnOrAfter but may differ — the SP must check both, and both must still be within their valid windows.',
 
+    // ── SAML metadata ─────────────────────────────────────────────────────────
+    'meta.signature':
+        'Whether the metadata document carries an XML digital signature (ds:Signature) — distinct from the entity’s own signing certificate. samlguy reports only that a signature is present and which algorithm it claims; it does not cryptographically verify it. Proper verification requires exclusive XML canonicalization and checking the signature against a trust anchor — your federation’s metadata-signing certificate (e.g. InCommon’s well-known signing key), NOT the certificate embedded in the signature, which a forger could simply supply. Always validate signed metadata against your federation’s published signing key before trusting it.',
+
+    'meta.entityId':
+        'The EntityID — the globally unique name for this IdP or SP within the federation. It is the primary key for everything: signature trust, audience restrictions, and metadata lookup all key off this exact string. It is an identifier, not necessarily a reachable URL.',
+
+    'meta.validUntil':
+        'The expiry of this metadata document. Relying parties must refuse to use metadata past validUntil — stale metadata is a security risk because it may still trust a rotated-out or compromised key. Federations typically re-sign and republish well before this time.',
+
+    'meta.registrationAuthority':
+        'The federation registrar that vouches for this entity (mdrpi:RegistrationInfo). For InCommon entities this is https://incommon.org. It tells you which federation operator registered the metadata and is the basis for inter-federation (eduGAIN) trust decisions.',
+
+    'meta.entityCategories':
+        'Entity category and assurance tags asserted in metadata (mdattr:EntityAttributes). R&S (Research & Scholarship) signals an SP qualifies for a standard attribute bundle; SIRTFI asserts the operator follows a security incident response framework; Code of Conduct commits an SP to GDPR-aligned data handling. IdPs use these to drive attribute release.',
+
+    'meta.role':
+        'The SAML role this entity plays. An IDPSSODescriptor authenticates users and issues assertions; an SPSSODescriptor consumes them to log users in. A single entity can advertise both roles (e.g. a proxy or gateway).',
+
+    'meta.keys':
+        'The X.509 certificates published for this role. use="signing" keys verify the entity\'s signatures; use="encryption" keys are used to encrypt assertions or NameIDs to it. A KeyDescriptor with no use applies to both. Trust comes from the certificate being in signed metadata — not from any external CA.',
+
+    'meta.nameIdFormats':
+        'The NameID formats this entity supports. For an IdP these are the subject identifier types it can issue; for an SP, the formats it can consume. persistent is an opaque, stable per-SP pairwise ID; transient is per-session and privacy-preserving; emailAddress carries an address.',
+
+    'meta.sso':
+        'Single Sign-On endpoints (IdP) — the URLs where the IdP receives AuthnRequests, one per supported binding. HTTP-Redirect carries a compressed request in the URL; HTTP-POST delivers it as a form field. An SP sends its AuthnRequest to the endpoint matching the binding it intends to use.',
+
+    'meta.slo':
+        'Single Logout endpoints — where this entity receives LogoutRequest/LogoutResponse messages to terminate sessions across the federation. ResponseLocation, when present, is a separate URL for the asynchronous logout response. SLO is notoriously fragile; many deployments leave it unconfigured.',
+
+    'meta.acs':
+        'Assertion Consumer Service endpoints (SP) — where the IdP delivers the SAMLResponse. Each has an index; the SP names one in its AuthnRequest (or relies on isDefault). The IdP must POST only to an ACS URL listed here in signed metadata — never to an arbitrary URL from the request.',
+
+    'meta.scope':
+        'The shibmd:Scope(s) this IdP is authoritative for — the domain suffix on scoped attribute values like eduPersonPrincipalName (user@university.edu). SPs should reject scoped values whose suffix is not in the IdP\'s declared scope, preventing one IdP from asserting another\'s users.',
+
+    'meta.requestedAttributes':
+        'The attributes this SP declares it needs (AttributeConsumingService). isRequired="true" marks an attribute the service cannot function without. IdP administrators use this list — alongside entity categories — to decide what to release, though required does not obligate an IdP to send it.',
+
+    'meta.signingFlags':
+        'Per-role signing policy. WantAuthnRequestsSigned (IdP) and AuthnRequestsSigned (SP) indicate whether the SP signs its AuthnRequests. WantAssertionsSigned (SP) requires the IdP to sign the assertion itself, not just the response. These advertise expectations; the relying party still enforces them.',
+
+    'meta.organization':
+        'The human-readable organization behind this entity (md:Organization). OrganizationDisplayName is shown in discovery interfaces and consent screens; OrganizationURL links to the organization\'s site. Distinct from the technical EntityID.',
+
+    'meta.contacts':
+        'Published contact people for this entity (md:ContactPerson). A technical contact handles integration and certificate rollover; a security/SIRTFI contact is the point of contact for incident response. Federations increasingly require a valid security contact.',
+
+    'meta.mdui':
+        'User-interface metadata (mdui:UIInfo) — the display name, description, and logo a discovery service or consent screen shows for this entity, often localized per language. Improves the user experience of IdP discovery and helps users recognize the service requesting their attributes.',
+
     // ── JWT / OIDC ────────────────────────────────────────────────────────────
     'jwt.algorithm':
         'The signing algorithm in the JWT header. RS256/RS384/RS512 and ES256/ES384/ES512 (asymmetric) are preferred — verification uses a public key, keeping the signing key private. HS256/HS384/HS512 (HMAC) require sharing the secret with every verifier. "none" means no signature and must always be rejected.',
