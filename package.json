@@ -45,6 +45,7 @@
         "pako": "^2.1.0"
     },
     "overrides": {
-        "cookie": "^0.7.0"
+        "cookie": "^0.7.0",
+        "esbuild": "^0.28.1"
     }
 }
