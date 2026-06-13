@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.0...samlguy-v1.5.1) (2026-06-13)
+
+
+### Security
+
+* **deps:** override esbuild to ^0.28.1 ([5dbc4ae](https://github.com/kellenmurphy/samlguy/commit/5dbc4aef3c355a7fbbf19066248df3e21ea0c019))
+
 ## [1.5.0](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.4.1...samlguy-v1.5.0) (2026-06-07)
 
 
