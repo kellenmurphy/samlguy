@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.2](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.1...samlguy-v1.5.2) (2026-06-16)
+
+
+### Security
+
+* **deps:** override ws to ^8.21.0 ([cc50d63](https://github.com/kellenmurphy/samlguy/commit/cc50d63c2b6bdb20097f7c07e2db8f6eedb1eac8))
+
 ## [1.5.1](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.0...samlguy-v1.5.1) (2026-06-13)
 
 
