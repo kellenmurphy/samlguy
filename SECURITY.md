@@ -34,7 +34,7 @@ You can expect an acknowledgement within 48 hours and a resolution or status upd
 | Adversary | Goal | Primary controls |
 |---|---|---|
 | Malicious paste / shared link | Trigger XSS via crafted SAML or JWT content rendered in the DOM | Svelte's default text escaping, `esc()` in the XML highlighter, CSP (`default-src 'self'`, no `unsafe-inline`, hash-pinned inline scripts) |
-| Compromised npm package | Inject malicious code into the build or CI environment | GuardDog, OSV-Scanner, Grype, `npm audit`, SHA-pinned actions, `npm ci` lockfile enforcement |
+| Compromised npm package | Inject malicious code into the build or CI environment | GuardDog, `npm audit`, Grype, Dependency Review, SHA-pinned actions, `npm ci` lockfile enforcement |
 | Compromised upstream GitHub Action | Substitute malicious CI code via a tampered version tag | All actions pinned to commit SHA, Dependabot rotates pins daily |
 | SSRF via OIDC proxy | Use the discovery Worker to reach internal infrastructure | `redirect: 'error'`, 5-second timeout, 100 KB cap, response validation |
 | Compromised maintainer account | Push unsigned or unreviewed code to `main` | Required commit signatures, branch protection, CODEOWNERS review, scoped API tokens |
@@ -137,7 +137,6 @@ Current pins in `.github/workflows/ci.yml`:
 - `codecov/codecov-action` — SHA-pinned
 - `github/codeql-action/upload-sarif` — SHA-pinned (v3.28.13)
 - `actions/dependency-review-action` — SHA-pinned (v5.0.0)
-- `google/osv-scanner-action` reusable workflow — SHA-pinned (v2.3.8)
 - `anchore/sbom-action` — SHA-pinned (v0.24.0)
 - `anchore/scan-action` — SHA-pinned (v7.4.0)
 - `actions/attest-build-provenance` — SHA-pinned (v4.1.0)
@@ -160,13 +159,9 @@ Dependabot is configured to open daily PRs when new versions of these actions ar
 
 ### Minimal token permissions
 
-All workflows use explicit `permissions` blocks rather than relying on GitHub's write-all default. The CI workflow sets the following at the workflow level, which serves as the baseline for all jobs:
+All workflows use explicit `permissions` blocks rather than relying on GitHub's write-all default. The CI workflow sets `contents: read` at the workflow level as the baseline for all jobs.
 
-- `actions: read` — required for the OSV-Scanner reusable workflow (GitHub constrains reusable workflow callers: the calling workflow must include any permissions granted to the called workflow)
-- `contents: read`
-- `security-events: write` — required for SARIF upload to GitHub Code Scanning across multiple jobs; also needed at workflow level for the OSV-Scanner reusable workflow call
-
-Individual jobs override this baseline to the minimum they require. The deploy job additionally requests `deployments: write` (Cloudflare Pages action), `id-token: write` (OIDC for sigstore attestation), and `attestations: write` (GitHub attestation API). No job can write to the repository, create issues, or make API calls beyond what is explicitly declared.
+Individual jobs add only what they require — the `GuardDog Supply Chain Scan` and `SBOM & Grype Scan` jobs each request `security-events: write` for their own SARIF upload. The deploy job additionally requests `deployments: write` (Cloudflare Pages action), `id-token: write` (OIDC for sigstore attestation), and `attestations: write` (GitHub attestation API). No job can write to the repository, create issues, or make API calls beyond what is explicitly declared.
 
 ### No secrets in PR workflows
 
@@ -180,7 +175,9 @@ The deploy job targets a GitHub Environment named `production`. This provides a 
 
 ### Dependency auditing
 
-The CI workflow runs `npm audit --audit-level=moderate` on every push and pull request. The build fails if any moderate, high, or critical vulnerabilities are present in the transitive dependency tree. Dependencies are installed with `npm ci` (not `npm install`), which installs exactly what is recorded in `package-lock.json` and fails if there is any discrepancy — preventing lockfile drift and ensuring reproducible installs.
+`npm audit --audit-level=moderate` runs in a dedicated `Dependency Audit` job that fails the build if any moderate, high, or critical vulnerability is present anywhere in the transitive dependency tree. This job runs on push to `main`, on a weekly schedule (Mondays 06:00 UTC), and on manual dispatch — but **not** on pull requests. The rationale: a freshly-published advisory in build/test tooling that a PR never touched should not block every open pull request at once. Pull requests are vulnerability-gated by Dependency Review (scoped to the dependencies the diff introduces) and GuardDog; Dependabot alerts and auto-PRs drive remediation; and the push-to-`main` run still gates the production deploy, so deploy protection is unchanged.
+
+Dependencies are installed with `npm ci` (not `npm install`), which installs exactly what is recorded in `package-lock.json` and fails if there is any discrepancy — preventing lockfile drift and ensuring reproducible installs.
 
 ### Secret scanning
 
@@ -208,25 +205,21 @@ A CodeQL workflow runs on every push and pull request to `main`, and weekly on M
 
 GuardDog runs entirely within the CI runner — no data is sent to any external service. Findings are reported as SARIF and uploaded to the GitHub code scanning dashboard. The job must pass before deploy is allowed.
 
-### OSV-Scanner
-
-[OSV-Scanner](https://google.github.io/osv-scanner/) (Google, Apache 2.0) runs on every push and pull request via Google's official reusable workflow. It queries the [Open Source Vulnerabilities](https://osv.dev) database, which aggregates CVE, GitHub Security Advisories (GHSA), and OSV records — a broader set of sources than npm's advisory feed alone. Findings are automatically uploaded to the GitHub code scanning dashboard as SARIF. The job must pass before deploy is allowed.
-
 ### SBOM and Grype
 
-On every push and pull request:
+Alongside the `Dependency Audit` job (push, weekly schedule, and manual dispatch — not pull requests):
 
 - **Syft** ([anchore/sbom-action](https://github.com/anchore/sbom-action), Apache 2.0) generates a Software Bill of Materials in SPDX-JSON format and uploads it as a workflow artifact. This provides an auditable inventory of every package in the build and supports compliance requirements that expect a machine-readable SBOM.
 
-- **Grype** ([anchore/scan-action](https://github.com/anchore/scan-action), Apache 2.0) scans the Syft-generated SBOM for known vulnerabilities at medium severity or higher. Findings are uploaded to the GitHub code scanning dashboard as SARIF. The job must pass before deploy is allowed.
+- **Grype** ([anchore/scan-action](https://github.com/anchore/scan-action), Apache 2.0) scans the Syft-generated SBOM for known vulnerabilities at medium severity or higher and uploads findings to the GitHub code scanning dashboard as SARIF. Grype runs in non-blocking mode (`fail-build: false`): `npm audit` in the `Dependency Audit` job is the single blocking CVE gate, while Grype contributes a second, independent vulnerability database to the Security tab.
 
 ### Dependency Review
 
-The [dependency-review-action](https://github.com/actions/dependency-review-action) runs on pull requests only. It compares the dependency diff introduced by the PR against GitHub's vulnerability database and fails the check if any newly added package carries a moderate or higher CVE. This catches vulnerable dependencies at PR time, before they land in `main`, complementing the full-tree scans that run on push.
+The [dependency-review-action](https://github.com/actions/dependency-review-action) runs on pull requests only. It compares the dependency diff introduced by the PR against GitHub's vulnerability database and fails the check if any newly added package carries a moderate or higher CVE. This is the pull-request-time vulnerability gate: it catches vulnerable dependencies a PR would *introduce*, before they land in `main`, while the full-tree `npm audit` and Grype scans run on push and the weekly schedule. A PR is therefore never blocked by a pre-existing, tree-wide advisory in a dependency the PR did not touch.
 
 ### GitHub Code Scanning
 
-All SARIF-producing tools (CodeQL, GuardDog, OSV-Scanner, Grype, OSSF Scorecard) upload their findings to GitHub's code scanning dashboard (Security → Code scanning). This provides a single triage surface across all scanners, with per-file, per-line annotation on pull requests. Each tool registers under its own `category` so findings are de-duplicated and attributable to their source.
+All SARIF-producing tools (CodeQL, GuardDog, Grype, OSSF Scorecard) upload their findings to GitHub's code scanning dashboard (Security → Code scanning). This provides a single triage surface across all scanners, with per-file, per-line annotation on pull requests. Each tool registers under its own `category` so findings are de-duplicated and attributable to their source.
 
 ### OSSF Scorecard
 
@@ -242,7 +235,7 @@ This means the provenance of every deployed bundle is verifiable: given the arti
 
 The `main` branch is protected with the following rules enforced for all contributors:
 
-- **Required status checks** — `Build & Test`, `GuardDog Supply Chain Scan`, `OSV Scanner / osv-scan`, `SBOM & Grype Scan`, and `Dependency Review` must all pass before any merge is allowed; the branch must be up to date with `main` before merging (strict mode)
+- **Required status checks** — `Build & Test`, `GuardDog Supply Chain Scan`, `Dependency Review`, and `CodeQL` must all pass before any merge is allowed; the branch must be up to date with `main` before merging (strict mode). The whole-tree scans (`Dependency Audit`, `SBOM & Grype Scan`) run on push and the weekly schedule rather than on pull requests, so they are not pull-request status checks — they gate the production deploy instead
 - **Required signatures** — every commit merged to `main` must carry a verified cryptographic signature
 - **Required pull request review** — at least one approval is required; stale approvals are dismissed on new pushes; code owner review is required
 - **No force pushes** — force-pushing to `main` is blocked
