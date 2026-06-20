@@ -18,17 +18,17 @@
     "devDependencies": {
         "@eslint/js": "^10.0.1",
         "@sveltejs/adapter-cloudflare": "^7.2.9",
-        "@sveltejs/kit": "^2.65.2",
+        "@sveltejs/kit": "^2.66.0",
         "@sveltejs/vite-plugin-svelte": "^7.1.2",
         "@tailwindcss/vite": "^4.3.1",
-        "@types/node": "^25.9.3",
+        "@types/node": "^26.0.0",
         "@types/pako": "^2.0.4",
         "@vitest/coverage-v8": "^4.1.9",
         "eslint": "^10.5.0",
         "eslint-plugin-svelte": "^3.19.0",
         "fast-check": "^4.8.0",
         "globals": "^17.6.0",
-        "happy-dom": "^20.10.5",
+        "happy-dom": "^20.10.6",
         "jsdom": "^29.1.1",
         "prettier": "^3.8.4",
         "prettier-plugin-svelte": "^4.1.1",
@@ -39,7 +39,7 @@
         "typescript-eslint": "^8.61.1",
         "vite": "^8.0.16",
         "vitest": "^4.1.9",
-        "wrangler": "^4.102.0"
+        "wrangler": "^4.103.0"
     },
     "dependencies": {
         "pako": "^2.1.0"
