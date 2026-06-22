@@ -42,7 +42,7 @@
         "wrangler": "^4.103.0"
     },
     "dependencies": {
-        "pako": "^2.1.0"
+        "pako": "^2.2.0"
     },
     "overrides": {
         "cookie": "^0.7.0",
