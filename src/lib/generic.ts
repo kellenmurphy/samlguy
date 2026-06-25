@@ -33,6 +33,7 @@ function detectContentType(text: string): GenericContentType {
 }
 
 function isReadable(text: string): boolean {
+    /* v8 ignore next -- defensive empty guard; decodeAllGeneric only passes non-empty decoded blobs */
     if (!text) return false;
     const sample = text.slice(0, 500);
     let bad = 0;
