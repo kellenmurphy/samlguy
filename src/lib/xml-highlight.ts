@@ -2,12 +2,10 @@ export const XML_ELEMENT_TIPS: Record<string, string> = {
     // ── SAML assertion ────────────────────────────────────────────────────────
     Assertion:
         'The core SAML 2.0 assertion — a signed, time-bounded statement from the IdP about an authenticated principal. Contains authentication, attribute, and/or authorization decision statements.',
-    Issuer:
-        "Identifies the entity that issued this message. For a Response this is the IdP's EntityID; for a Request it is the SP's EntityID. Must match the EntityID in the issuer's SAML metadata.",
+    Issuer: "Identifies the entity that issued this message. For a Response this is the IdP's EntityID; for a Request it is the SP's EntityID. Must match the EntityID in the issuer's SAML metadata.",
     Subject:
         'The principal (user) this assertion is about. Contains a NameID and a SubjectConfirmation that together identify who authenticated and allow the recipient to verify they are the intended audience.',
-    NameID:
-        'The subject identifier, typed by the Format attribute — emailAddress (user@domain), persistent (opaque and SP-scoped, survives sessions), transient (single-session, privacy-preserving), or unspecified.',
+    NameID: 'The subject identifier, typed by the Format attribute — emailAddress (user@domain), persistent (opaque and SP-scoped, survives sessions), transient (single-session, privacy-preserving), or unspecified.',
     SubjectConfirmation:
         'Specifies the method by which the subject can be confirmed as the intended bearer. For browser SSO the method is always urn:oasis:names:tc:SAML:2.0:cm:bearer.',
     SubjectConfirmationData:
@@ -15,7 +13,7 @@ export const XML_ELEMENT_TIPS: Record<string, string> = {
     Conditions:
         'Time and audience restrictions on this assertion. The SP must verify the current time falls within [NotBefore, NotOnOrAfter) and that its EntityID appears in AudienceRestriction.',
     AudienceRestriction:
-        "Restricts this assertion to one or more intended recipients. The SP must verify that its own EntityID is listed — using an assertion intended for another SP is a security violation.",
+        'Restricts this assertion to one or more intended recipients. The SP must verify that its own EntityID is listed — using an assertion intended for another SP is a security violation.',
     Audience:
         'An EntityID for which this assertion is intended. The SP must reject assertions where its EntityID does not appear in at least one AudienceRestriction.',
     OneTimeUse:
@@ -46,10 +44,9 @@ export const XML_ELEMENT_TIPS: Record<string, string> = {
         "A request to terminate the principal's sessions across the federation. Initiates the single logout (SLO) flow. The SessionIndex links this to the specific IdP session to terminate.",
     LogoutResponse:
         'A response to a LogoutRequest confirming the logout outcome. PartialLogout status means some SP sessions could not be terminated.',
-    Status:
-        'The outcome of this protocol exchange. Always present in Responses. Contains a StatusCode and optionally a StatusMessage and StatusDetail.',
+    Status: 'The outcome of this protocol exchange. Always present in Responses. Contains a StatusCode and optionally a StatusMessage and StatusDetail.',
     StatusCode:
-        "A URI identifying the outcome. Top-level: Success, Requester (SP-side error), Responder (IdP-side error), VersionMismatch. Sub-codes provide more specific detail — e.g., AuthnFailed, NoAuthnContext.",
+        'A URI identifying the outcome. Top-level: Success, Requester (SP-side error), Responder (IdP-side error), VersionMismatch. Sub-codes provide more specific detail — e.g., AuthnFailed, NoAuthnContext.',
     StatusMessage:
         'A human-readable message from the IdP describing the status outcome. Present primarily on error responses. Content is IdP-specific and not standardized across implementations.',
     StatusDetail:
@@ -98,7 +95,8 @@ export const XML_ELEMENT_TIPS: Record<string, string> = {
     EncryptionMethod:
         'The encryption algorithm used. Typically AES-128-CBC or AES-256-GCM for assertion content; RSA-OAEP for the wrapped session key.',
     CipherData: 'Container for the encrypted bytes.',
-    CipherValue: 'The Base64-encoded ciphertext — the actual encrypted assertion or session key content.',
+    CipherValue:
+        'The Base64-encoded ciphertext — the actual encrypted assertion or session key content.',
 
     // ── SAML metadata ─────────────────────────────────────────────────────────
     EntitiesDescriptor:
@@ -125,8 +123,7 @@ export const XML_ELEMENT_TIPS: Record<string, string> = {
         'Declares the named service and the set of attributes this SP requests from the IdP. IdP administrators consult it when deciding attribute release.',
     ServiceName:
         'A human-readable, optionally localized name for the SP service, used in consent and discovery interfaces.',
-    ServiceDescription:
-        'A human-readable, optionally localized description of the SP service.',
+    ServiceDescription: 'A human-readable, optionally localized description of the SP service.',
     RequestedAttribute:
         'An attribute this SP requests, by Name (usually an OID-style URN) and FriendlyName. isRequired="true" marks it as essential to the service.',
     NameIDFormat:
@@ -134,32 +131,35 @@ export const XML_ELEMENT_TIPS: Record<string, string> = {
     Organization:
         'The human-readable organization responsible for this entity — its name, display name, and URL, optionally localized.',
     OrganizationName: 'The formal, machine-oriented organization name.',
-    OrganizationDisplayName: 'The organization name shown to users in discovery and consent screens.',
+    OrganizationDisplayName:
+        'The organization name shown to users in discovery and consent screens.',
     OrganizationURL: "A link to the organization's website.",
     ContactPerson:
         'A published contact for this entity, typed by contactType — technical, support, administrative, billing, or other. A security/SIRTFI contact is the point of contact for incident response.',
     Company: 'The company or organization the contact belongs to.',
-    GivenName: 'The contact\'s given (first) name.',
-    SurName: 'The contact\'s surname (last name).',
+    GivenName: "The contact's given (first) name.",
+    SurName: "The contact's surname (last name).",
     EmailAddress: "The contact's email address, often prefixed with mailto:.",
     TelephoneNumber: "The contact's telephone number.",
-    UIInfo:
-        'User-interface metadata (mdui) — display name, description, and logo shown for this entity in discovery services and consent screens, often localized per language.',
+    UIInfo: 'User-interface metadata (mdui) — display name, description, and logo shown for this entity in discovery services and consent screens, often localized per language.',
     DisplayName: 'A localized, user-facing display name for the entity.',
     Description: 'A localized, user-facing description of the entity.',
     InformationURL: 'A localized link to more information about the entity.',
     PrivacyStatementURL: "A localized link to the entity's privacy statement.",
     Logo: 'A logo for the entity, with width and height, shown in discovery and consent interfaces.',
-    Scope:
-        'The domain suffix this IdP is authoritative for (shibmd:Scope). Scoped attribute values like eduPersonPrincipalName (user@domain) must match this scope; SPs should reject values that do not.',
+    Scope: 'The domain suffix this IdP is authoritative for (shibmd:Scope). Scoped attribute values like eduPersonPrincipalName (user@domain) must match this scope; SPs should reject values that do not.',
     RegistrationInfo:
         'Identifies the federation registrar (registrationAuthority) that registered this metadata — the basis for inter-federation (eduGAIN) trust.',
     EntityAttributes:
-        'Carries entity category and assurance tags as SAML Attributes — e.g. Research & Scholarship, SIRTFI, or Code of Conduct — that drive IdP attribute-release policy.',
+        'Carries entity category and assurance tags as SAML Attributes — e.g. Research & Scholarship, SIRTFI, or Code of Conduct — that drive IdP attribute-release policy.'
 };
 
 function esc(s: string): string {
-    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return s
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
 }
 
 function localName(qname: string): string {
@@ -170,9 +170,7 @@ function localName(qname: string): string {
 function elSpan(qname: string): string {
     const local = localName(qname);
     const hasTip = local in XML_ELEMENT_TIPS;
-    const attrs = hasTip
-        ? ` class="xml-el xml-el-tip" data-el="${esc(local)}"`
-        : ' class="xml-el"';
+    const attrs = hasTip ? ` class="xml-el xml-el-tip" data-el="${esc(local)}"` : ' class="xml-el"';
     return `<span${attrs}>${esc(qname)}</span>`;
 }
 
@@ -188,7 +186,15 @@ function highlightAttrs(s: string): string {
         }
         // attribute name — scan to '=' or whitespace
         const nameStart = i;
-        while (i < s.length && s[i] !== '=' && s[i] !== ' ' && s[i] !== '\n' && s[i] !== '\r' && s[i] !== '\t') i++;
+        while (
+            i < s.length &&
+            s[i] !== '=' &&
+            s[i] !== ' ' &&
+            s[i] !== '\n' &&
+            s[i] !== '\r' &&
+            s[i] !== '\t'
+        )
+            i++;
         /* v8 ignore next */
         if (i > nameStart) {
             out.push(`<span class="xml-attr-name">${esc(s.slice(nameStart, i))}</span>`);
@@ -240,7 +246,10 @@ export function highlightXml(xml: string): string {
         if (xml.startsWith('<?', i)) {
             const end = xml.indexOf('?>', i);
             /* v8 ignore next */
-            if (end === -1) { out.push(esc(xml.slice(i))); break; }
+            if (end === -1) {
+                out.push(esc(xml.slice(i)));
+                break;
+            }
             out.push(`<span class="xml-prolog">${esc(xml.slice(i, end + 2))}</span>`);
             i = end + 2;
             continue;
@@ -250,7 +259,10 @@ export function highlightXml(xml: string): string {
         if (xml.startsWith('<!--', i)) {
             const end = xml.indexOf('-->', i);
             /* v8 ignore next */
-            if (end === -1) { out.push(esc(xml.slice(i))); break; }
+            if (end === -1) {
+                out.push(esc(xml.slice(i)));
+                break;
+            }
             out.push(`<span class="xml-comment">${esc(xml.slice(i, end + 3))}</span>`);
             i = end + 3;
             continue;
@@ -260,9 +272,14 @@ export function highlightXml(xml: string): string {
         if (xml.startsWith('</', i)) {
             const end = xml.indexOf('>', i);
             /* v8 ignore next */
-            if (end === -1) { out.push(esc(xml.slice(i))); break; }
+            if (end === -1) {
+                out.push(esc(xml.slice(i)));
+                break;
+            }
             const name = xml.slice(i + 2, end).trim();
-            out.push(`<span class="xml-punct">&lt;/</span>${elSpan(name)}<span class="xml-punct">&gt;</span>`);
+            out.push(
+                `<span class="xml-punct">&lt;/</span>${elSpan(name)}<span class="xml-punct">&gt;</span>`
+            );
             i = end + 1;
             continue;
         }

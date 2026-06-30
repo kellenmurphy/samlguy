@@ -31,14 +31,14 @@ You can expect an acknowledgement within 48 hours and a resolution or status upd
 
 ### Adversaries and assets
 
-| Adversary | Goal | Primary controls |
-|---|---|---|
-| Malicious paste / shared link | Trigger XSS via crafted SAML or JWT content rendered in the DOM | Svelte's default text escaping, `esc()` in the XML highlighter, CSP (`default-src 'self'`, no `unsafe-inline`, hash-pinned inline scripts) |
-| Compromised npm package | Inject malicious code into the build or CI environment | GuardDog, `npm audit`, Grype, Dependency Review, SHA-pinned actions, `npm ci` lockfile enforcement |
-| Compromised upstream GitHub Action | Substitute malicious CI code via a tampered version tag | All actions pinned to commit SHA, Dependabot rotates pins daily |
-| SSRF via OIDC proxy | Use the discovery Worker to reach internal infrastructure | `redirect: 'error'`, 5-second timeout, 100 KB cap, response validation |
-| Compromised maintainer account | Push unsigned or unreviewed code to `main` | Required commit signatures, branch protection, CODEOWNERS review, scoped API tokens |
-| Information leakage | Exfiltrate SAML assertions or JWT payloads | All decoding is client-side; no server ever receives token content; Worker code logs nothing; `Referrer-Policy: no-referrer` prevents issuer URLs from leaking via outbound navigation |
+| Adversary                          | Goal                                                            | Primary controls                                                                                                                                                                       |
+| ---------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Malicious paste / shared link      | Trigger XSS via crafted SAML or JWT content rendered in the DOM | Svelte's default text escaping, `esc()` in the XML highlighter, CSP (`default-src 'self'`, no `unsafe-inline`, hash-pinned inline scripts)                                             |
+| Compromised npm package            | Inject malicious code into the build or CI environment          | GuardDog, `npm audit`, Grype, Dependency Review, SHA-pinned actions, `npm ci` lockfile enforcement                                                                                     |
+| Compromised upstream GitHub Action | Substitute malicious CI code via a tampered version tag         | All actions pinned to commit SHA, Dependabot rotates pins daily                                                                                                                        |
+| SSRF via OIDC proxy                | Use the discovery Worker to reach internal infrastructure       | `redirect: 'error'`, 5-second timeout, 100 KB cap, response validation                                                                                                                 |
+| Compromised maintainer account     | Push unsigned or unreviewed code to `main`                      | Required commit signatures, branch protection, CODEOWNERS review, scoped API tokens                                                                                                    |
+| Information leakage                | Exfiltrate SAML assertions or JWT payloads                      | All decoding is client-side; no server ever receives token content; Worker code logs nothing; `Referrer-Policy: no-referrer` prevents issuer URLs from leaking via outbound navigation |
 
 ### Out of scope
 
@@ -130,6 +130,7 @@ The adapter additionally appends `Cache-Control: public, immutable, max-age=3153
 All GitHub Actions are pinned to a full commit SHA, not a mutable version tag. Version tags can be silently redirected by a compromised upstream repository, substituting malicious code into the pipeline. Pinning by SHA means the exact code reviewed at setup time is the code that runs. Human-readable version numbers are preserved as inline comments.
 
 Current pins in `.github/workflows/ci.yml`:
+
 - `actions/checkout` — SHA-pinned
 - `actions/setup-node` — SHA-pinned
 - `astral-sh/setup-uv` — SHA-pinned (v8.1.0)
@@ -142,15 +143,18 @@ Current pins in `.github/workflows/ci.yml`:
 - `actions/attest-build-provenance` — SHA-pinned (v4.1.0)
 
 Current pins in `.github/workflows/scorecard.yml`:
+
 - `actions/checkout` — SHA-pinned
 - `ossf/scorecard-action` — SHA-pinned (v2.4.3)
 - `actions/upload-artifact` — SHA-pinned (v7.0.1)
 - `github/codeql-action/upload-sarif` — SHA-pinned
 
 Current pins in `.github/workflows/release-please.yml`:
+
 - `googleapis/release-please-action` — SHA-pinned (v4)
 
 Current pins in `.github/workflows/codeql.yml`:
+
 - `actions/checkout` — SHA-pinned
 - `github/codeql-action/init` — SHA-pinned (v3.28.13)
 - `github/codeql-action/analyze` — SHA-pinned (v3.28.13)
@@ -186,6 +190,7 @@ GitHub secret scanning and push protection are both enabled on this repository. 
 ### Dependabot
 
 Dependabot runs daily for:
+
 - **npm packages** — grouped (Svelte ecosystem together, Cloudflare tools together) to reduce PR noise while keeping everything current. Commits use the `chore(deps)` prefix so routine dependency bumps do not trigger unnecessary patch releases via release-please.
 - **GitHub Actions** — separate ecosystem entry, because action dependencies are a supply chain vector that is easy to neglect
 
@@ -215,7 +220,7 @@ Alongside the `Dependency Audit` job (push, weekly schedule, and manual dispatch
 
 ### Dependency Review
 
-The [dependency-review-action](https://github.com/actions/dependency-review-action) runs on pull requests only. It compares the dependency diff introduced by the PR against GitHub's vulnerability database and fails the check if any newly added package carries a moderate or higher CVE. This is the pull-request-time vulnerability gate: it catches vulnerable dependencies a PR would *introduce*, before they land in `main`, while the full-tree `npm audit` and Grype scans run on push and the weekly schedule. A PR is therefore never blocked by a pre-existing, tree-wide advisory in a dependency the PR did not touch.
+The [dependency-review-action](https://github.com/actions/dependency-review-action) runs on pull requests only. It compares the dependency diff introduced by the PR against GitHub's vulnerability database and fails the check if any newly added package carries a moderate or higher CVE. This is the pull-request-time vulnerability gate: it catches vulnerable dependencies a PR would _introduce_, before they land in `main`, while the full-tree `npm audit` and Grype scans run on push and the weekly schedule. A PR is therefore never blocked by a pre-existing, tree-wide advisory in a dependency the PR did not touch.
 
 ### GitHub Code Scanning
 
@@ -266,4 +271,3 @@ Since samlguy.com deploys continuously from `main`, the production deployment al
 ## License
 
 This project is released under the [MIT License](LICENSE). You are free to use, fork, modify, and distribute the code. The only requirement is that the copyright notice is preserved in copies or substantial portions of the software.
-

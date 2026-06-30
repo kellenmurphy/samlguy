@@ -1,6 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { decodeCert } from './cert';
-import { TEST_CERT_B64, EC_CERT_B64, GENTIME_CERT_B64, ED25519_CERT_B64, BIGSERIAL_CERT_B64, RSA_FALLBACK_CERT_B64, UTCTIME_OLD_CERT_B64, EC_NO_CURVE_CERT_B64, RSA_NO_ZERO_CERT_B64, TITLE_ATTR_CERT_B64 } from './fixtures.test-helper';
+import {
+    TEST_CERT_B64,
+    EC_CERT_B64,
+    GENTIME_CERT_B64,
+    ED25519_CERT_B64,
+    BIGSERIAL_CERT_B64,
+    RSA_FALLBACK_CERT_B64,
+    UTCTIME_OLD_CERT_B64,
+    EC_NO_CURVE_CERT_B64,
+    RSA_NO_ZERO_CERT_B64,
+    TITLE_ATTR_CERT_B64
+} from './fixtures.test-helper';
 
 describe('decodeCert', () => {
     const cert = decodeCert(TEST_CERT_B64);

@@ -8,12 +8,14 @@ labels: bug
 A clear description of the bug.
 
 **Input type**
+
 - [ ] SAMLRequest
 - [ ] SAMLResponse
 - [ ] JWT
 - [ ] Other
 
 **Steps to reproduce**
+
 1. Paste ...
 2. See ...
 
@@ -24,6 +26,7 @@ What did you expect to see?
 What did you see instead?
 
 **Environment**
+
 - Browser:
 - OS:
 

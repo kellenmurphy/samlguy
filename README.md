@@ -1,7 +1,8 @@
 <div align="center">
 
 # `<saml:Guy/>`
-**[*samlguy.com*](https://samlguy.com) — A SAML assertion and JWT decoder for the IAM community.**
+
+**[_samlguy.com_](https://samlguy.com) — A SAML assertion and JWT decoder for the IAM community.**
 
 [![CI](https://github.com/kellenmurphy/samlguy/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/kellenmurphy/samlguy/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/kellenmurphy/samlguy/graph/badge.svg)](https://codecov.io/gh/kellenmurphy/samlguy) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12859/badge)](https://www.bestpractices.dev/projects/12859)
 
@@ -13,10 +14,9 @@ SAML assertions get a full summary panel with binding type, message type, status
 
 Think [jwt.io](https://jwt.io), but for the full modern IAM stack — built by someone who actually works in identity, for everyone else who does too.
 
-
 ## Who is it for?
 
-[samlguy.com](https://samlguy.com) is built by an IAM practitioner, for the IAM practitioner community: identity architects and engineers at universities, research institutions, and other organizations participating in federated identity like **[InCommon](https://incommon.org)** and **[eduGAIN](https://edugain.org/)**, and the broader R&E Trust & Identity community. 
+[samlguy.com](https://samlguy.com) is built by an IAM practitioner, for the IAM practitioner community: identity architects and engineers at universities, research institutions, and other organizations participating in federated identity like **[InCommon](https://incommon.org)** and **[eduGAIN](https://edugain.org/)**, and the broader R&E Trust & Identity community.
 
 If you run a Shibboleth IdP, debug SAML flows for a living, or spend time staring at raw base64 blobs in Fiddler or a browser DevTools network tab — this tool belongs in your bookmarks.
 
@@ -34,13 +34,11 @@ But it's not just SAML! It's equally useful for OAuth 2.0 / OIDC work. Access to
 
 **Everything else** — contextual `?` tooltips on every field covering the SAML spec, JWT/OIDC standards, and trust fabric conventions. Shareable links base64url-encode the input into the URL fragment — never sent to the server. Dark mode default with `localStorage` persistence.
 
-
 ## Privacy & Security
 
 **All SAML and JWT payloads are decoded entirely in your browser.** Nothing you paste is ever transmitted to or stored on any server. The only network request the tool makes on your behalf is the OIDC discovery proxy described above, which receives only an issuer URL, not the token itself.
 
 See [SECURITY.md](SECURITY.md) for the full vulnerability disclosure policy and a description of the security controls in this project.
-
 
 ## Local development
 
@@ -62,7 +60,6 @@ npm run coverage    # vitest with v8 coverage report
 npm run build       # production build
 npm run preview     # preview production build locally
 ```
-
 
 ## Project structure
 
@@ -96,11 +93,9 @@ src/
   CODEOWNERS
 ```
 
-
 ## Deployment
 
 [samlguy.com](https://samlguy.com) is deployed using Cloudflare Pages. Every merge to `main` triggers an automatic build and deploy via GitHub Actions — but only after the test and coverage jobs pass. Build command: `npm run build`, output directory: `.svelte-kit/cloudflare`.
-
 
 ## What's Planned
 
@@ -111,11 +106,9 @@ src/
 - **JWT JWKS validation** — after OIDC discovery, fetch `jwks_uri` and verify the JWT signature against the matching key
 - **REFEDS entity category checker** — given an EntityID (via MDQ), check whether the IdP's attribute release policy would likely cover the SP's requested attributes; builds on the entity-category and requested-attribute parsing already in the metadata view
 
-
 ## Contributing
 
 This started as a personal passion project for [The SAML Guy](https://kellenmurphy.com) to mess with a nifty tech stack (Svelte). Bug reports and suggestions are welcome via [GitHub Issues](https://github.com/kellenmurphy/samlguy/issues). See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and contribution guidelines. For security vulnerabilities, please follow the [responsible disclosure process](SECURITY.md) rather than opening a public issue.
-
 
 ## License
 

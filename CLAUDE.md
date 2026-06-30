@@ -28,6 +28,7 @@ The core UX premise: paste whatever messy thing you grabbed from a log file, a n
 A single `<textarea>` input. The `detect()` function determines whether the input is a JWT (three-part dot-separated base64url, or starts with `Authorization: Bearer`) or SAML (everything else). A debounced `$effect` drives decoding on a 300ms timer.
 
 The page handles:
+
 - Multiple SAML messages in one paste (`decodeAllSaml` scans for all `SAMLRequest`/`SAMLResponse` params)
 - Generic fallback decoding (`decodeAllGeneric`) for non-SAML base64/XML/JSON blobs
 - Lazy-loaded cert decoding via dynamic `import('$lib/cert')` to avoid blocking first render
@@ -60,6 +61,7 @@ The page handles:
 ### JWT decode library (`src/lib/jwt.ts`)
 
 `decodeJwt(input)` — strips `Bearer` prefix, splits on `.`, base64url-decodes header and payload, returns typed `JwtDecodeResult` with:
+
 - `isAlgNone` / `isWeakAlg` flags
 - `timestamps` object (`iat`, `exp`, `nbf` as `JwtTimestamp` with `date`, `label`, `expired`)
 - `scopes` array (handles both `scope` string and `scp` array claim variants)
@@ -105,6 +107,7 @@ All tooltip text externalized as `FIELD_EXPLANATIONS: Record<string, string>` wi
 ## Test coverage
 
 100% statements, branches, functions, and lines across all `src/lib/` modules. Achieved via:
+
 - `/* v8 ignore next */` directives on defensive null-guards that are unreachable in valid DER/XML (never in `parseName`, `parseKeyAlg`, etc.)
 - Carefully crafted DER certificate fixtures (single-line base64, length divisible by 4 — jsdom's `atob()` is strict, unlike Node's `Buffer.from()`)
 - Test cases for every edge path: UTCTime year ≥ 50, EC with no curve OID, RSA modulus without leading zero, unknown DN attribute OIDs, all SAML timestamp variants, JWT non-string alg, etc.
@@ -135,10 +138,12 @@ Run with: `npm run coverage`
 ## Planned features
 
 ### Medium priority
+
 - **SAML signature validation** — fetch the IdP's SAML metadata (by EntityID or URL), extract the signing cert, and verify `<ds:Signature>` using the Web Crypto API. Display verified/unverified status prominently.
 - **JWT JWKS validation** — after OIDC discovery, fetch `jwks_uri` and attempt to verify the JWT signature against the matching key.
 
 ### Lower priority / ideas
+
 - **MDQ discovery** — fetch an entity's metadata from InCommon's MDQ service by EntityID and feed it into the metadata view (`src/lib/metadata.ts`)
 - **REFEDS entity category checker** — cross-check an SP's `RequestedAttribute`s against entity categories already parsed by the metadata view
 - **i18n** — `explanations.ts` is already structured for this; add a locale switcher and alternate record implementations
@@ -157,15 +162,15 @@ Optional body explaining why, not what.
 
 ### Types and their effects
 
-| Type | Version bump | Changelog section |
-|------|-------------|-------------------|
-| `feat` | minor (1.x.0) | Features |
-| `fix` | patch (1.0.x) | Bug Fixes & Dependencies |
-| `perf` | patch | Performance |
+| Type       | Version bump        | Changelog section                        |
+| ---------- | ------------------- | ---------------------------------------- |
+| `feat`     | minor (1.x.0)       | Features                                 |
+| `fix`      | patch (1.0.x)       | Bug Fixes & Dependencies                 |
+| `perf`     | patch               | Performance                              |
 | `security` | none (display only) | Security — use `fix` if a bump is needed |
-| `docs` | none | Documentation (visible) |
-| `chore` | none | Miscellaneous (hidden) |
-| `ci` | none | CI/CD (hidden) |
+| `docs`     | none                | Documentation (visible)                  |
+| `chore`    | none                | Miscellaneous (hidden)                   |
+| `ci`       | none                | CI/CD (hidden)                           |
 
 Breaking changes: add `!` after the type (`feat!:` or `fix!:`) **or** include a `BREAKING CHANGE:` footer. Either triggers a major bump (x.0.0).
 
@@ -184,9 +189,11 @@ Commits that don't match any of the above types (e.g. `Add something` with no ty
 Before any structural refactor on a file >300 LOC, remove dead props, unused exports, and debug logs. Commit separately.
 
 After any significant change, run:
+
 ```bash
 npx tsc --noEmit && npx eslint . --quiet && npm run coverage
 ```
+
 All three must pass before reporting work complete.
 
 ESLint config note: `svelte/no-navigation-without-resolve` is configured with `ignoreLinks: true` because samlguy.com deploys at the root with no base path, making `resolve()` unnecessary for plain `href="/"` links.

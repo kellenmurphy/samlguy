@@ -94,10 +94,22 @@
     </main>
 
     <footer class="px-6 py-4">
-        <div class="mx-auto flex max-w-5xl flex-col items-center gap-y-1 text-[10px] text-neutral-400 dark:text-neutral-600">
-            <span>Made with ♥ by <a href="https://kellenmurphy.com" class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400">The SAML Guy</a></span>
+        <div
+            class="mx-auto flex max-w-5xl flex-col items-center gap-y-1 text-[10px] text-neutral-400 dark:text-neutral-600"
+        >
+            <span
+                >Made with ♥ by <a
+                    href="https://kellenmurphy.com"
+                    class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
+                    >The SAML Guy</a
+                ></span
+            >
             <div class="flex items-center gap-x-3">
-                <a href="/privacy" class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400">Privacy</a>
+                <a
+                    href="/privacy"
+                    class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
+                    >Privacy</a
+                >
                 <span aria-hidden="true">&middot;</span>
                 <a
                     href="https://github.com/kellenmurphy/samlguy/security"

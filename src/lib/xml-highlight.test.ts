@@ -28,7 +28,9 @@ describe('highlightXml — element names', () => {
     });
 
     it('handles self-closing tags', () => {
-        const result = highlightXml('<samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/>');
+        const result = highlightXml(
+            '<samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/>'
+        );
         expect(result).toContain('data-el="StatusCode"');
         expect(result).toContain('/&gt;');
     });
@@ -87,7 +89,7 @@ describe('highlightXml — attributes', () => {
     it('handles single-quoted attribute values', () => {
         const result = highlightXml("<foo bar='baz'>");
         expect(result).toContain('<span class="xml-attr-name">bar</span>');
-        expect(result).toContain("<span class=\"xml-attr-val\">'baz'</span>");
+        expect(result).toContain('<span class="xml-attr-val">\'baz\'</span>');
     });
 
     it('handles attributes without a value at end of tag', () => {
@@ -173,21 +175,44 @@ describe('highlightXml — full round-trip', () => {
 
 describe('XML_ELEMENT_TIPS', () => {
     it('has non-empty tips for core SAML elements', () => {
-        const coreElements = ['Assertion', 'Issuer', 'Subject', 'NameID', 'Conditions', 'AuthnStatement', 'AuthnContextClassRef', 'AttributeStatement', 'Attribute'];
+        const coreElements = [
+            'Assertion',
+            'Issuer',
+            'Subject',
+            'NameID',
+            'Conditions',
+            'AuthnStatement',
+            'AuthnContextClassRef',
+            'AttributeStatement',
+            'Attribute'
+        ];
         for (const el of coreElements) {
             expect(XML_ELEMENT_TIPS[el], `missing tip for ${el}`).toBeTruthy();
         }
     });
 
     it('has non-empty tips for protocol elements', () => {
-        const protoElements = ['Response', 'AuthnRequest', 'Status', 'StatusCode', 'RequestedAuthnContext', 'NameIDPolicy'];
+        const protoElements = [
+            'Response',
+            'AuthnRequest',
+            'Status',
+            'StatusCode',
+            'RequestedAuthnContext',
+            'NameIDPolicy'
+        ];
         for (const el of protoElements) {
             expect(XML_ELEMENT_TIPS[el], `missing tip for ${el}`).toBeTruthy();
         }
     });
 
     it('has non-empty tips for signature elements', () => {
-        const sigElements = ['Signature', 'SignedInfo', 'SignatureValue', 'X509Certificate', 'DigestValue'];
+        const sigElements = [
+            'Signature',
+            'SignedInfo',
+            'SignatureValue',
+            'X509Certificate',
+            'DigestValue'
+        ];
         for (const el of sigElements) {
             expect(XML_ELEMENT_TIPS[el], `missing tip for ${el}`).toBeTruthy();
         }

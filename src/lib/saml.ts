@@ -86,10 +86,11 @@ export const AUTHN_CONTEXT_LABELS: Record<string, string> = {
     [`${NIST_HTTP_PFX}ial/2`]: 'IAL2',
     [`${NIST_HTTP_PFX}aal/1`]: 'AAL1',
     [`${NIST_HTTP_PFX}aal/2`]: 'AAL2',
-    [`${NIST_HTTP_PFX}aal/3`]: 'AAL3',
+    [`${NIST_HTTP_PFX}aal/3`]: 'AAL3'
 };
 
-const OASIS_AC_SPEC = 'https://docs.oasis-open.org/security/saml/v2.0/saml-authn-context-2.0-os.pdf';
+const OASIS_AC_SPEC =
+    'https://docs.oasis-open.org/security/saml/v2.0/saml-authn-context-2.0-os.pdf';
 const NIST_800_63 = 'https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-63-3.pdf';
 
 export const AUTHN_CONTEXT_SPEC_URLS: Record<string, string> = {
@@ -130,7 +131,7 @@ export const AUTHN_CONTEXT_SPEC_URLS: Record<string, string> = {
     [`${NIST_HTTP_PFX}ial/2`]: NIST_800_63,
     [`${NIST_HTTP_PFX}aal/1`]: NIST_800_63,
     [`${NIST_HTTP_PFX}aal/2`]: NIST_800_63,
-    [`${NIST_HTTP_PFX}aal/3`]: NIST_800_63,
+    [`${NIST_HTTP_PFX}aal/3`]: NIST_800_63
 };
 
 const ST_PFX = 'urn:oasis:names:tc:SAML:2.0:status:';
@@ -143,7 +144,7 @@ export const STATUS_DESCRIPTIONS: Record<string, string> = {
     [`${ST_PFX}VersionMismatch`]:
         'The SAML version specified in the request is not supported by this IdP.',
     [`${ST_PFX}AuthnFailed`]:
-        "The IdP was unable to authenticate the principal — wrong credentials, locked account, or a failed MFA step.",
+        'The IdP was unable to authenticate the principal — wrong credentials, locked account, or a failed MFA step.',
     [`${ST_PFX}InvalidAttrNameOrValue`]:
         'An Attribute or AttributeValue element contained unexpected or invalid content — often a misconfigured attribute release policy.',
     [`${ST_PFX}InvalidNameIDPolicy`]:
@@ -158,8 +159,7 @@ export const STATUS_DESCRIPTIONS: Record<string, string> = {
         'The IdP proxy could not find a supported IdP for the requested principal.',
     [`${ST_PFX}PartialLogout`]:
         'Single logout completed only partially — not all sessions at participating SPs could be terminated.',
-    [`${ST_PFX}ProxyCountExceeded`]:
-        'The ProxyCount limit was exceeded in an IdP-proxy chain.',
+    [`${ST_PFX}ProxyCountExceeded`]: 'The ProxyCount limit was exceeded in an IdP-proxy chain.',
     [`${ST_PFX}RequestDenied`]:
         'The IdP refused to perform the requested operation — typically a policy block, consent requirement, or SP not authorized.',
     [`${ST_PFX}RequestUnsupported`]:
@@ -174,12 +174,10 @@ export const STATUS_DESCRIPTIONS: Record<string, string> = {
         'The resource specified in the request is not recognized by this IdP.',
     [`${ST_PFX}TooManyResponses`]:
         'Too many matching responses exist; the IdP cannot return all of them.',
-    [`${ST_PFX}UnknownAttrProfile`]:
-        'An unknown attribute profile was requested.',
-    [`${ST_PFX}UnknownPrincipal`]:
-        'The specified principal is not known to this IdP.',
+    [`${ST_PFX}UnknownAttrProfile`]: 'An unknown attribute profile was requested.',
+    [`${ST_PFX}UnknownPrincipal`]: 'The specified principal is not known to this IdP.',
     [`${ST_PFX}UnsupportedBinding`]:
-        'The binding specified in the request is not supported by this IdP.',
+        'The binding specified in the request is not supported by this IdP.'
 };
 
 const SAML_CORE_SPEC = 'https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf';
@@ -207,7 +205,7 @@ export const STATUS_SPEC_URLS: Record<string, string> = {
     [`${ST_PFX}TooManyResponses`]: SAML_CORE_SPEC,
     [`${ST_PFX}UnknownAttrProfile`]: SAML_CORE_SPEC,
     [`${ST_PFX}UnknownPrincipal`]: SAML_CORE_SPEC,
-    [`${ST_PFX}UnsupportedBinding`]: SAML_CORE_SPEC,
+    [`${ST_PFX}UnsupportedBinding`]: SAML_CORE_SPEC
 };
 
 export interface SamlDecodeResult {
@@ -508,10 +506,19 @@ function splitAttrs(s: string): string[] {
     const result: string[] = [];
     let i = 0;
     while (i < s.length) {
-        while (i < s.length && (s[i] === ' ' || s[i] === '\n' || s[i] === '\r' || s[i] === '\t')) i++;
+        while (i < s.length && (s[i] === ' ' || s[i] === '\n' || s[i] === '\r' || s[i] === '\t'))
+            i++;
         if (i >= s.length) break;
         const start = i;
-        while (i < s.length && s[i] !== '=' && s[i] !== ' ' && s[i] !== '\n' && s[i] !== '\r' && s[i] !== '\t') i++;
+        while (
+            i < s.length &&
+            s[i] !== '=' &&
+            s[i] !== ' ' &&
+            s[i] !== '\n' &&
+            s[i] !== '\r' &&
+            s[i] !== '\t'
+        )
+            i++;
         if (i < s.length && s[i] === '=') {
             i++;
             /* v8 ignore next */
@@ -591,7 +598,11 @@ export function prettyPrintXml(xml: string): string {
                     lines.push(current);
                     current = '';
                 }
-                lines.push(tag.endsWith('/>') ? wrapOpenTag(tag, '  '.repeat(indent)) : '  '.repeat(indent) + tag);
+                lines.push(
+                    tag.endsWith('/>')
+                        ? wrapOpenTag(tag, '  '.repeat(indent))
+                        : '  '.repeat(indent) + tag
+                );
             } else {
                 // Opening tag
                 if (current) lines.push(current);

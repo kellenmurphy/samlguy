@@ -16,7 +16,9 @@ describe('encodePayload', () => {
     });
 
     it('produces no +, /, or = characters in output', () => {
-        const result = encodePayload('SAMLRequest=abc+def/ghi=&RelayState=https%3A%2F%2Fexample.com');
+        const result = encodePayload(
+            'SAMLRequest=abc+def/ghi=&RelayState=https%3A%2F%2Fexample.com'
+        );
         expect(result).not.toMatch(/[+/=]/);
     });
 

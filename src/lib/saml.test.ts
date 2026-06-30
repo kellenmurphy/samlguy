@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { decodeSaml, decodeAllSaml, prettyPrintXml, AUTHN_CONTEXT_LABELS, AUTHN_CONTEXT_SPEC_URLS, STATUS_DESCRIPTIONS, STATUS_SPEC_URLS } from '$lib/saml';
+import {
+    decodeSaml,
+    decodeAllSaml,
+    prettyPrintXml,
+    AUTHN_CONTEXT_LABELS,
+    AUTHN_CONTEXT_SPEC_URLS,
+    STATUS_DESCRIPTIONS,
+    STATUS_SPEC_URLS
+} from '$lib/saml';
 import {
     AUTHN_REQUEST_XML,
     AUTHN_REQUEST_WITH_CONTEXT_XML,
@@ -38,16 +46,12 @@ describe('decodeSaml — redirect binding (base64+deflate)', () => {
     });
 
     it('decodes a full URL', () => {
-        const r = decodeSaml(
-            `https://idp.example.com/sso?SAMLRequest=${encodeURIComponent(blob)}`
-        );
+        const r = decodeSaml(`https://idp.example.com/sso?SAMLRequest=${encodeURIComponent(blob)}`);
         expect(r.summary.issuer).toBe('https://sp.example.com');
     });
 
     it('decodes an HTTP log line (GET format)', () => {
-        const r = decodeSaml(
-            `GET /sso?SAMLRequest=${encodeURIComponent(blob)} HTTP/1.1`
-        );
+        const r = decodeSaml(`GET /sso?SAMLRequest=${encodeURIComponent(blob)} HTTP/1.1`);
         expect(r.summary.issuer).toBe('https://sp.example.com');
     });
 
@@ -143,7 +147,9 @@ describe('decodeSaml — error cases', () => {
 
     it('throws when decoded content looks like XML but is malformed', () => {
         // base64 of text starting with '<' but failing XML parse
-        expect(() => decodeSaml(btoa('<malformed &xml>'))).toThrow('Decoded content is not valid XML');
+        expect(() => decodeSaml(btoa('<malformed &xml>'))).toThrow(
+            'Decoded content is not valid XML'
+        );
     });
 
     it('handles malformed percent-encoding in query strings gracefully', () => {
@@ -479,13 +485,14 @@ describe('prettyPrintXml', () => {
     it('wraps self-closing tags whose line exceeds 100 chars', () => {
         const xml = `<sc:Code ${`a="${'x'.repeat(40)}"`.repeat(3)}/>`;
         const pretty = prettyPrintXml(`<root>${xml}</root>`);
-        const codeLine = pretty.split('\n').find(l => l.includes('sc:Code'))!;
+        const codeLine = pretty.split('\n').find((l) => l.includes('sc:Code'))!;
         expect(codeLine.length).toBeLessThanOrEqual(100);
     });
 
     it('packs multiple short attributes onto the same continuation line', () => {
         // tag is long due to namespace, but short attrs should pack together
-        const xml = '<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="_r1" Version="2.0" IssueInstant="2024-01-01T00:00:00Z"></samlp:Response>';
+        const xml =
+            '<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="_r1" Version="2.0" IssueInstant="2024-01-01T00:00:00Z"></samlp:Response>';
         const pretty = prettyPrintXml(xml);
         // ID and Version are short — both should appear on the same continuation line
         expect(pretty).toMatch(/ID="_r1" Version="2\.0"/);
@@ -504,7 +511,8 @@ describe('prettyPrintXml', () => {
     });
 
     it('handles standalone (boolean) attributes in long tags', () => {
-        const xml = '<el xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" standalone/>';
+        const xml =
+            '<el xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" standalone/>';
         const pretty = prettyPrintXml(`<root>${xml}</root>`);
         expect(pretty).toContain('standalone');
     });
@@ -516,7 +524,8 @@ describe('prettyPrintXml', () => {
     });
 
     it('handles single-quoted attribute values in long tags', () => {
-        const xml = "<samlp:Response xmlns:samlp='urn:oasis:names:tc:SAML:2.0:protocol' xmlns:saml='urn:oasis:names:tc:SAML:2.0:assertion' ID='_r1'></samlp:Response>";
+        const xml =
+            "<samlp:Response xmlns:samlp='urn:oasis:names:tc:SAML:2.0:protocol' xmlns:saml='urn:oasis:names:tc:SAML:2.0:assertion' ID='_r1'></samlp:Response>";
         const pretty = prettyPrintXml(xml);
         expect(pretty).toContain("xmlns:saml='urn:oasis:names:tc:SAML:2.0:assertion'");
     });
@@ -576,7 +585,9 @@ describe('parseSummary — requestedAuthnContext', () => {
             ''
         );
         const r = decodeSaml(toRedirectBlob(xml));
-        expect(r.summary.requestedAuthnContext?.classRefs).toEqual(['https://refeds.org/profile/mfa']);
+        expect(r.summary.requestedAuthnContext?.classRefs).toEqual([
+            'https://refeds.org/profile/mfa'
+        ]);
     });
 });
 
@@ -606,7 +617,11 @@ describe('parseSummary — error response', () => {
 
 describe('AUTHN_CONTEXT_LABELS', () => {
     it('has a label for PasswordProtectedTransport', () => {
-        expect(AUTHN_CONTEXT_LABELS['urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport']).toBe('Password (HTTPS)');
+        expect(
+            AUTHN_CONTEXT_LABELS[
+                'urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport'
+            ]
+        ).toBe('Password (HTTPS)');
     });
 
     it('has labels for REFEDS MFA and SFA', () => {
@@ -615,8 +630,12 @@ describe('AUTHN_CONTEXT_LABELS', () => {
     });
 
     it('has labels for REFEDS Assurance Framework entries', () => {
-        expect(AUTHN_CONTEXT_LABELS['https://refeds.org/assurance/IAP/high']).toBe('REFEDS IAP High');
-        expect(AUTHN_CONTEXT_LABELS['https://refeds.org/assurance/ID/eppn-unique-no-reassign']).toBe('REFEDS EPPN (no reassign)');
+        expect(AUTHN_CONTEXT_LABELS['https://refeds.org/assurance/IAP/high']).toBe(
+            'REFEDS IAP High'
+        );
+        expect(
+            AUTHN_CONTEXT_LABELS['https://refeds.org/assurance/ID/eppn-unique-no-reassign']
+        ).toBe('REFEDS EPPN (no reassign)');
     });
 
     it('has labels for NIST/FICAM entries', () => {
@@ -633,18 +652,27 @@ describe('AUTHN_CONTEXT_LABELS', () => {
 
 describe('AUTHN_CONTEXT_SPEC_URLS', () => {
     it('maps SAML 2.0 URNs to the OASIS spec PDF', () => {
-        const ppt = AUTHN_CONTEXT_SPEC_URLS['urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport'];
+        const ppt =
+            AUTHN_CONTEXT_SPEC_URLS[
+                'urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport'
+            ];
         expect(ppt).toContain('oasis-open.org');
         expect(ppt).toContain('.pdf');
     });
 
     it('maps REFEDS MFA to its own URI', () => {
-        expect(AUTHN_CONTEXT_SPEC_URLS['https://refeds.org/profile/mfa']).toBe('https://refeds.org/profile/mfa');
+        expect(AUTHN_CONTEXT_SPEC_URLS['https://refeds.org/profile/mfa']).toBe(
+            'https://refeds.org/profile/mfa'
+        );
     });
 
     it('maps REFEDS Assurance entries to the RAF landing page', () => {
-        expect(AUTHN_CONTEXT_SPEC_URLS['https://refeds.org/assurance/IAP/medium']).toBe('https://refeds.org/assurance');
-        expect(AUTHN_CONTEXT_SPEC_URLS['https://refeds.org/assurance/ID/eppn-unique-no-reassign']).toBe('https://refeds.org/assurance');
+        expect(AUTHN_CONTEXT_SPEC_URLS['https://refeds.org/assurance/IAP/medium']).toBe(
+            'https://refeds.org/assurance'
+        );
+        expect(
+            AUTHN_CONTEXT_SPEC_URLS['https://refeds.org/assurance/ID/eppn-unique-no-reassign']
+        ).toBe('https://refeds.org/assurance');
     });
 
     it('maps NIST/FICAM entries to the NIST 800-63 PDF', () => {
@@ -661,7 +689,10 @@ describe('AUTHN_CONTEXT_SPEC_URLS', () => {
 
     it('all spec URLs are valid HTTPS URLs', () => {
         for (const [uri, specUrl] of Object.entries(AUTHN_CONTEXT_SPEC_URLS)) {
-            expect(specUrl.startsWith('https://'), `spec URL not HTTPS for ${uri}: ${specUrl}`).toBe(true);
+            expect(
+                specUrl.startsWith('https://'),
+                `spec URL not HTTPS for ${uri}: ${specUrl}`
+            ).toBe(true);
         }
     });
 });
@@ -670,7 +701,9 @@ describe('STATUS_DESCRIPTIONS', () => {
     it('has descriptions for top-level codes', () => {
         expect(STATUS_DESCRIPTIONS['urn:oasis:names:tc:SAML:2.0:status:Requester']).toBeTruthy();
         expect(STATUS_DESCRIPTIONS['urn:oasis:names:tc:SAML:2.0:status:Responder']).toBeTruthy();
-        expect(STATUS_DESCRIPTIONS['urn:oasis:names:tc:SAML:2.0:status:VersionMismatch']).toBeTruthy();
+        expect(
+            STATUS_DESCRIPTIONS['urn:oasis:names:tc:SAML:2.0:status:VersionMismatch']
+        ).toBeTruthy();
     });
 
     it('has a description for AuthnFailed', () => {
@@ -678,7 +711,9 @@ describe('STATUS_DESCRIPTIONS', () => {
     });
 
     it('has a description for NoAuthnContext', () => {
-        expect(STATUS_DESCRIPTIONS['urn:oasis:names:tc:SAML:2.0:status:NoAuthnContext']).toBeTruthy();
+        expect(
+            STATUS_DESCRIPTIONS['urn:oasis:names:tc:SAML:2.0:status:NoAuthnContext']
+        ).toBeTruthy();
     });
 
     it('has no empty description values', () => {

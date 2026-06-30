@@ -10,13 +10,13 @@ export const FIELD_EXPLANATIONS: Record<string, string> = {
         'The outcome of the SAML exchange. Success means the IdP authenticated the user and issued a valid assertion. Error responses carry a top-level code (Requester for SP-side problems, Responder for IdP-side) and usually a more specific sub-code.',
 
     'saml.issuer':
-        'The EntityID of the party that issued this message — the IdP for a Response, the SP for a Request. Must match the EntityID in the issuer\'s SAML metadata. A mismatch indicates misconfiguration or a spoofing attempt.',
+        "The EntityID of the party that issued this message — the IdP for a Response, the SP for a Request. Must match the EntityID in the issuer's SAML metadata. A mismatch indicates misconfiguration or a spoofing attempt.",
 
     'saml.destination':
         'The URL this message was addressed to. SAML requires recipients to verify that Destination matches their own endpoint URL. This check prevents message forwarding attacks, where a captured message is replayed at a different service.',
 
     'saml.acsUrl':
-        'Assertion Consumer Service URL — the SP endpoint where the IdP will POST the SAMLResponse. The IdP must validate this against the SP\'s registered metadata and must reject any ACS URL not listed there.',
+        "Assertion Consumer Service URL — the SP endpoint where the IdP will POST the SAMLResponse. The IdP must validate this against the SP's registered metadata and must reject any ACS URL not listed there.",
 
     'saml.nameId':
         'The identifier for the authenticated user. The Format attribute defines the type: emailAddress (user@domain), persistent (opaque but stable per SP — used for account linking), transient (changes each session — provides anonymity), or unspecified.',
@@ -28,10 +28,10 @@ export const FIELD_EXPLANATIONS: Record<string, string> = {
         'An opaque value the SP includes in the AuthnRequest and expects returned unchanged in the Response. Typically encodes the deep-link URL the user was trying to reach so the SP can redirect there after successful login.',
 
     'saml.encrypted':
-        'Whether the Assertion or NameID has been XML-encrypted. Requires the IdP to have the SP\'s public key from metadata. Protects sensitive attributes and user identifiers from intermediaries who can observe transport-level traffic.',
+        "Whether the Assertion or NameID has been XML-encrypted. Requires the IdP to have the SP's public key from metadata. Protects sensitive attributes and user identifiers from intermediaries who can observe transport-level traffic.",
 
     'saml.signingCert':
-        'The X.509 certificate whose private key signed this message. The relying party should verify the signature using the public key from the issuer\'s SAML metadata. An expired or unknown certificate outside a trusted metadata feed is a security concern.',
+        "The X.509 certificate whose private key signed this message. The relying party should verify the signature using the public key from the issuer's SAML metadata. An expired or unknown certificate outside a trusted metadata feed is a security concern.",
 
     'saml.authnContext':
         'The Authentication Context Class Reference — a URI that describes how the user authenticated at the IdP. Common values: Password (HTTPS) means username/password over TLS; Kerberos means a Kerberos ticket was used; REFEDS MFA means the session satisfies the REFEDS Multi-Factor Authentication profile, widely used in research and education federations.',
@@ -40,14 +40,14 @@ export const FIELD_EXPLANATIONS: Record<string, string> = {
         'The SP\'s requirements for how the user must authenticate. The Comparison attribute controls matching: "exact" requires one of the listed classes precisely; "minimum" accepts any class at least as strong; "better" requires strictly stronger; "maximum" requires no stronger. If the IdP cannot satisfy the requirement, it returns NoAuthnContext.',
 
     'saml.attributes':
-        'Attribute statements contain claims about the authenticated user released by the IdP — such as email, display name, group memberships, or entitlements. Which attributes are released is governed by IdP policy and the SP\'s metadata. These values typically drive authorization decisions at the SP. Badges: R&S = part of the REFEDS Research & Scholarship attribute bundle (applies to IdPs and SPs that have registered the R&S entity category in their metadata); eppn-scoped = eduPersonPrincipalName value is properly scoped (user@scope) per REFEDS RAF eppn-unique requirements.',
+        "Attribute statements contain claims about the authenticated user released by the IdP — such as email, display name, group memberships, or entitlements. Which attributes are released is governed by IdP policy and the SP's metadata. These values typically drive authorization decisions at the SP. Badges: R&S = part of the REFEDS Research & Scholarship attribute bundle (applies to IdPs and SPs that have registered the R&S entity category in their metadata); eppn-scoped = eduPersonPrincipalName value is properly scoped (user@scope) per REFEDS RAF eppn-unique requirements.",
 
     // ── SAML timestamps ───────────────────────────────────────────────────────
     'saml.ts.authnInstant':
         'When the user last authenticated at the IdP. If this is well in the past, the IdP is reusing an existing SSO session rather than prompting for fresh credentials — relevant when ForceAuthn or a maximum session age policy applies.',
 
     'saml.ts.sessionNotOnOrAfter':
-        'The IdP SSO session expiry. After this time the user must re-authenticate at the IdP. Distinct from the assertion\'s NotOnOrAfter — the session lifetime can be much longer than any individual assertion\'s validity window.',
+        "The IdP SSO session expiry. After this time the user must re-authenticate at the IdP. Distinct from the assertion's NotOnOrAfter — the session lifetime can be much longer than any individual assertion's validity window.",
 
     'saml.ts.notBefore':
         'The assertion is not valid before this time. Clock skew between the IdP and SP can cause validation failures here. A typical allowed skew is ±2–5 minutes.',
@@ -56,7 +56,7 @@ export const FIELD_EXPLANATIONS: Record<string, string> = {
         'The assertion expires at this time and must be rejected after it passes. Short validity windows (minutes rather than hours) reduce the replay attack window if the assertion is captured in transit.',
 
     'saml.ts.subjectConfirmationNotOnOrAfter':
-        'The window during which the bearer can be confirmed as the assertion\'s subject. Often matches Conditions NotOnOrAfter but may differ — the SP must check both, and both must still be within their valid windows.',
+        "The window during which the bearer can be confirmed as the assertion's subject. Often matches Conditions NotOnOrAfter but may differ — the SP must check both, and both must still be within their valid windows.",
 
     // ── SAML metadata ─────────────────────────────────────────────────────────
     'meta.signature':
@@ -93,7 +93,7 @@ export const FIELD_EXPLANATIONS: Record<string, string> = {
         'Assertion Consumer Service endpoints (SP) — where the IdP delivers the SAMLResponse. Each has an index; the SP names one in its AuthnRequest (or relies on isDefault). The IdP must POST only to an ACS URL listed here in signed metadata — never to an arbitrary URL from the request.',
 
     'meta.scope':
-        'The shibmd:Scope(s) this IdP is authoritative for — the domain suffix on scoped attribute values like eduPersonPrincipalName (user@university.edu). SPs should reject scoped values whose suffix is not in the IdP\'s declared scope, preventing one IdP from asserting another\'s users.',
+        "The shibmd:Scope(s) this IdP is authoritative for — the domain suffix on scoped attribute values like eduPersonPrincipalName (user@university.edu). SPs should reject scoped values whose suffix is not in the IdP's declared scope, preventing one IdP from asserting another's users.",
 
     'meta.requestedAttributes':
         'The attributes this SP declares it needs (AttributeConsumingService). isRequired="true" marks an attribute the service cannot function without. IdP administrators use this list — alongside entity categories — to decide what to release, though required does not obligate an IdP to send it.',
@@ -102,7 +102,7 @@ export const FIELD_EXPLANATIONS: Record<string, string> = {
         'Per-role signing policy. WantAuthnRequestsSigned (IdP) and AuthnRequestsSigned (SP) indicate whether the SP signs its AuthnRequests. WantAssertionsSigned (SP) requires the IdP to sign the assertion itself, not just the response. These advertise expectations; the relying party still enforces them.',
 
     'meta.organization':
-        'The human-readable organization behind this entity (md:Organization). OrganizationDisplayName is shown in discovery interfaces and consent screens; OrganizationURL links to the organization\'s site. Distinct from the technical EntityID.',
+        "The human-readable organization behind this entity (md:Organization). OrganizationDisplayName is shown in discovery interfaces and consent screens; OrganizationURL links to the organization's site. Distinct from the technical EntityID.",
 
     'meta.contacts':
         'Published contact people for this entity (md:ContactPerson). A technical contact handles integration and certificate rollover; a security/SIRTFI contact is the point of contact for incident response. Federations increasingly require a valid security contact.',
@@ -143,7 +143,7 @@ export const FIELD_EXPLANATIONS: Record<string, string> = {
         'The "nbf" (Not Before) claim — the token must not be accepted before this Unix timestamp. Allows tokens to be pre-issued and activated at a specific future moment, useful for scheduled or deferred access grants.',
 
     'jwt.ts.expires':
-        'The "exp" (Expiration Time) claim — the token must be rejected after this Unix timestamp. Access tokens are typically short-lived (minutes to an hour) to limit exposure if a token is stolen or leaked.',
+        'The "exp" (Expiration Time) claim — the token must be rejected after this Unix timestamp. Access tokens are typically short-lived (minutes to an hour) to limit exposure if a token is stolen or leaked.'
 };
 
 export const SAML_TS_KEY: Record<string, string> = {
@@ -151,5 +151,5 @@ export const SAML_TS_KEY: Record<string, string> = {
     SessionNotOnOrAfter: 'saml.ts.sessionNotOnOrAfter',
     NotBefore: 'saml.ts.notBefore',
     NotOnOrAfter: 'saml.ts.notOnOrAfter',
-    'SubjectConfirmation NotOnOrAfter': 'saml.ts.subjectConfirmationNotOnOrAfter',
+    'SubjectConfirmation NotOnOrAfter': 'saml.ts.subjectConfirmationNotOnOrAfter'
 };

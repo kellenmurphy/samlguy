@@ -106,9 +106,7 @@ describe('EXAMPLES', () => {
     });
 
     it('MFA SAMLResponse has REFEDS MFA authn context', () => {
-        const mfa = EXAMPLES.find(
-            (e) => e.category === 'SAMLResponse' && e.label.includes('MFA')
-        );
+        const mfa = EXAMPLES.find((e) => e.category === 'SAMLResponse' && e.label.includes('MFA'));
         expect(mfa).toBeDefined();
         expect(decodeSaml(mfa!.payload()).summary.authnContext?.classRef).toBe(
             'https://refeds.org/profile/mfa'
@@ -116,9 +114,7 @@ describe('EXAMPLES', () => {
     });
 
     it('MFA SAMLRequest has REFEDS MFA requested authn context', () => {
-        const mfa = EXAMPLES.find(
-            (e) => e.category === 'SAMLRequest' && e.label.includes('MFA')
-        );
+        const mfa = EXAMPLES.find((e) => e.category === 'SAMLRequest' && e.label.includes('MFA'));
         expect(mfa).toBeDefined();
         const result = decodeSaml(mfa!.payload());
         expect(result.summary.requestedAuthnContext?.classRefs).toContain(

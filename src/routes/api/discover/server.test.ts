@@ -34,25 +34,27 @@ describe('GET /api/discover', () => {
     });
 
     it('returns 400 for an invalid issuer URL', async () => {
-        await expect(GET(makeEvent({ issuer: 'not a url' }))).rejects.toMatchObject({ status: 400 });
+        await expect(GET(makeEvent({ issuer: 'not a url' }))).rejects.toMatchObject({
+            status: 400
+        });
     });
 
     it('returns 400 when issuer is not HTTPS', async () => {
-        await expect(
-            GET(makeEvent({ issuer: 'http://idp.example.com' }))
-        ).rejects.toMatchObject({ status: 400 });
+        await expect(GET(makeEvent({ issuer: 'http://idp.example.com' }))).rejects.toMatchObject({
+            status: 400
+        });
     });
 
     it('returns 400 for an IPv6 literal issuer', async () => {
-        await expect(
-            GET(makeEvent({ issuer: 'https://[::1]/' }))
-        ).rejects.toMatchObject({ status: 400 });
+        await expect(GET(makeEvent({ issuer: 'https://[::1]/' }))).rejects.toMatchObject({
+            status: 400
+        });
     });
 
     it('returns 400 for an IPv4 literal issuer', async () => {
-        await expect(
-            GET(makeEvent({ issuer: 'https://169.254.169.254/' }))
-        ).rejects.toMatchObject({ status: 400 });
+        await expect(GET(makeEvent({ issuer: 'https://169.254.169.254/' }))).rejects.toMatchObject({
+            status: 400
+        });
     });
 
     // --- Fetch failures ---
@@ -60,9 +62,9 @@ describe('GET /api/discover', () => {
     it('returns 504 when the discovery fetch times out (AbortError thrown directly)', async () => {
         const abortErr = Object.assign(new Error('aborted'), { name: 'AbortError' });
         vi.mocked(fetch).mockRejectedValue(abortErr);
-        await expect(
-            GET(makeEvent({ issuer: 'https://idp.example.com' }))
-        ).rejects.toMatchObject({ status: 504 });
+        await expect(GET(makeEvent({ issuer: 'https://idp.example.com' }))).rejects.toMatchObject({
+            status: 504
+        });
     });
 
     it('aborts the fetch and returns 504 when the 5-second timer fires', async () => {
@@ -84,16 +86,16 @@ describe('GET /api/discover', () => {
 
     it('returns 502 when the fetch fails for a non-timeout reason (e.g. redirect blocked)', async () => {
         vi.mocked(fetch).mockRejectedValue(new TypeError('redirect mode is set to error'));
-        await expect(
-            GET(makeEvent({ issuer: 'https://idp.example.com' }))
-        ).rejects.toMatchObject({ status: 502 });
+        await expect(GET(makeEvent({ issuer: 'https://idp.example.com' }))).rejects.toMatchObject({
+            status: 502
+        });
     });
 
     it('passes through non-ok HTTP status from the discovery endpoint', async () => {
         vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 404 }));
-        await expect(
-            GET(makeEvent({ issuer: 'https://idp.example.com' }))
-        ).rejects.toMatchObject({ status: 404 });
+        await expect(GET(makeEvent({ issuer: 'https://idp.example.com' }))).rejects.toMatchObject({
+            status: 404
+        });
     });
 
     // --- Response size limits ---
@@ -105,47 +107,49 @@ describe('GET /api/discover', () => {
                 headers: { 'content-length': '200000' }
             })
         );
-        await expect(
-            GET(makeEvent({ issuer: 'https://idp.example.com' }))
-        ).rejects.toMatchObject({ status: 502 });
+        await expect(GET(makeEvent({ issuer: 'https://idp.example.com' }))).rejects.toMatchObject({
+            status: 502
+        });
     });
 
     it('returns 502 when the response body exceeds the size cap even without Content-Length', async () => {
         const bigBody = 'x'.repeat(100_001);
         vi.mocked(fetch).mockResolvedValue(new Response(bigBody, { status: 200 }));
-        await expect(
-            GET(makeEvent({ issuer: 'https://idp.example.com' }))
-        ).rejects.toMatchObject({ status: 502 });
+        await expect(GET(makeEvent({ issuer: 'https://idp.example.com' }))).rejects.toMatchObject({
+            status: 502
+        });
     });
 
     // --- Response body validation ---
 
     it('returns 502 when the response body is not valid JSON', async () => {
         vi.mocked(fetch).mockResolvedValue(new Response('<html>nope</html>', { status: 200 }));
-        await expect(
-            GET(makeEvent({ issuer: 'https://idp.example.com' }))
-        ).rejects.toMatchObject({ status: 502 });
+        await expect(GET(makeEvent({ issuer: 'https://idp.example.com' }))).rejects.toMatchObject({
+            status: 502
+        });
     });
 
     it('returns 502 when the JSON body is not an object (e.g. a number)', async () => {
         vi.mocked(fetch).mockResolvedValue(new Response('42', { status: 200 }));
-        await expect(
-            GET(makeEvent({ issuer: 'https://idp.example.com' }))
-        ).rejects.toMatchObject({ status: 502 });
+        await expect(GET(makeEvent({ issuer: 'https://idp.example.com' }))).rejects.toMatchObject({
+            status: 502
+        });
     });
 
     it('returns 502 when the JSON body is null', async () => {
         vi.mocked(fetch).mockResolvedValue(new Response('null', { status: 200 }));
-        await expect(
-            GET(makeEvent({ issuer: 'https://idp.example.com' }))
-        ).rejects.toMatchObject({ status: 502 });
+        await expect(GET(makeEvent({ issuer: 'https://idp.example.com' }))).rejects.toMatchObject({
+            status: 502
+        });
     });
 
     it('returns 502 when the JSON object has no issuer field', async () => {
-        vi.mocked(fetch).mockResolvedValue(makeJsonResponse({ token_endpoint: 'https://idp.example.com/token' }));
-        await expect(
-            GET(makeEvent({ issuer: 'https://idp.example.com' }))
-        ).rejects.toMatchObject({ status: 502 });
+        vi.mocked(fetch).mockResolvedValue(
+            makeJsonResponse({ token_endpoint: 'https://idp.example.com/token' })
+        );
+        await expect(GET(makeEvent({ issuer: 'https://idp.example.com' }))).rejects.toMatchObject({
+            status: 502
+        });
     });
 
     // --- Happy path ---
