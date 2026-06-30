@@ -40,9 +40,7 @@ describe('fuzz: decodeJwt', () => {
 
 describe('fuzz: decodeCert — arbitrary base64 strings', () => {
     it('never throws a non-Error', () => {
-        fc.assert(
-            fc.property(fc.base64String(), (s) => neverThrowsNonError(() => decodeCert(s)))
-        );
+        fc.assert(fc.property(fc.base64String(), (s) => neverThrowsNonError(() => decodeCert(s))));
     });
 });
 

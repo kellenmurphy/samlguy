@@ -80,7 +80,11 @@ function tryBase64(raw: string): GenericDecodeResult | null {
         const text = new TextDecoder().decode(inflated);
         if (isReadable(text)) {
             const ct = detectContentType(text);
-            return { content: formatContent(text, ct), encoding: 'base64+deflate', contentType: ct };
+            return {
+                content: formatContent(text, ct),
+                encoding: 'base64+deflate',
+                contentType: ct
+            };
         }
     } catch {
         // not deflated

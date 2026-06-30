@@ -22,7 +22,7 @@ export const EXAMPLE_CATEGORIES: ExampleCategory[] = [
     'JWT',
     'Authorization header',
     'Query string',
-    'Full URL',
+    'Full URL'
 ];
 
 function ts(offsetSeconds: number): string {
@@ -40,10 +40,7 @@ function encodeRedirectBinding(xml: string): string {
 }
 
 function b64url(obj: object): string {
-    return btoa(JSON.stringify(obj))
-        .replace(/=/g, '')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_');
+    return btoa(JSON.stringify(obj)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 }
 
 function makeJwt(header: object, payload: object): string {
@@ -160,7 +157,7 @@ function idTokenPayload(): object {
         amr: ['pwd', 'mfa'],
         name: 'Jane Smith',
         email: 'jsmith@university.edu',
-        preferred_username: 'jsmith',
+        preferred_username: 'jsmith'
     };
 }
 
@@ -174,7 +171,7 @@ function accessTokenPayload(): object {
         exp: now + 3585,
         jti: 'jwt_6f84bc2a9d1e3057',
         scope: 'openid email profile',
-        client_id: 'app_xyz789',
+        client_id: 'app_xyz789'
     };
 }
 
@@ -281,60 +278,59 @@ export const EXAMPLES: Example[] = [
     {
         label: 'Successful response (password auth)',
         category: 'SAMLResponse',
-        payload: () => samlResponse(),
+        payload: () => samlResponse()
     },
     {
         label: 'Successful response (REFEDS MFA)',
         category: 'SAMLResponse',
-        payload: () => samlResponse({ mfa: true }),
+        payload: () => samlResponse({ mfa: true })
     },
     {
         label: 'Basic authentication request',
         category: 'SAMLRequest',
-        payload: () => samlRequest(),
+        payload: () => samlRequest()
     },
     {
         label: 'Request requiring REFEDS MFA',
         category: 'SAMLRequest',
-        payload: () => samlRequest({ mfa: true }),
+        payload: () => samlRequest({ mfa: true })
     },
     {
         label: 'IdP metadata (Shibboleth)',
         category: 'Metadata',
-        payload: () => idpMetadata(),
+        payload: () => idpMetadata()
     },
     {
         label: 'SP metadata (Shibboleth)',
         category: 'Metadata',
-        payload: () => spMetadata(),
+        payload: () => spMetadata()
     },
     {
         label: 'OIDC ID token',
         category: 'JWT',
-        payload: () => makeJwt({ alg: 'RS256', kid: 'sig-2024-01', typ: 'JWT' }, idTokenPayload()),
+        payload: () => makeJwt({ alg: 'RS256', kid: 'sig-2024-01', typ: 'JWT' }, idTokenPayload())
     },
     {
         label: 'OAuth 2.0 access token',
         category: 'JWT',
         payload: () =>
-            makeJwt({ alg: 'RS256', kid: 'sig-2024-01', typ: 'at+JWT' }, accessTokenPayload()),
+            makeJwt({ alg: 'RS256', kid: 'sig-2024-01', typ: 'at+JWT' }, accessTokenPayload())
     },
     {
         label: 'Bearer token',
         category: 'Authorization header',
         payload: () =>
-            `Authorization: Bearer ${makeJwt({ alg: 'RS256', kid: 'sig-2024-01', typ: 'JWT' }, idTokenPayload())}`,
+            `Authorization: Bearer ${makeJwt({ alg: 'RS256', kid: 'sig-2024-01', typ: 'JWT' }, idTokenPayload())}`
     },
     {
         label: 'Redirect binding query string',
         category: 'Query string',
-        payload: () =>
-            `SAMLRequest=${encodeRedirectBinding(samlRequest())}&RelayState=%2Fdashboard`,
+        payload: () => `SAMLRequest=${encodeRedirectBinding(samlRequest())}&RelayState=%2Fdashboard`
     },
     {
         label: 'IdP redirect binding URL',
         category: 'Full URL',
         payload: () =>
-            `https://idp.university.edu/idp/profile/SAML2/Redirect/SSO?SAMLRequest=${encodeRedirectBinding(samlRequest())}&RelayState=%2Fdashboard`,
-    },
+            `https://idp.university.edu/idp/profile/SAML2/Redirect/SSO?SAMLRequest=${encodeRedirectBinding(samlRequest())}&RelayState=%2Fdashboard`
+    }
 ];

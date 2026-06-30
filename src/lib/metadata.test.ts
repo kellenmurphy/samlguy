@@ -160,7 +160,10 @@ describe('isMetadata', () => {
         ['EntitiesDescriptor aggregate', '<md:EntitiesDescriptor>'],
         ['with XML prolog', '<?xml version="1.0"?>\n<md:EntityDescriptor>'],
         ['with leading comment', '<!-- exported --> <md:EntityDescriptor>'],
-        ['with prolog and multiple comments', '<?xml version="1.0"?><!--a--> <!--b--><md:EntityDescriptor>'],
+        [
+            'with prolog and multiple comments',
+            '<?xml version="1.0"?><!--a--> <!--b--><md:EntityDescriptor>'
+        ],
         ['with a BOM', '\uFEFF<md:EntityDescriptor>'],
         ['self-closing', '<md:EntityDescriptor/>']
     ])('detects %s', (_label, input) => {
@@ -237,8 +240,20 @@ describe('parseMetadata — IdP', () => {
     it('parses SSO and SLO endpoints with response location', () => {
         const r = role('idp');
         expect(r.singleSignOnServices).toEqual([
-            { binding: B('HTTP-Redirect'), location: 'https://shibidp.virginia.edu/idp/profile/SAML2/Redirect/SSO', responseLocation: undefined, index: undefined, isDefault: undefined },
-            { binding: B('HTTP-POST'), location: 'https://shibidp.virginia.edu/idp/profile/SAML2/POST/SSO', responseLocation: undefined, index: undefined, isDefault: undefined }
+            {
+                binding: B('HTTP-Redirect'),
+                location: 'https://shibidp.virginia.edu/idp/profile/SAML2/Redirect/SSO',
+                responseLocation: undefined,
+                index: undefined,
+                isDefault: undefined
+            },
+            {
+                binding: B('HTTP-POST'),
+                location: 'https://shibidp.virginia.edu/idp/profile/SAML2/POST/SSO',
+                responseLocation: undefined,
+                index: undefined,
+                isDefault: undefined
+            }
         ]);
         expect(r.singleLogoutServices[0].responseLocation).toBe(
             'https://shibidp.virginia.edu/idp/profile/SAML2/Redirect/SLO'
@@ -251,7 +266,9 @@ describe('parseMetadata — IdP', () => {
         expect(m.descriptions[0].value).toBe('UVA Shibboleth IdP');
         expect(m.informationURLs[0].value).toBe('https://virginia.edu/about');
         expect(m.privacyURLs[0].value).toBe('https://virginia.edu/privacy');
-        expect(m.logos).toEqual([{ url: 'https://virginia.edu/logo.png', width: '80', height: '60' }]);
+        expect(m.logos).toEqual([
+            { url: 'https://virginia.edu/logo.png', width: '80', height: '60' }
+        ]);
     });
 
     it('parses organization', () => {
@@ -293,7 +310,13 @@ describe('parseMetadata — SP', () => {
 
     it('parses indexed ACS endpoints with default flag', () => {
         const acs = role('sp', sp()).assertionConsumerServices!;
-        expect(acs[0]).toEqual({ binding: B('HTTP-POST'), location: 'https://sp.example.org/acs', responseLocation: undefined, index: 0, isDefault: true });
+        expect(acs[0]).toEqual({
+            binding: B('HTTP-POST'),
+            location: 'https://sp.example.org/acs',
+            responseLocation: undefined,
+            index: 0,
+            isDefault: true
+        });
         expect(acs[1].index).toBe(1);
         expect(acs[1].isDefault).toBeUndefined();
     });
@@ -377,12 +400,20 @@ describe('label maps', () => {
     it('maps known bindings and entity categories with spec URLs', () => {
         expect(BINDING_LABELS[B('HTTP-POST')]).toBe('HTTP-POST');
         expect(BINDING_LABELS[B('HTTP-POST-SimpleSign')]).toBe('HTTP-POST-SimpleSign');
-        expect(BINDING_LABELS['urn:mace:shibboleth:1.0:profiles:AuthnRequest']).toBe('Shibboleth 1.0 AuthnRequest');
+        expect(BINDING_LABELS['urn:mace:shibboleth:1.0:profiles:AuthnRequest']).toBe(
+            'Shibboleth 1.0 AuthnRequest'
+        );
         expect(ENTITY_CATEGORY_LABELS['https://refeds.org/sirtfi']).toBe('SIRTFI');
-        expect(ENTITY_CATEGORY_LABELS['http://id.incommon.org/category/registered-by-incommon']).toBe('Registered by InCommon');
-        expect(ENTITY_CATEGORY_LABELS['http://www.swamid.se/category/research-and-education']).toBe('R&E (SWAMID)');
+        expect(
+            ENTITY_CATEGORY_LABELS['http://id.incommon.org/category/registered-by-incommon']
+        ).toBe('Registered by InCommon');
+        expect(ENTITY_CATEGORY_LABELS['http://www.swamid.se/category/research-and-education']).toBe(
+            'R&E (SWAMID)'
+        );
         expect(ENTITY_CATEGORY_LABELS['https://idem.garr.it/af/IDEM-P1']).toBe('IDEM P1');
-        expect(ENTITY_CATEGORY_LABELS['http://www.geant.net/uri/dataprotection-code-of-conduct/v2']).toBe('GÉANT CoCo v2');
+        expect(
+            ENTITY_CATEGORY_LABELS['http://www.geant.net/uri/dataprotection-code-of-conduct/v2']
+        ).toBe('GÉANT CoCo v2');
         expect(ENTITY_CATEGORY_SPEC_URLS['https://refeds.org/sirtfi']).toMatch(/^https:\/\//);
     });
 });

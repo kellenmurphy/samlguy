@@ -9,15 +9,9 @@ const RS256_FULL =
     '.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlLmNvbSIsInN1YiI6InVzZXIxMjMiLCJhdWQiOiJjbGllbnRfaWQiLCJpYXQiOjk5OTk5NjQwMCwiZXhwIjoxMDAwMDAwMDAwLCJuYmYiOjk5OTk5NjQwMCwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCJ9' +
     '.sig';
 
-const ALG_NONE =
-    'eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0' +
-    '.eyJzdWIiOiJhdHRhY2tlciJ9' +
-    '.sig';
+const ALG_NONE = 'eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0' + '.eyJzdWIiOiJhdHRhY2tlciJ9' + '.sig';
 
-const HS256 =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9' +
-    '.eyJzdWIiOiJhdHRhY2tlciJ9' +
-    '.sig';
+const HS256 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9' + '.eyJzdWIiOiJhdHRhY2tlciJ9' + '.sig';
 
 const SCOPE_ARRAY =
     'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9' +
@@ -39,10 +33,7 @@ const NO_SCOPE =
     '.eyJzdWIiOiJ1c2VyIiwiaXNzIjoiaHR0cHM6Ly9leGFtcGxlLmNvbSJ9' +
     '.sig';
 
-const NO_TIMESTAMPS =
-    'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9' +
-    '.eyJzdWIiOiJ1c2VyIn0' +
-    '.sig';
+const NO_TIMESTAMPS = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9' + '.eyJzdWIiOiJ1c2VyIn0' + '.sig';
 
 describe('decodeJwt — RS256 with full claims', () => {
     const result = decodeJwt(RS256_FULL);
@@ -54,7 +45,7 @@ describe('decodeJwt — RS256 with full claims', () => {
     it('populates payload', () => {
         expect(result.payload).toMatchObject({
             iss: 'https://issuer.example.com',
-            sub: 'user123',
+            sub: 'user123'
         });
     });
 
@@ -172,10 +163,7 @@ describe('decodeJwt — missing timestamps', () => {
 });
 
 // header: {"alg":42,"typ":"JWT"} — alg is a number, not a string
-const ALG_NOT_STRING =
-    'eyJhbGciOjQyLCJ0eXAiOiJKV1QifQ' +
-    '.eyJzdWIiOiJ1c2VyIn0' +
-    '.sig';
+const ALG_NOT_STRING = 'eyJhbGciOjQyLCJ0eXAiOiJKV1QifQ' + '.eyJzdWIiOiJ1c2VyIn0' + '.sig';
 
 describe('decodeJwt — non-string alg', () => {
     const result = decodeJwt(ALG_NOT_STRING);
@@ -207,8 +195,8 @@ describe('decodeJwt — error cases', () => {
 
     it('throws when payload is not valid JSON after base64url decode', () => {
         // header is valid, payload decodes to "notjson"
-        expect(() =>
-            decodeJwt('eyJhbGciOiJSUzI1NiJ9.bm90anNvbg.sig')
-        ).toThrow('could not decode payload');
+        expect(() => decodeJwt('eyJhbGciOiJSUzI1NiJ9.bm90anNvbg.sig')).toThrow(
+            'could not decode payload'
+        );
     });
 });

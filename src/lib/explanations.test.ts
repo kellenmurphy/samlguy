@@ -48,7 +48,7 @@ const EXPECTED_KEYS = [
     'jwt.scopes',
     'jwt.ts.issuedAt',
     'jwt.ts.notBefore',
-    'jwt.ts.expires',
+    'jwt.ts.expires'
 ];
 
 describe('FIELD_EXPLANATIONS', () => {
@@ -61,7 +61,10 @@ describe('FIELD_EXPLANATIONS', () => {
 describe('SAML_TS_KEY', () => {
     it('maps all SAML timestamp labels to known FIELD_EXPLANATIONS keys', () => {
         for (const [label, key] of Object.entries(SAML_TS_KEY)) {
-            expect(FIELD_EXPLANATIONS[key], `SAML_TS_KEY["${label}"] points to missing key "${key}"`).toBeDefined();
+            expect(
+                FIELD_EXPLANATIONS[key],
+                `SAML_TS_KEY["${label}"] points to missing key "${key}"`
+            ).toBeDefined();
         }
     });
 });

@@ -38,22 +38,20 @@ function parseScopes(payload: Record<string, unknown>): string[] | null {
     const scope = payload.scope;
     const scp = payload.scp;
 
-    if (typeof scope === 'string' && scope.trim())
-        return scope.trim().split(/\s+/);
-    if (Array.isArray(scope))
-        return scope.filter((s): s is string => typeof s === 'string');
-    if (typeof scp === 'string' && scp.trim())
-        return scp.trim().split(/\s+/);
-    if (Array.isArray(scp))
-        return scp.filter((s): s is string => typeof s === 'string');
+    if (typeof scope === 'string' && scope.trim()) return scope.trim().split(/\s+/);
+    if (Array.isArray(scope)) return scope.filter((s): s is string => typeof s === 'string');
+    if (typeof scp === 'string' && scp.trim()) return scp.trim().split(/\s+/);
+    if (Array.isArray(scp)) return scp.filter((s): s is string => typeof s === 'string');
     return null;
 }
 
 export function decodeJwt(input: string): JwtDecodeResult {
-    const trimmed = input.trim().replace(/^Authorization:\s+/i, '').replace(/^Bearer\s+/i, '');
+    const trimmed = input
+        .trim()
+        .replace(/^Authorization:\s+/i, '')
+        .replace(/^Bearer\s+/i, '');
     const parts = trimmed.split('.');
-    if (parts.length !== 3)
-        throw new Error('Invalid JWT: expected 3 dot-separated parts');
+    if (parts.length !== 3) throw new Error('Invalid JWT: expected 3 dot-separated parts');
 
     const [headerB64, payloadB64, signature] = parts;
 
@@ -86,8 +84,8 @@ export function decodeJwt(input: string): JwtDecodeResult {
         timestamps: {
             iat: parseTimestamp(payload.iat),
             exp: parseTimestamp(payload.exp),
-            nbf: parseTimestamp(payload.nbf),
+            nbf: parseTimestamp(payload.nbf)
         },
-        scopes: parseScopes(payload),
+        scopes: parseScopes(payload)
     };
 }

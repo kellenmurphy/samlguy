@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-    getAttributeInfo,
-    eppnScopedStatus,
-    EPPN_OID,
-    ATTRIBUTE_REGISTRY,
-} from './attributes';
+import { getAttributeInfo, eppnScopedStatus, EPPN_OID, ATTRIBUTE_REGISTRY } from './attributes';
 
 describe('ATTRIBUTE_REGISTRY', () => {
     it('EPPN_OID constant matches the registry entry', () => {

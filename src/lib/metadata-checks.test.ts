@@ -91,7 +91,9 @@ describe('checkMetadata', () => {
         expect(t).toContain('Certificate contains PEM headers');
         expect(t).toContain('IdP has a plaintext (HTTP) endpoint');
         expect(checks.find((c) => c.title === 'Metadata expired')?.severity).toBe('error');
-        expect(checks.find((c) => c.title === 'Certificate contains PEM headers')?.severity).toBe('error');
+        expect(checks.find((c) => c.title === 'Certificate contains PEM headers')?.severity).toBe(
+            'error'
+        );
     });
 
     it('warns on imminent expiry, whitespace entityID, and a role with no certificate', () => {

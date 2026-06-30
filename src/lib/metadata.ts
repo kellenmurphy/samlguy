@@ -214,7 +214,10 @@ function parseEntity(el: Element): EntityMetadata {
         entityId: attr(el, 'entityID') ?? '',
         validUntil: attr(el, 'validUntil'),
         cacheDuration: attr(el, 'cacheDuration'),
-        registrationAuthority: attr(getEl(el, NS_MDRPI, 'RegistrationInfo'), 'registrationAuthority'),
+        registrationAuthority: attr(
+            getEl(el, NS_MDRPI, 'RegistrationInfo'),
+            'registrationAuthority'
+        ),
         entityCategories: parseEntityCategories(el),
         organization,
         contacts: getEls(el, NS_MD, 'ContactPerson').map(parseContact),
@@ -251,7 +254,9 @@ function parseContact(el: Element): ContactPerson {
 function parseRole(el: Element, kind: 'idp' | 'sp'): RoleDescriptor {
     const role: RoleDescriptor = {
         kind,
-        protocolSupport: (attr(el, 'protocolSupportEnumeration') ?? '').split(/\s+/).filter(Boolean),
+        protocolSupport: (attr(el, 'protocolSupportEnumeration') ?? '')
+            .split(/\s+/)
+            .filter(Boolean),
         keys: parseKeys(el),
         nameIdFormats: getEls(el, NS_MD, 'NameIDFormat')
             .map((f) => txt(f))
@@ -390,17 +395,22 @@ const REFEDS_CoC_HOME = 'https://wiki.refeds.org/display/CODE/Data+Protection+Co
 
 export const ENTITY_CATEGORY_SPEC_URLS: Record<string, string> = {
     // R&S
-    'http://refeds.org/category/research-and-scholarship': 'https://refeds.org/category/research-and-scholarship',
-    'https://refeds.org/category/research-and-scholarship': 'https://refeds.org/category/research-and-scholarship',
+    'http://refeds.org/category/research-and-scholarship':
+        'https://refeds.org/category/research-and-scholarship',
+    'https://refeds.org/category/research-and-scholarship':
+        'https://refeds.org/category/research-and-scholarship',
     'http://id.incommon.org/category/research-and-scholarship':
         'https://incommon.org/federation/research-scholarship-adopters/',
     // Code of Conduct
     'http://www.geant.net/uri/dataprotection-code-of-conduct/v1': REFEDS_CoC_HOME,
     'https://www.geant.net/uri/dataprotection-code-of-conduct/v1': REFEDS_CoC_HOME,
     'http://www.geant.net/uri/dataprotection-code-of-conduct/v2': REFEDS_CoC_HOME,
-    'https://geant.org/category/code-of-conduct/v2': 'https://refeds.org/category/code-of-conduct/v2',
-    'https://refeds.org/category/code-of-conduct/v1': 'https://refeds.org/category/code-of-conduct/v1',
-    'https://refeds.org/category/code-of-conduct/v2': 'https://refeds.org/category/code-of-conduct/v2',
+    'https://geant.org/category/code-of-conduct/v2':
+        'https://refeds.org/category/code-of-conduct/v2',
+    'https://refeds.org/category/code-of-conduct/v1':
+        'https://refeds.org/category/code-of-conduct/v1',
+    'https://refeds.org/category/code-of-conduct/v2':
+        'https://refeds.org/category/code-of-conduct/v2',
     // SIRTFI & assurance
     'https://refeds.org/sirtfi': 'https://refeds.org/sirtfi',
     'http://refeds.org/sirtfi': 'https://refeds.org/sirtfi',
@@ -427,8 +437,10 @@ export const ENTITY_CATEGORY_SPEC_URLS: Record<string, string> = {
     // Other well-known
     'http://www.swamid.se/category/research-and-education': 'https://wiki.sunet.se/display/SWAMID',
     'http://www.swamid.se/category/hei-service': 'https://wiki.sunet.se/display/SWAMID',
-    'http://clarin.eu/category/clarin-member': 'https://www.clarin.eu/content/service-provider-federation',
-    'https://myacademicid.org/entity-categories/esi': 'https://myacademicid.org/entity-categories/esi',
+    'http://clarin.eu/category/clarin-member':
+        'https://www.clarin.eu/content/service-provider-federation',
+    'https://myacademicid.org/entity-categories/esi':
+        'https://myacademicid.org/entity-categories/esi',
     // Registration markers
     'http://id.incommon.org/category/registered-by-incommon':
         'https://incommon.org/federation/entity-categories/',

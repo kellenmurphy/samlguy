@@ -29,8 +29,8 @@
         onmouseenter={show}
         onfocus={show}
         onmouseleave={hide}
-        onblur={hide}
-    >?</button>
+        onblur={hide}>?</button
+    >
     {#if visible}
         <div
             role="tooltip"
