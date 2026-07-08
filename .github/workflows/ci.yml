@@ -64,7 +64,7 @@ jobs:
 
             - name: Setup uv
               # astral-sh/setup-uv v8.1.0
-              uses: astral-sh/setup-uv@f98e06938123ccabd21905ea5d0069192241f9f1
+              uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990
 
             - name: Scan with GuardDog
               run: uvx guarddog npm verify package-lock.json --output-format sarif > guarddog.sarif
@@ -72,7 +72,7 @@ jobs:
             - name: Upload GuardDog SARIF
               if: always()
               # github/codeql-action v3.28.13
-              uses: github/codeql-action/upload-sarif@54f647b7e1bb85c95cddabcd46b0c578ec92bc1a
+              uses: github/codeql-action/upload-sarif@99df26d4f13ea111d4ec1a7dddef6063f76b97e9
               with:
                   sarif_file: guarddog.sarif
                   category: guarddog
@@ -140,7 +140,7 @@ jobs:
             - name: Upload Grype SARIF
               if: always()
               # github/codeql-action v3.28.13
-              uses: github/codeql-action/upload-sarif@54f647b7e1bb85c95cddabcd46b0c578ec92bc1a
+              uses: github/codeql-action/upload-sarif@99df26d4f13ea111d4ec1a7dddef6063f76b97e9
               with:
                   sarif_file: ${{ steps.grype.outputs.sarif }}
                   category: grype
