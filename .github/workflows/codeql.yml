@@ -30,6 +30,6 @@ jobs:
 
             - name: Analyze
               # github/codeql-action v3.28.13
-              uses: github/codeql-action/analyze@7188fc363630916deb702c7fdcf4e481b751f97a
+              uses: github/codeql-action/analyze@e0647621c2984b5ed2f768cb892365bf2a616ad1
               with:
                   category: /language:javascript-typescript
