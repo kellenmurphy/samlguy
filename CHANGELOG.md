@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.3](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.2...samlguy-v1.5.3) (2026-07-21)
+
+
+### Bug Fixes & Dependencies
+
+* **deps:** batch dependency bumps 2026-07-21 ([#224](https://github.com/kellenmurphy/samlguy/issues/224)) ([fd059fa](https://github.com/kellenmurphy/samlguy/commit/fd059fa5a97b836c9ea537f9dc3fc9ca852c5ae5))
+
 ## [1.5.2](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.1...samlguy-v1.5.2) (2026-06-16)
 
 ### Security
