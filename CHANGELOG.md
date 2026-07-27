@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.4](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.3...samlguy-v1.5.4) (2026-07-27)
+
+
+### Bug Fixes & Dependencies
+
+* **deps:** resolve npm audit findings ([93c5926](https://github.com/kellenmurphy/samlguy/commit/93c5926ebb7662a8dab59449bd74836996337d53))
+* **deps:** resolve npm audit findings ([0105abb](https://github.com/kellenmurphy/samlguy/commit/0105abb1ec4d7ea1233209e580aff55ac131f10f))
+
 ## [1.5.3](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.2...samlguy-v1.5.3) (2026-07-21)
 
 
