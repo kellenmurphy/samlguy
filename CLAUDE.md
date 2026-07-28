@@ -218,8 +218,10 @@ The identity community will appreciate a tool that clearly understands their wor
 
 ## Deployment
 
-- **Cloudflare Pages** — connected to this GitHub repo; merges to `main` auto-deploy
-- Build command: `npm run build`
+- **Cloudflare Pages** — direct upload, **not** git-connected. The Pages project has no repo connection and no build configuration; Cloudflare never runs a build.
+- The `deploy` job in `.github/workflows/ci.yml` builds and uploads on every push to `main`: `npm ci` → `npm run build` → `wrangler pages deploy .svelte-kit/cloudflare --project-name=samlguy`. GitHub Actions is therefore the toolchain that produces the production artifact, so its `node-version` is a production-path setting, not just CI hygiene.
+- Build command: `npm run build` (run in Actions)
 - Output directory: `.svelte-kit/cloudflare`
 - Cloudflare Worker API routes deploy automatically alongside the Pages site via the adapter
+- Runtime compatibility date is set in the Pages project settings (currently 2026-05-11), not in a `wrangler.toml` — there is no wrangler config file in the repo
 - `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` stored as GitHub repository secrets; token is scoped to Cloudflare Pages only
