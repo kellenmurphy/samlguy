@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.5](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.4...samlguy-v1.5.5) (2026-07-28)
+
+
+### Documentation
+
+* correct the Cloudflare Pages deployment description ([f63a80d](https://github.com/kellenmurphy/samlguy/commit/f63a80d0d6c8fd1ec794f4ea84e7edf2f9fde285))
+
 ## [1.5.4](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.3...samlguy-v1.5.4) (2026-07-27)
 
 
