@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.6](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.5...samlguy-v1.5.6) (2026-08-03)
+
+
+### Security
+
+* **deps-dev:** override undici to 7.29.0 and bump brace-expansion ([441b729](https://github.com/kellenmurphy/samlguy/commit/441b7296cc45dfcbddaf932b5b467b64331c3a08))
+
 ## [1.5.5](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.4...samlguy-v1.5.5) (2026-07-28)
 
 
