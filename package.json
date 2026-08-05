@@ -27,7 +27,7 @@
         "eslint": "^10.8.0",
         "eslint-plugin-svelte": "^3.22.0",
         "fast-check": "^4.9.0",
-        "globals": "^17.8.0",
+        "globals": "^17.9.0",
         "happy-dom": "^20.11.1",
         "jsdom": "^30.0.1",
         "prettier": "^3.9.6",
