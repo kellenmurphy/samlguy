@@ -176,7 +176,9 @@ Breaking changes: add `!` after the type (`feat!:` or `fix!:`) **or** include a 
 
 ### Scope (optional)
 
-Scope goes in parentheses: `fix(deps):`, `feat(saml):`, `ci(release):`. Dependabot is configured to produce `fix(deps):` for npm updates and `chore(ci):` for Actions updates — both fit the changelog config automatically.
+Scope goes in parentheses: `fix(deps):`, `feat(saml):`, `ci(release):`. Dependabot is configured with `prefix: 'chore'` and `include: 'scope'`, so it produces `chore(deps):` for production dependencies and Actions updates, and `chore(deps-dev):` for dev dependencies. All of those are hidden from the changelog and trigger no version bump. To get a dependency bump into the published changelog, retitle the squash commit to `fix(deps):` before merging.
+
+Dependabot runs weekly (Monday 06:00 America/New_York), not daily, and collapses everything eligible in that run into a catch-all group per ecosystem, split three ways: patch/minor, major, and security. Expect one PR per ecosystem per week, titled like `chore(deps-dev): bump the npm group with 5 updates`. The split exists because a grouped PR reports the highest update-type in the group, so a major bundled with minors would block the whole batch from auto-merging. `cooldown` holds new releases for 5 days (14 for majors) before they are eligible, as a supply-chain guard; it does not apply to security updates, which are raised as soon as the advisory publishes.
 
 ### Commits that don't trigger changelog entries
 
