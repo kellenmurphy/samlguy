@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.7](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.6...samlguy-v1.5.7) (2026-08-13)
+
+
+### Documentation
+
+* correct the documented dependabot commit prefix ([30b2af2](https://github.com/kellenmurphy/samlguy/commit/30b2af2085fa9c2046468db692d4b49bd2c80d34))
+
 ## [1.5.6](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.5...samlguy-v1.5.6) (2026-08-03)
 
 
