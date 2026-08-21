@@ -33,6 +33,7 @@ function detectContentType(text: string): GenericContentType {
 }
 
 function isReadable(text: string): boolean {
+    /* v8 ignore next -- defensive empty guard; decodeAllGeneric only passes non-empty decoded blobs */
     if (!text) return false;
     const sample = text.slice(0, 500);
     let bad = 0;
@@ -79,7 +80,11 @@ function tryBase64(raw: string): GenericDecodeResult | null {
         const text = new TextDecoder().decode(inflated);
         if (isReadable(text)) {
             const ct = detectContentType(text);
-            return { content: formatContent(text, ct), encoding: 'base64+deflate', contentType: ct };
+            return {
+                content: formatContent(text, ct),
+                encoding: 'base64+deflate',
+                contentType: ct
+            };
         }
     } catch {
         // not deflated

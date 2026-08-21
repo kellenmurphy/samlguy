@@ -62,7 +62,9 @@ describe('decodeAllGeneric — URL/query string extraction', () => {
 
     it('extracts a decodable value from a full URL', () => {
         const blob = toPostBlob(AUTHN_REQUEST_XML);
-        const results = decodeAllGeneric(`https://example.com/path?token=${encodeURIComponent(blob)}`);
+        const results = decodeAllGeneric(
+            `https://example.com/path?token=${encodeURIComponent(blob)}`
+        );
         expect(results.some((r) => r.contentType === 'xml')).toBe(true);
     });
 });
@@ -104,7 +106,8 @@ describe('decodeAllGeneric — additional paths', () => {
 
     it('decodes base64 plain text with contentType=text', () => {
         // 80+ chars of base64 needed to hit the blob regex scan
-        const plainText = 'hello world, this is plain text content for testing purposes, it is long enough now';
+        const plainText =
+            'hello world, this is plain text content for testing purposes, it is long enough now';
         const blob = btoa(plainText);
         const results = decodeAllGeneric(blob);
         expect(results).toHaveLength(1);

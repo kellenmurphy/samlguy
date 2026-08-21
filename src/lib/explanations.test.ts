@@ -13,12 +13,31 @@ const EXPECTED_KEYS = [
     'saml.relayState',
     'saml.encrypted',
     'saml.signingCert',
+    'saml.authnContext',
+    'saml.requestedAuthnContext',
     'saml.attributes',
     'saml.ts.authnInstant',
     'saml.ts.sessionNotOnOrAfter',
     'saml.ts.notBefore',
     'saml.ts.notOnOrAfter',
     'saml.ts.subjectConfirmationNotOnOrAfter',
+    'meta.signature',
+    'meta.entityId',
+    'meta.validUntil',
+    'meta.registrationAuthority',
+    'meta.entityCategories',
+    'meta.role',
+    'meta.keys',
+    'meta.nameIdFormats',
+    'meta.sso',
+    'meta.slo',
+    'meta.acs',
+    'meta.scope',
+    'meta.requestedAttributes',
+    'meta.signingFlags',
+    'meta.organization',
+    'meta.contacts',
+    'meta.mdui',
     'jwt.algorithm',
     'jwt.tokenType',
     'jwt.keyId',
@@ -29,7 +48,7 @@ const EXPECTED_KEYS = [
     'jwt.scopes',
     'jwt.ts.issuedAt',
     'jwt.ts.notBefore',
-    'jwt.ts.expires',
+    'jwt.ts.expires'
 ];
 
 describe('FIELD_EXPLANATIONS', () => {
@@ -42,7 +61,10 @@ describe('FIELD_EXPLANATIONS', () => {
 describe('SAML_TS_KEY', () => {
     it('maps all SAML timestamp labels to known FIELD_EXPLANATIONS keys', () => {
         for (const [label, key] of Object.entries(SAML_TS_KEY)) {
-            expect(FIELD_EXPLANATIONS[key], `SAML_TS_KEY["${label}"] points to missing key "${key}"`).toBeDefined();
+            expect(
+                FIELD_EXPLANATIONS[key],
+                `SAML_TS_KEY["${label}"] points to missing key "${key}"`
+            ).toBeDefined();
         }
     });
 });

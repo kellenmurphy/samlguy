@@ -68,8 +68,10 @@ function oid(bytes: Uint8Array): string {
     for (const b of bytes) {
         acc = (acc << 7) | (b & 0x7f);
         if (!(b & 0x80)) {
-            if (first) { parts.push(Math.floor(acc / 40), acc % 40); first = false; }
-            else parts.push(acc);
+            if (first) {
+                parts.push(Math.floor(acc / 40), acc % 40);
+                first = false;
+            } else parts.push(acc);
             acc = 0;
         }
     }
@@ -86,12 +88,12 @@ function parseTime(node: DerNode): Date {
         const y = parseInt(s.slice(0, 2));
         return new Date(
             `${y >= 50 ? 1900 + y : 2000 + y}-${s.slice(2, 4)}-${s.slice(4, 6)}` +
-            `T${s.slice(6, 8)}:${s.slice(8, 10)}:${s.slice(10, 12)}Z`
+                `T${s.slice(6, 8)}:${s.slice(8, 10)}:${s.slice(10, 12)}Z`
         );
     }
     return new Date(
         `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}` +
-        `T${s.slice(8, 10)}:${s.slice(10, 12)}:${s.slice(12, 14)}Z`
+            `T${s.slice(8, 10)}:${s.slice(10, 12)}:${s.slice(12, 14)}Z`
     );
 }
 
@@ -172,5 +174,13 @@ export function decodeCert(base64Der: string): CertInfo {
     const keyAlgorithm = parseKeyAlg(f[i]);
 
     const now = new Date();
-    return { subject, issuer, validFrom, validTo, isValid: now >= validFrom && now <= validTo, serialNumber, keyAlgorithm };
+    return {
+        subject,
+        issuer,
+        validFrom,
+        validTo,
+        isValid: now >= validFrom && now <= validTo,
+        serialNumber,
+        keyAlgorithm
+    };
 }

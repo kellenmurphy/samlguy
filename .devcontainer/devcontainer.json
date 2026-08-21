@@ -1,0 +1,32 @@
+// Dev Container / Codespaces configuration for samlguy.com
+// JSONC — comments are allowed here.
+{
+  "name": "samlguy",
+
+  // Keep the default Codespaces image: Node 24, npm, git, and the
+  // Codespaces GPG commit-signing wrapper (gh-gpgsign) all come with it.
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+
+  // Install the Claude Code CLI so `claude` is available in the integrated
+  // terminal too (the VS Code extension bundles its own copy separately).
+  "features": {
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+  },
+
+  "customizations": {
+    "vscode": {
+      // Install + enable the Claude Code extension automatically.
+      "extensions": ["anthropic.claude-code"]
+    }
+  },
+
+  // Install project dependencies on create so the workspace is ready to run.
+  "postCreateCommand": "npm ci"
+
+  // Authentication note:
+  //   Sign-in is provided at runtime via the CLAUDE_CODE_OAUTH_TOKEN
+  //   Codespaces secret (Settings > Secrets and variables > Codespaces).
+  //   Codespaces injects that secret as an environment variable, which both
+  //   the CLI and the extension read automatically. The token is intentionally
+  //   NOT stored in this file or in the prebuilt image.
+}

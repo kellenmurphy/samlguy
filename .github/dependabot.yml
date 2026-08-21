@@ -1,22 +1,86 @@
+# Consolidated update strategy: one weekly run per ecosystem, and within that run
+# every eligible dependency is collapsed into a catch-all group. Majors are kept in
+# their own group because the auto-merge workflow only enables auto-merge for
+# patch/minor, and a grouped PR reports the highest update-type in the group: a
+# single major bundled in with minors would hold the whole batch for manual review.
+# Security updates get their own group so an advisory fix is never blocked behind
+# a routine version bump.
+#
+# `cooldown` is the supply-chain control: a newly published version is not
+# eligible for a version-update PR until it has been on the registry for
+# default-days, so a malicious release has a window to be caught and yanked
+# before it reaches us. Majors get a longer soak. Weekly batching stretches this
+# further in practice: a release only lands in a PR on the next Monday run, so
+# the effective minimum age is the cooldown plus up to six more days.
+#
+# The one gap, per GitHub's docs, is that cooldown does NOT apply to security
+# updates: those are raised as soon as the advisory publishes. That is the right
+# trade (a known-exploited CVE should not wait a week), and the GuardDog scan in
+# CI is what covers the malicious-package case on that path.
 version: 2
 updates:
     - package-ecosystem: 'npm'
       directory: '/'
       schedule:
           interval: 'weekly'
-      open-pull-requests-limit: 10
+          day: 'monday'
+          time: '06:00'
+          timezone: 'America/New_York'
+      open-pull-requests-limit: 5
+      cooldown:
+          default-days: 5
+          semver-major-days: 14
+      commit-message:
+          prefix: 'chore'
+          include: 'scope'
       groups:
-          svelte:
+          npm:
+              applies-to: version-updates
               patterns:
-                  - 'svelte*'
-                  - '@sveltejs/*'
-          cloudflare:
+                  - '*'
+              update-types:
+                  - 'patch'
+                  - 'minor'
+          npm-major:
+              applies-to: version-updates
               patterns:
-                  - '@cloudflare/*'
-                  - 'wrangler'
+                  - '*'
+              update-types:
+                  - 'major'
+          npm-security:
+              applies-to: security-updates
+              patterns:
+                  - '*'
 
     - package-ecosystem: 'github-actions'
       directory: '/'
       schedule:
           interval: 'weekly'
+          day: 'monday'
+          time: '06:00'
+          timezone: 'America/New_York'
       open-pull-requests-limit: 5
+      cooldown:
+          default-days: 5
+          semver-major-days: 14
+      commit-message:
+          prefix: 'chore'
+          include: 'scope'
+      groups:
+          actions:
+              applies-to: version-updates
+              patterns:
+                  - '*'
+              update-types:
+                  - 'patch'
+                  - 'minor'
+          actions-major:
+              applies-to: version-updates
+              patterns:
+                  - '*'
+              update-types:
+                  - 'major'
+          actions-security:
+              applies-to: security-updates
+              patterns:
+                  - '*'

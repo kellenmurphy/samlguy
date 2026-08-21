@@ -26,7 +26,8 @@
         </svg>
         <p class="text-sm font-medium text-green-800 dark:text-green-400">
             Everything is processed in your browser. Nothing you paste — SAML assertions, JWTs,
-            certificates, or any other identity data — is ever transmitted to or stored on any server.
+            certificates, or any other identity data — is ever transmitted to or stored on any
+            server.
         </p>
     </div>
 
@@ -36,9 +37,9 @@
                 What this tool does
             </h2>
             <p>
-                samlguy.com hosts a client-side identity decoder. SAML assertions, JWTs, and any other
-                content you paste are decoded entirely within your browser. Nothing you paste is
-                transmitted to or stored on any server.
+                samlguy.com hosts a client-side identity decoder. SAML assertions, JWTs, and any
+                other content you paste are decoded entirely within your browser. Nothing you paste
+                is transmitted to or stored on any server.
             </p>
         </section>
 
@@ -63,8 +64,8 @@
                 fetches the issuer's <code
                     class="rounded bg-neutral-100 px-1 font-mono text-xs dark:bg-neutral-800"
                     >.well-known/openid-configuration</code
-                > endpoint on your behalf to avoid browser CORS restrictions. The proxy forwards the
-                response and does not log or store the issuer URL or the response.
+                > endpoint on your behalf to avoid browser CORS restrictions. The proxy forwards the response
+                and does not log or store the issuer URL or the response.
             </p>
         </section>
 
@@ -81,9 +82,7 @@
         </section>
 
         <section class="space-y-2">
-            <h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-                Hosting
-            </h2>
+            <h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">Hosting</h2>
             <p>
                 This site is served via Cloudflare Pages. Cloudflare may collect standard web server
                 logs (IP address, request path, timestamp) in accordance with their own <a

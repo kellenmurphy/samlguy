@@ -1,0 +1,5 @@
+Contact: https://github.com/kellenmurphy/samlguy/security/advisories/new
+Contact: mailto:me@kellenmurphy.com
+Expires: 2027-05-28T00:00:00.000Z
+Canonical: https://samlguy.com/.well-known/security.txt
+Preferred-Languages: en

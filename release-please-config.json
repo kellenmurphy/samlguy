@@ -6,10 +6,9 @@
             "package-name": "samlguy",
             "changelog-sections": [
                 { "type": "feat", "section": "Features" },
-                { "type": "fix", "section": "Bug Fixes" },
+                { "type": "fix", "section": "Bug Fixes & Dependencies" },
                 { "type": "perf", "section": "Performance" },
                 { "type": "security", "section": "Security" },
-                { "type": "deps", "section": "Dependencies" },
                 { "type": "docs", "section": "Documentation", "hidden": false },
                 { "type": "chore", "section": "Miscellaneous", "hidden": true },
                 { "type": "ci", "section": "CI/CD", "hidden": true }

@@ -1,6 +1,7 @@
 <script lang="ts">
     import '../app.css';
     import { onMount } from 'svelte';
+    import { version } from '$app/environment';
     import type { Snippet } from 'svelte';
 
     let { children }: { children: Snippet } = $props();
@@ -41,13 +42,9 @@
 >
     <header class="px-6 py-4">
         <div class="mx-auto flex max-w-5xl items-center justify-between">
-            <a href="/" class="font-mono text-base font-semibold tracking-tight">
-                <span class="text-neutral-500 dark:text-neutral-500">&lt;</span>samlguy.com<span
-                    class="text-neutral-500 dark:text-neutral-500"
-                >
-                    /&gt;</span
-                >
-            </a>
+            <a href="/" class="font-mono text-base font-semibold tracking-tight"
+                >&lt;<span class="text-neutral-500 dark:text-neutral-500">saml:</span>Guy/&gt;</a
+            >
             <button
                 onclick={toggleTheme}
                 aria-label="Toggle theme"
@@ -97,34 +94,55 @@
     </main>
 
     <footer class="px-6 py-4">
-        <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[10px] text-neutral-400 dark:text-neutral-600">
-            <a href="/privacy" class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400">Privacy</a>
-            <span aria-hidden="true">&middot;</span>
-            <a
-                href="https://github.com/kellenmurphy/samlguy/security"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
-                >Security</a
+        <div
+            class="mx-auto flex max-w-5xl flex-col items-center gap-y-1 text-[10px] text-neutral-400 dark:text-neutral-600"
+        >
+            <span
+                >Made with ♥ by <a
+                    href="https://kellenmurphy.com"
+                    class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
+                    >The SAML Guy</a
+                ></span
             >
-            <span aria-hidden="true">&middot;</span>
-            <span>Made with ♥ by <a href="https://kellenmurphy.com" class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400">The SAML Guy</a></span>
-            <span aria-hidden="true">&middot;</span>
-            <a
-                href="https://github.com/kellenmurphy/samlguy"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
-                >Source</a
-            >
-            <span aria-hidden="true">&middot;</span>
-            <a
-                href="https://github.com/kellenmurphy/samlguy/blob/main/LICENSE"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
-                >MIT License</a
-            >
+            <div class="flex items-center gap-x-3">
+                <a
+                    href="/privacy"
+                    class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
+                    >Privacy</a
+                >
+                <span aria-hidden="true">&middot;</span>
+                <a
+                    href="https://github.com/kellenmurphy/samlguy/security"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
+                    >Security</a
+                >
+                <span aria-hidden="true">&middot;</span>
+                <a
+                    href="https://github.com/kellenmurphy/samlguy/releases/tag/samlguy-v{version}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="font-mono transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
+                    >v{version}</a
+                >
+                <span aria-hidden="true">&middot;</span>
+                <a
+                    href="https://github.com/kellenmurphy/samlguy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
+                    >Source</a
+                >
+                <span aria-hidden="true">&middot;</span>
+                <a
+                    href="https://github.com/kellenmurphy/samlguy/blob/main/LICENSE"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="transition-colors hover:text-neutral-600 dark:hover:text-neutral-400"
+                    >MIT License</a
+                >
+            </div>
         </div>
     </footer>
 </div>

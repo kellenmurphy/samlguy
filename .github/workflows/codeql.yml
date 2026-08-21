@@ -19,17 +19,17 @@ jobs:
             security-events: write
         steps:
             - name: Checkout
-              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
             - name: Initialize CodeQL
               # github/codeql-action v3.28.13
-              uses: github/codeql-action/init@458d36d7d4f47d0dd16ca424c1d3cda0060f1360
+              uses: github/codeql-action/init@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd
               with:
                   languages: javascript-typescript
                   queries: security-extended
 
             - name: Analyze
               # github/codeql-action v3.28.13
-              uses: github/codeql-action/analyze@458d36d7d4f47d0dd16ca424c1d3cda0060f1360
+              uses: github/codeql-action/analyze@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd
               with:
                   category: /language:javascript-typescript

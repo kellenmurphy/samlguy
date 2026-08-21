@@ -5,6 +5,13 @@ on:
         branches: [main]
     pull_request:
         branches: [main]
+        types: [opened, synchronize, reopened, labeled]
+    schedule:
+        # Weekly whole-tree vulnerability sweep (Mondays 06:00 UTC), independent of
+        # PR/push activity, so a newly-published advisory surfaces within a week even
+        # when the repo is quiet.
+        - cron: '0 6 * * 1'
+    workflow_dispatch:
 
 permissions:
     contents: read
@@ -17,19 +24,16 @@ jobs:
             contents: read
         steps:
             - name: Checkout
-              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
             - name: Setup Node
-              uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+              uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
               with:
-                  node-version: 20
+                  node-version: 26
                   cache: 'npm'
 
             - name: Install dependencies
               run: npm ci
-
-            - name: Audit dependencies
-              run: npm audit --audit-level=high
 
             - name: Type check
               run: npm run check
@@ -38,8 +42,8 @@ jobs:
               run: npm run coverage
 
             - name: Upload coverage to Codecov
-              # codecov/codecov-action v6.0.0
-              uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
+              # codecov/codecov-action v7.0.0
+              uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
               with:
                   token: ${{ secrets.CODECOV_TOKEN }}
                   files: ./coverage/lcov.info
@@ -48,23 +52,133 @@ jobs:
             - name: Build
               run: npm run build
 
+    guarddog:
+        name: GuardDog Supply Chain Scan
+        runs-on: ubuntu-24.04
+        permissions:
+            contents: read
+            security-events: write
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+            - name: Setup uv
+              # astral-sh/setup-uv v10.0.0
+              uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d
+
+            - name: Scan with GuardDog
+              run: uvx guarddog npm verify package-lock.json --output-format sarif > guarddog.sarif
+
+            - name: Upload GuardDog SARIF
+              if: always()
+              # github/codeql-action v3.28.13
+              uses: github/codeql-action/upload-sarif@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd
+              with:
+                  sarif_file: guarddog.sarif
+                  category: guarddog
+
+    security-audit:
+        name: Dependency Audit
+        runs-on: ubuntu-24.04
+        # Whole-tree CVE gate. Runs on push-to-main, the weekly schedule, and manual
+        # dispatch — never on pull_request. This is deliberate: a freshly-published
+        # advisory in (dev/build) tooling that a PR never touched should not red-X
+        # every open PR. On PRs, vulnerabilities are gated by Dependency Review
+        # (scoped to the deps the diff introduces) plus GuardDog; Dependabot alerts
+        # and auto-PRs are the remediation path. The push-to-main run still gates the
+        # deploy job below, so production protection is unchanged.
+        if: github.event_name != 'pull_request'
+        permissions:
+            contents: read
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+            - name: Setup Node
+              uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+              with:
+                  node-version: 26
+                  cache: 'npm'
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Audit dependencies
+              run: npm audit --audit-level=moderate
+
+    sbom:
+        name: SBOM & Grype Scan
+        runs-on: ubuntu-24.04
+        # Off the PR path (same rationale as security-audit). Generates the SBOM
+        # artifact and runs Grype for Security-tab visibility, but is non-blocking
+        # (fail-build: false) — npm audit in security-audit is the single whole-tree
+        # gate. Runs on push-to-main + schedule and feeds the deploy pipeline below.
+        if: github.event_name != 'pull_request'
+        permissions:
+            contents: read
+            security-events: write
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+            - name: Generate SBOM with Syft
+              # anchore/sbom-action v0.24.0
+              uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610
+              with:
+                  format: spdx-json
+                  output-file: sbom.spdx.json
+
+            - name: Scan with Grype
+              # anchore/scan-action v7.4.0
+              id: grype
+              uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2
+              with:
+                  sbom: sbom.spdx.json
+                  fail-build: false
+                  severity-cutoff: medium
+
+            - name: Upload Grype SARIF
+              if: always()
+              # github/codeql-action v3.28.13
+              uses: github/codeql-action/upload-sarif@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd
+              with:
+                  sarif_file: ${{ steps.grype.outputs.sarif }}
+                  category: grype
+
+    dependency-review:
+        name: Dependency Review
+        runs-on: ubuntu-24.04
+        if: github.event_name == 'pull_request'
+        permissions:
+            contents: read
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+            - name: Dependency Review
+              # actions/dependency-review-action v5.0.0
+              uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294
+              with:
+                  fail-on-severity: moderate
+
     deploy:
         name: Deploy to Cloudflare Pages
         runs-on: ubuntu-24.04
-        needs: test
+        needs: [test, guarddog, security-audit, sbom]
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         environment: production
         permissions:
             contents: read
-            deployments: write
+            id-token: write
+            attestations: write
         steps:
             - name: Checkout
-              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
             - name: Setup Node
-              uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+              uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
               with:
-                  node-version: 20
+                  node-version: 26
                   cache: 'npm'
 
             - name: Install dependencies
@@ -73,9 +187,15 @@ jobs:
             - name: Build
               run: npm run build
 
+            - name: Attest build provenance
+              # actions/attest-build-provenance v4.1.0
+              uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8
+              with:
+                  subject-path: .svelte-kit/cloudflare
+
             - name: Deploy to Cloudflare Pages
               # cloudflare/wrangler-action v3.15.0
-              uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd
+              uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0
               with:
                   apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
                   accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
