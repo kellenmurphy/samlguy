@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.8](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.7...samlguy-v1.5.8) (2026-08-25)
+
+
+### Bug Fixes & Dependencies
+
+* use RELEASE_PLEASE_TOKEN so release PRs trigger CI ([#285](https://github.com/kellenmurphy/samlguy/issues/285)) ([0c8ed42](https://github.com/kellenmurphy/samlguy/commit/0c8ed42535651d79f50d7df2f8f176c2e2a29a01))
+
 ## [1.5.7](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.6...samlguy-v1.5.7) (2026-08-13)
 
 
