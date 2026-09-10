@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.9](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.8...samlguy-v1.5.9) (2026-09-10)
+
+
+### Bug Fixes & Dependencies
+
+* **deps:** bump wrangler to 4.130.0 and pin sharp to 0.35.4 ([#329](https://github.com/kellenmurphy/samlguy/issues/329)) ([b8f173a](https://github.com/kellenmurphy/samlguy/commit/b8f173a475b86216ef67309e5b834522c5702a14))
+
 ## [1.5.8](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.7...samlguy-v1.5.8) (2026-08-25)
 
 
