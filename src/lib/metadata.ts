@@ -6,6 +6,10 @@ const NS_MDATTR = 'urn:oasis:names:tc:SAML:metadata:attribute';
 const NS_MDRPI = 'urn:oasis:names:tc:SAML:metadata:rpi';
 const NS_SHIBMD = 'urn:mace:shibboleth:metadata:1.0';
 const NS_XML = 'http://www.w3.org/XML/1998/namespace';
+const NS_REMD = 'http://refeds.org/metadata';
+
+// remd:contactType value marking an incident-response contact; required by SIRTFI.
+export const REFEDS_SECURITY_CONTACT = 'http://refeds.org/metadata/contactType/security';
 
 export type KeyUse = 'signing' | 'encryption';
 
@@ -50,6 +54,8 @@ export interface MduiInfo {
 
 export interface ContactPerson {
     type: string;
+    // REFEDS remd:contactType refinement (e.g. REFEDS_SECURITY_CONTACT), when present
+    refedsType?: string;
     company?: string;
     givenName?: string;
     surName?: string;
@@ -242,6 +248,7 @@ function parseEntityCategories(el: Element): string[] {
 function parseContact(el: Element): ContactPerson {
     return {
         type: attr(el, 'contactType') ?? '',
+        refedsType: el.getAttributeNS(NS_REMD, 'contactType') || undefined,
         company: txt(getEl(el, NS_MD, 'Company')),
         givenName: txt(getEl(el, NS_MD, 'GivenName')),
         surName: txt(getEl(el, NS_MD, 'SurName')),
@@ -249,6 +256,10 @@ function parseContact(el: Element): ContactPerson {
             .map((e) => txt(e)?.replace(/^mailto:/i, ''))
             .filter((e): e is string => !!e)
     };
+}
+
+export function isSecurityContact(c: ContactPerson): boolean {
+    return c.refedsType === REFEDS_SECURITY_CONTACT;
 }
 
 function parseRole(el: Element, kind: 'idp' | 'sp'): RoleDescriptor {

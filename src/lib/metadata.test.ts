@@ -3,9 +3,11 @@ import {
     isMetadata,
     parseMetadata,
     entityCategoryKind,
+    isSecurityContact,
     BINDING_LABELS,
     ENTITY_CATEGORY_LABELS,
     ENTITY_CATEGORY_SPEC_URLS,
+    REFEDS_SECURITY_CONTACT,
     type RoleDescriptor
 } from './metadata';
 
@@ -295,6 +297,23 @@ describe('parseMetadata — IdP', () => {
             surName: undefined,
             emails: ['help@virginia.edu']
         });
+    });
+
+    it('reads the REFEDS remd:contactType refinement and recognises security contacts', () => {
+        const xml = `<md:EntityDescriptor ${NS} xmlns:remd="http://refeds.org/metadata" entityID="https://idp.example.org/idp">
+  <md:ContactPerson contactType="other" remd:contactType="${REFEDS_SECURITY_CONTACT}">
+    <md:EmailAddress>mailto:security@example.org</md:EmailAddress>
+  </md:ContactPerson>
+  <md:ContactPerson contactType="technical">
+    <md:EmailAddress>mailto:noc@example.org</md:EmailAddress>
+  </md:ContactPerson>
+</md:EntityDescriptor>`;
+        const [sec, tech] = parseMetadata(xml).entity.contacts;
+        expect(sec.type).toBe('other');
+        expect(sec.refedsType).toBe(REFEDS_SECURITY_CONTACT);
+        expect(isSecurityContact(sec)).toBe(true);
+        expect(tech.refedsType).toBeUndefined();
+        expect(isSecurityContact(tech)).toBe(false);
     });
 });
 
