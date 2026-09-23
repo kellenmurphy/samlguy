@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.10](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.9...samlguy-v1.5.10) (2026-09-23)
+
+
+### Bug Fixes & Dependencies
+
+* **deps:** bump devalue to 5.9.4 (GHSA-9rgm-9g3h-6x36) ([#352](https://github.com/kellenmurphy/samlguy/issues/352)) ([16791a4](https://github.com/kellenmurphy/samlguy/commit/16791a4936ddd3443cf9a380d7e1cc1efb2fcd33))
+
 ## [1.5.9](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.8...samlguy-v1.5.9) (2026-09-10)
 
 
