@@ -51,5 +51,9 @@
         "miniflare": {
             "undici": "^7.29.0"
         }
+    },
+    "allowScripts": {
+        "esbuild": true,
+        "workerd": true
     }
 }
