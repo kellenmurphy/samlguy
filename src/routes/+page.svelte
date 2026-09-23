@@ -14,6 +14,7 @@
         isMetadata,
         parseMetadata,
         entityCategoryKind,
+        isSecurityContact,
         type MetadataResult,
         type EntityCategoryKind,
         BINDING_LABELS,
@@ -1462,6 +1463,12 @@
                         <div class="flex gap-4 px-4 py-2.5">
                             <dt class="w-36 shrink-0 text-sm capitalize text-neutral-500">
                                 {c.type || 'contact'}
+                                {#if isSecurityContact(c)}
+                                    <span
+                                        class="ml-1 inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium normal-case {CATEGORY_KIND_CLASSES.assurance}"
+                                        >Security</span
+                                    >
+                                {/if}
                             </dt>
                             <dd class="space-y-0.5 text-sm">
                                 {#if name}<div class="text-neutral-900 dark:text-neutral-100">

@@ -143,3 +143,59 @@ describe('checkMetadata', () => {
         expect(titles(run(xml))).not.toContain('Weak metadata signature algorithm');
     });
 });
+
+describe('checkMetadata: SIRTFI security contact', () => {
+    const SIRTFI_CHECK = 'SIRTFI asserted without a security contact';
+    const SECURITY = `<ContactPerson contactType="other" xmlns:remd="http://refeds.org/metadata" remd:contactType="http://refeds.org/metadata/contactType/security">
+    <EmailAddress>mailto:security@example.org</EmailAddress>
+  </ContactPerson>`;
+    const OTHER = `<ContactPerson contactType="other"><EmailAddress>mailto:noc@example.org</EmailAddress></ContactPerson>`;
+
+    function entity(certs: string[], contacts = ''): string {
+        const values = certs.map((c) => `<saml:AttributeValue>${c}</saml:AttributeValue>`).join('');
+        const ext = certs.length
+            ? `<Extensions><mdattr:EntityAttributes><saml:Attribute Name="urn:oasis:names:tc:SAML:attribute:assurance-certification">${values}</saml:Attribute></mdattr:EntityAttributes></Extensions>`
+            : '';
+        return `<EntityDescriptor ${NS} entityID="https://idp.example.org/idp" validUntil="${iso(100)}">
+  ${sigBlock('http://www.w3.org/2001/04/xmldsig-more#rsa-sha256')}
+  ${ext}
+  <IDPSSODescriptor protocolSupportEnumeration="${SAMLP}">
+    <KeyDescriptor use="signing"><ds:KeyInfo><ds:X509Data><ds:X509Certificate>MIIBcleanCert==</ds:X509Certificate></ds:X509Data></ds:KeyInfo></KeyDescriptor>
+    <SingleSignOnService Binding="${B('HTTP-Redirect')}" Location="https://idp.example.org/sso"/>
+  </IDPSSODescriptor>
+  ${contacts}
+</EntityDescriptor>`;
+    }
+
+    it('flags SIRTFI with no contacts at all, as an error', () => {
+        const hit = run(entity(['https://refeds.org/sirtfi'])).filter(
+            (c) => c.title === SIRTFI_CHECK
+        );
+        expect(hit).toHaveLength(1);
+        expect(hit[0].severity).toBe('error');
+    });
+
+    it('flags SIRTFI when the only contact lacks the REFEDS security type', () => {
+        expect(titles(run(entity(['https://refeds.org/sirtfi'], OTHER)))).toContain(SIRTFI_CHECK);
+    });
+
+    it('flags SIRTFI v2 the same way', () => {
+        expect(titles(run(entity(['https://refeds.org/sirtfi2'], OTHER)))).toContain(SIRTFI_CHECK);
+    });
+
+    it('does not flag SIRTFI when a REFEDS security contact is published', () => {
+        expect(titles(run(entity(['https://refeds.org/sirtfi'], OTHER + SECURITY)))).not.toContain(
+            SIRTFI_CHECK
+        );
+    });
+
+    it('does not flag entities that do not assert SIRTFI', () => {
+        expect(titles(run(entity([], OTHER)))).not.toContain(SIRTFI_CHECK);
+    });
+
+    it('leaves a misspelled SIRTFI URI to the typo check', () => {
+        const t = titles(run(entity(['https://refeds.org/sirtf'])));
+        expect(t).toContain('Misspelled entity category');
+        expect(t).not.toContain(SIRTFI_CHECK);
+    });
+});

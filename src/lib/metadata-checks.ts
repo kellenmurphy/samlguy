@@ -1,4 +1,4 @@
-import type { MetadataResult } from './metadata';
+import { isSecurityContact, type MetadataResult } from './metadata';
 
 // Static health checks that can be derived from a single pasted metadata document.
 // Intentionally limited to what's verifiable from the XML itself — checks that need
@@ -31,6 +31,15 @@ const MISSPELLED_CATEGORIES: Record<string, string> = {
     'http://id.incommon.org/category/research-and-scholaship':
         'http://id.incommon.org/category/research-and-scholarship'
 };
+
+// SIRTFI v1 and v2 assurance-certification values (the misspellings above are reported
+// by their own check, not treated as SIRTFI assertions).
+const SIRTFI_URIS = new Set([
+    'https://refeds.org/sirtfi',
+    'http://refeds.org/sirtfi',
+    'https://refeds.org/sirtfi/v2',
+    'https://refeds.org/sirtfi2'
+]);
 
 const EXPIRY_WARN_DAYS = 14;
 const MS_PER_DAY = 86_400_000;
@@ -114,6 +123,15 @@ export function checkMetadata(result: MetadataResult): MetadataCheck[] {
                 detail: `"${cat}" looks like a typo of "${suggestion}". Partners keying on the correct URI will silently ignore this value, so the category effectively does nothing.`
             });
         }
+    }
+
+    // ── SIRTFI requires a REFEDS security contact ───────────────────────────────
+    if (e.entityCategories.some((c) => SIRTFI_URIS.has(c)) && !e.contacts.some(isSecurityContact)) {
+        checks.push({
+            severity: 'error',
+            title: 'SIRTFI asserted without a security contact',
+            detail: 'This entity asserts SIRTFI, which requires a <md:ContactPerson> marked remd:contactType="http://refeds.org/metadata/contactType/security" for incident response. Without one the assertion is non-compliant, and federations may reject or strip it.'
+        });
     }
 
     // ── Per-role checks ───────────────────────────────────────────────────────────
