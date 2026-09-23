@@ -5,6 +5,11 @@ on:
         branches: [main]
     pull_request:
         branches: [main]
+        # labeled: release-please opens its PR as the bot, so these runs are held
+        # at action_required; its trigger-ci label (applied with
+        # RELEASE_PLEASE_TOKEN) re-fires CodeQL, a required check, the same way
+        # it re-fires ci.yml.
+        types: [opened, synchronize, reopened, labeled]
     schedule:
         - cron: '30 1 * * 1'
 
