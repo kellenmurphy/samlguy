@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.10...samlguy-v1.6.0) (2026-09-23)
+
+
+### Features
+
+* **metadata:** flag SIRTFI asserted without a security contact ([#356](https://github.com/kellenmurphy/samlguy/issues/356)) ([c8356aa](https://github.com/kellenmurphy/samlguy/commit/c8356aad7e1cafc6519c1b5d15fd1a7a2f99c3d4))
+
 ## [1.5.10](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.9...samlguy-v1.5.10) (2026-09-23)
 
 
