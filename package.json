@@ -21,7 +21,7 @@
         "@sveltejs/kit": "^2.70.3",
         "@sveltejs/vite-plugin-svelte": "^7.3.0",
         "@tailwindcss/vite": "^4.3.3",
-        "@types/node": "^26.6.1",
+        "@types/node": "^26.6.2",
         "@vitest/coverage-v8": "^5.0.1",
         "eslint": "^10.11.0",
         "eslint-plugin-svelte": "^3.23.0",
