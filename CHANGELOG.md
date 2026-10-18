@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.6.0...samlguy-v1.6.1) (2026-10-18)
+
+
+### Bug Fixes & Dependencies
+
+* **deps:** upgrade to SvelteKit 3 and adapter-cloudflare 8 ([#409](https://github.com/kellenmurphy/samlguy/issues/409)) ([bc3f37d](https://github.com/kellenmurphy/samlguy/commit/bc3f37d935c07107fedddd40da9bcf8fc8d82325))
+
 ## [1.6.0](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.5.10...samlguy-v1.6.0) (2026-09-23)
 
 
