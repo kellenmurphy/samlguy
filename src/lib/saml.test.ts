@@ -7,7 +7,7 @@ import {
     AUTHN_CONTEXT_SPEC_URLS,
     STATUS_DESCRIPTIONS,
     STATUS_SPEC_URLS
-} from '$lib/saml';
+} from '#lib/saml.ts';
 import {
     AUTHN_REQUEST_XML,
     AUTHN_REQUEST_WITH_CONTEXT_XML,

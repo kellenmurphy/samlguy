@@ -93,7 +93,7 @@ The Worker does not receive, log, or store any JWT token. It receives only the i
 
 ### Content Security Policy
 
-CSP is configured via `kit.csp` in `svelte.config.js` using `mode: 'hash'` and delivered as a `Content-Security-Policy` HTTP response header on every request (not a meta tag — the Cloudflare Worker SSR path sets headers directly, which means `frame-ancestors` is respected):
+CSP is configured via the `csp` option of the `sveltekit()` plugin in `vite.config.ts` using `mode: 'hash'` and delivered as a `Content-Security-Policy` HTTP response header on every request (not a meta tag — the Cloudflare Worker SSR path sets headers directly, which means `frame-ancestors` is respected):
 
 - `default-src 'self'` — baseline: only same-origin resources allowed
 - `script-src 'self' <hashes>` — no `unsafe-inline`; SvelteKit automatically hashes its bootstrap script per render; the theme-detection script in `app.html` is covered by a manually computed static hash

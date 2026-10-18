@@ -1,9 +1,9 @@
 import { describe, it } from 'vitest';
 import * as fc from 'fast-check';
-import { decodeSaml, decodeAllSaml } from '$lib/saml';
-import { decodeJwt } from '$lib/jwt';
-import { decodeCert } from '$lib/cert';
-import { decodeAllGeneric } from '$lib/generic';
+import { decodeSaml, decodeAllSaml } from '#lib/saml.ts';
+import { decodeJwt } from '#lib/jwt.ts';
+import { decodeCert } from '#lib/cert.ts';
+import { decodeAllGeneric } from '#lib/generic.ts';
 
 // Invariant: any thrown value must be an Error instance.
 // A non-Error throw (string, plain object, undefined, etc.) is a parser bug.

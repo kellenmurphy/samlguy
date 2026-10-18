@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { FIELD_EXPLANATIONS } from '$lib/explanations';
+    import { FIELD_EXPLANATIONS } from '#lib/explanations.ts';
 
     let { key }: { key: string | undefined } = $props();
 
-    const text = key ? FIELD_EXPLANATIONS[key] : undefined;
+    const text = $derived(key ? FIELD_EXPLANATIONS[key] : undefined);
 
     let visible = $state(false);
     let tipX = $state(0);
