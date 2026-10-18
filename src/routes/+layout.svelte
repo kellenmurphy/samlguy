@@ -1,7 +1,7 @@
 <script lang="ts">
     import '../app.css';
     import { onMount } from 'svelte';
-    import { version } from '$app/environment';
+    import { version } from '$app/env';
     import type { Snippet } from 'svelte';
 
     let { children }: { children: Snippet } = $props();

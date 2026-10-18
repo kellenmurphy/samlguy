@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { FIELD_EXPLANATIONS } from '$lib/explanations';
+    import { FIELD_EXPLANATIONS } from '#lib/explanations.ts';
 
     let { key }: { key: string | undefined } = $props();
 

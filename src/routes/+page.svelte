@@ -9,7 +9,7 @@
         AUTHN_CONTEXT_SPEC_URLS,
         STATUS_DESCRIPTIONS,
         STATUS_SPEC_URLS
-    } from '$lib/saml';
+    } from '#lib/saml.ts';
     import {
         isMetadata,
         parseMetadata,
@@ -20,18 +20,18 @@
         BINDING_LABELS,
         ENTITY_CATEGORY_LABELS,
         ENTITY_CATEGORY_SPEC_URLS
-    } from '$lib/metadata';
-    import { checkMetadata, type MetadataCheck, type CheckSeverity } from '$lib/metadata-checks';
-    import { decodeJwt, type JwtDecodeResult } from '$lib/jwt';
-    import { decodeAllGeneric, type GenericDecodeResult } from '$lib/generic';
-    import InfoTip from '$lib/InfoTip.svelte';
-    import { SAML_TS_KEY } from '$lib/explanations';
-    import { encodePayload, decodePayload } from '$lib/hash';
-    import { getAttributeInfo, eppnScopedStatus } from '$lib/attributes';
-    import { relativeLabel, isExpired } from '$lib/time';
-    import type { CertInfo } from '$lib/cert';
-    import { highlightXml, XML_ELEMENT_TIPS } from '$lib/xml-highlight';
-    import { EXAMPLES, EXAMPLE_CATEGORIES } from '$lib/examples';
+    } from '#lib/metadata.ts';
+    import { checkMetadata, type MetadataCheck, type CheckSeverity } from '#lib/metadata-checks.ts';
+    import { decodeJwt, type JwtDecodeResult } from '#lib/jwt.ts';
+    import { decodeAllGeneric, type GenericDecodeResult } from '#lib/generic.ts';
+    import InfoTip from '#lib/InfoTip.svelte';
+    import { SAML_TS_KEY } from '#lib/explanations.ts';
+    import { encodePayload, decodePayload } from '#lib/hash.ts';
+    import { getAttributeInfo, eppnScopedStatus } from '#lib/attributes.ts';
+    import { relativeLabel, isExpired } from '#lib/time.ts';
+    import type { CertInfo } from '#lib/cert.ts';
+    import { highlightXml, XML_ELEMENT_TIPS } from '#lib/xml-highlight.ts';
+    import { EXAMPLES, EXAMPLE_CATEGORIES } from '#lib/examples.ts';
 
     type InputType = 'saml' | 'jwt' | null;
 
@@ -214,7 +214,7 @@
             if (!raw) continue;
             const key = raw.slice(0, 20);
             if (key in certInfos) continue;
-            import('$lib/cert')
+            import('#lib/cert.ts')
                 .then(({ decodeCert }) => {
                     try {
                         certInfos = { ...certInfos, [key]: decodeCert(raw) };
@@ -234,7 +234,7 @@
             for (const k of role.keys) {
                 const key = k.certificate.slice(0, 20);
                 if (key in certInfos) continue;
-                import('$lib/cert')
+                import('#lib/cert.ts')
                     .then(({ decodeCert }) => {
                         try {
                             certInfos = { ...certInfos, [key]: decodeCert(k.certificate) };

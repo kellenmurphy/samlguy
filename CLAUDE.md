@@ -10,7 +10,7 @@ The core UX premise: paste whatever messy thing you grabbed from a log file, a n
 
 ## Tech stack
 
-- **Framework**: SvelteKit 2 with Svelte 5 (runes API: `$state`, `$derived`, `$effect`, `$props`)
+- **Framework**: SvelteKit 3 with Svelte 5 (runes API: `$state`, `$derived`, `$effect`, `$props`)
 - **Deployment**: Cloudflare Pages + Workers via `@sveltejs/adapter-cloudflare`
 - **Language**: TypeScript (strict)
 - **Styling**: Tailwind CSS 4
@@ -31,7 +31,7 @@ The page handles:
 
 - Multiple SAML messages in one paste (`decodeAllSaml` scans for all `SAMLRequest`/`SAMLResponse` params)
 - Generic fallback decoding (`decodeAllGeneric`) for non-SAML base64/XML/JSON blobs
-- Lazy-loaded cert decoding via dynamic `import('$lib/cert')` to avoid blocking first render
+- Lazy-loaded cert decoding via dynamic `import('#lib/cert.ts')` to avoid blocking first render
 
 ### SAML decode library (`src/lib/saml.ts`)
 
