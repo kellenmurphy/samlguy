@@ -15,7 +15,7 @@ The core UX premise: paste whatever messy thing you grabbed from a log file, a n
 - **Language**: TypeScript (strict)
 - **Styling**: Tailwind CSS 4
 - **Package manager**: npm
-- **Testing**: Vitest 4 with v8 coverage provider, jsdom + happy-dom environments
+- **Testing**: Vitest 4 with v8 coverage provider, jsdom environment
 - **CI**: GitHub Actions with SHA-pinned actions, Codecov integration
 - **Linting**: typescript-eslint + eslint-plugin-svelte
 
