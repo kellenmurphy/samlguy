@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.7.1...samlguy-v1.8.0) (2026-11-06)
+
+
+### Features
+
+* **jwt:** verify signatures against the issuer JWKS, x5c or a pasted key ([#449](https://github.com/kellenmurphy/samlguy/issues/449)) ([c00e5be](https://github.com/kellenmurphy/samlguy/commit/c00e5be6f98098e07d8cc03c25df6ff7d26dafa8))
+
 ## [1.7.1](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.7.0...samlguy-v1.7.1) (2026-11-06)
 
 
