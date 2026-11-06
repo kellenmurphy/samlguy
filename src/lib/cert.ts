@@ -32,6 +32,8 @@ const OID_CURVE: Record<string, string> = {
 interface DerNode {
     tag: number;
     value: Uint8Array;
+    /** The complete encoding of this node: tag, length and value. */
+    raw: Uint8Array;
     children?: DerNode[];
 }
 
@@ -58,7 +60,7 @@ function parseNode(b: Uint8Array, o: number): { node: DerNode; next: number } {
             pos = next;
         }
     }
-    return { node: { tag, value, children }, next: vs + len };
+    return { node: { tag, value, raw: b.slice(o, vs + len), children }, next: vs + len };
 }
 
 function oid(bytes: Uint8Array): string {
@@ -149,16 +151,33 @@ function parseKeyAlg(spki: DerNode): string {
     return name;
 }
 
-export function decodeCert(base64Der: string): CertInfo {
+/** The TBSCertificate fields, and the index of the serial number among them. */
+function tbsFields(base64Der: string): { f: DerNode[]; i: number } {
     const binary = atob(base64Der.replace(/\s+/g, ''));
     const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
 
     const { node: cert } = parseNode(bytes, 0);
     const tbs = cert.children![0];
     const f = tbs.children!;
+    // skip the optional [0] version
+    return { f, i: f[0].tag === 0xa0 ? 1 : 0 };
+}
 
-    let i = 0;
-    if (f[0].tag === 0xa0) i++; // skip optional version
+/**
+ * The certificate's SubjectPublicKeyInfo as DER, exactly as encoded in the
+ * certificate. Feed it to `toPem(..., 'PUBLIC KEY')` for a public key PEM.
+ */
+export function certPublicKeySpki(base64Der: string): Uint8Array {
+    const { f, i } = tbsFields(base64Der);
+    // serial, signature algorithm, issuer, validity, subject, then SPKI
+    const spki = f[i + 5];
+    if (spki?.tag !== 0x30) throw new Error('Certificate has no SubjectPublicKeyInfo');
+    return spki.raw;
+}
+
+export function decodeCert(base64Der: string): CertInfo {
+    const { f, i: serialIdx } = tbsFields(base64Der);
+    let i = serialIdx;
 
     const rawSerial = f[i++].value;
     const serialNumber = Array.from(rawSerial[0] === 0 ? rawSerial.slice(1) : rawSerial)

@@ -68,7 +68,15 @@ The page handles:
 
 ### X.509 certificate parser (`src/lib/cert.ts`)
 
-**Pure custom DER/ASN.1 parser — no external library.** Parses: subject DN, issuer DN, validity dates (both UTCTime and GeneralizedTime), serial number, and key algorithm (RSA with bit length, EC with named curve). Handles unknown OIDs gracefully.
+**Pure custom DER/ASN.1 parser — no external library.** Parses: subject DN, issuer DN, validity dates (both UTCTime and GeneralizedTime), serial number, and key algorithm (RSA with bit length, EC with named curve). Handles unknown OIDs gracefully. Each parsed node keeps its complete encoding as `raw`, which `certPublicKeySpki(base64Der)` uses to return the certificate's SubjectPublicKeyInfo byte-for-byte as encoded.
+
+### PEM and JWK conversion (`src/lib/pem.ts`)
+
+No external library. `toPem(der, label)` wraps DER bytes or a base64 DER string in `CERTIFICATE` or `PUBLIC KEY` armor at 64 columns (RFC 7468). `jwkToSpki(jwk)` / `jwkToPem(jwk)` build an SPKI from a public JWK: RSA (`n`/`e` as minimal positive INTEGERs), EC P-256/P-384/P-521 (uncompressed point, coordinate lengths checked), and OKP Ed25519/Ed448/X25519/X448; `oct` keys are rejected because they have no public form. `encodeTlv` is the DER encoder behind both. The tests use Node's `crypto` as an independent oracle for every key type. Nothing renders JWKs yet; `jwkToPem` is there for JWKS display when signature verification lands (#441).
+
+### Certificate details (`src/lib/CertDetails.svelte`)
+
+Renders one certificate: validity badge, key algorithm, subject, issuer and dates, plus **Copy PEM**, **Copy public key** and **Show PEM** controls. Takes the base64 DER and the `CertInfo | false | undefined` from the page's `certInfos` cache. `pem.ts` and `cert.ts` are imported dynamically on first use, so the page's first render stays free of them. Used for the SAML signing cert, every metadata `KeyDescriptor`, and each `x5c` entry in a JWT header.
 
 ### Time helpers (`src/lib/time.ts`)
 

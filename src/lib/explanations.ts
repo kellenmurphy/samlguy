@@ -120,6 +120,9 @@ export const FIELD_EXPLANATIONS: Record<string, string> = {
     'jwt.keyId':
         'The "kid" (Key ID) header — identifies which key was used to sign this token. Consumers use it to select the correct public key from the issuer\'s JWKS endpoint (/.well-known/jwks.json) without trying every key in the set.',
 
+    'jwt.x5c':
+        'The "x5c" (X.509 certificate chain) header — the certificate holding the signing public key, first, followed by any certificates that chain it to a trusted root. Each entry is base64 DER, not base64url (RFC 7515 §4.1.6). A verifier that trusts the chain can check the signature without fetching a JWKS; it must still validate the chain, because anyone can put a certificate in a header.',
+
     'jwt.issuer':
         'The "iss" claim — the authorization server or identity provider that issued this token. Consumers must validate that iss matches the expected issuer. In OIDC, this is the provider\'s canonical base URL (e.g. https://idp.example.com).',
 
