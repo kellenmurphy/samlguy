@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.8.1...samlguy-v1.9.0) (2026-11-06)
+
+
+### Features
+
+* **saml:** edit and re-encode a decoded AuthnRequest ([#454](https://github.com/kellenmurphy/samlguy/issues/454)) ([dc5babb](https://github.com/kellenmurphy/samlguy/commit/dc5babb68bd636b3ef3b37eebb44feddf2679c43))
+
 ## [1.8.1](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.8.0...samlguy-v1.8.1) (2026-11-06)
 
 
