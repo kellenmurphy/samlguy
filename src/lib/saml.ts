@@ -219,6 +219,11 @@ export interface SamlSource {
     endpoint?: string;
     /** Whether the query string carried an HTTP-Redirect binding signature (SigAlg / Signature). */
     redirectSigned: boolean;
+    /**
+     * The query string exactly as received, without the leading "?". An HTTP-Redirect
+     * signature covers the parameters in their original URL-encoding, so it is kept raw.
+     */
+    query?: string;
 }
 
 export interface SamlDecodeResult {
@@ -257,7 +262,13 @@ export function decodeSaml(raw: string): SamlDecodeResult {
     return {
         xml: prettyPrintXml(xml),
         summary: parseSummary(doc, binding, relayState, paramName),
-        source: { xml, relayState, endpoint: endpointOf(input), redirectSigned }
+        source: {
+            xml,
+            relayState,
+            endpoint: endpointOf(input),
+            redirectSigned,
+            query: qs === null ? undefined : qs.replace(/^\?/, '')
+        }
     };
 }
 

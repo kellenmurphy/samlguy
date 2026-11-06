@@ -51,6 +51,10 @@ Pure DOM, no library. `readFields(xml)` returns `IssueInstant`, `AssertionConsum
 
 `decodeSaml` returns a `source` alongside the summary for this: the XML exactly as received (not the pretty-printed copy), `relayState`, the `endpoint` (the input URL minus `SAMLRequest`, `SAMLResponse`, `RelayState`, `SigAlg`, `Signature`) and `redirectSigned`. `AuthnRequestEditor.svelte` renders the "Edit Request" card for any `SAMLRequest` whose root is an `AuthnRequest`; form ids come from `$props.id()` so several requests in one paste do not collide.
 
+### HTTP-Redirect signatures (`src/lib/redirect-sig.ts`)
+
+SAML Bindings §3.4.4.1: the signature covers `SAMLRequest=…&RelayState=…&SigAlg=…` (or `SAMLResponse`) built from the parameters **exactly as URL-encoded in the received URL**, so `decodeSaml` keeps `source.query` raw and `parseSignedRedirect` splits it on `&` without decoding or normalising (first occurrence wins; RelayState only if present). `Signature` and `SigAlg` are percent-decoded with a literal `+` kept, since neither contains spaces. `SIG_ALGS` maps RSA-SHA1 (verified, flagged deprecated), RSA-SHA256/384/512 and ECDSA-SHA256/384/512 to WebCrypto; ECDSA takes its curve from the key (`ecCurve` walks the SPKI AlgorithmIdentifier) and accepts r||s or DER (`ecdsaRaw`). `parseRedirectKeys` reads SP metadata (signing or unlabelled `KeyDescriptor`s of the SPSSODescriptor; IdP-only metadata is refused with a hint), a certificate or public key PEM, or bare base64 from `ds:X509Certificate`. `verifyRedirect` never throws and treats a `verify` the platform refuses (some refuse SHA-1) as no match. Tests sign real queries with Node; the SHA-1 case is signed by hand (raw RSA over the DigestInfo) because Fedora's crypto policy refuses SHA-1 signing, and asserts Verified only where the platform allows SHA-1. `RedirectSignature.svelte` is the card shown for any message with `source.redirectSigned`.
+
 ### SAML metadata library (`src/lib/metadata.ts`)
 
 **Pure DOM parsing, no external library** (same philosophy as `saml.ts`). Routed ahead of the SAML-message decode path in `+page.svelte`.
@@ -165,7 +169,7 @@ Run with: `npm run coverage`
 
 ### Medium priority
 
-- **SAML signature validation** — fetch the IdP's SAML metadata (by EntityID or URL), extract the signing cert, and verify `<ds:Signature>` using the Web Crypto API. Display verified/unverified status prominently.
+- **SAML signature validation** — fetch the IdP's SAML metadata (by EntityID or URL), extract the signing cert, and verify enveloped `<ds:Signature>` (POST requests, responses, assertions) using the Web Crypto API. Needs Exclusive XML Canonicalization: write it in-house or adopt a library, decided deliberately. HTTP-Redirect signatures are already done (`redirect-sig.ts`).
 
 ### Lower priority / ideas
 
