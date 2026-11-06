@@ -131,6 +131,23 @@ describe('GET /api/jwks', () => {
         });
     });
 
+    it('refuses a redirect from the JWKS endpoint', async () => {
+        vi.mocked(fetch)
+            .mockResolvedValueOnce(jsonResponse(DISCOVERY))
+            .mockResolvedValueOnce(
+                new Response(null, {
+                    status: 302,
+                    headers: { Location: 'https://internal.example/' }
+                })
+            );
+        await expect(GET(makeEvent({ issuer: ISSUER }))).rejects.toMatchObject({
+            status: 502,
+            body: { message: 'JWKS endpoint redirected; redirects are not followed' }
+        });
+        expect(fetch).toHaveBeenCalledTimes(2);
+        expect(vi.mocked(fetch).mock.calls[1][1]).toMatchObject({ redirect: 'manual' });
+    });
+
     it('names the JWKS endpoint when it fails', async () => {
         vi.mocked(fetch)
             .mockResolvedValueOnce(jsonResponse(DISCOVERY))

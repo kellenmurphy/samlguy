@@ -92,7 +92,7 @@ Cloudflare Worker. Accepts `?issuer=<url>`, validates HTTPS, fetches `{issuerUrl
 
 ### JWKS proxy (`src/routes/api/jwks/+server.ts`)
 
-Cloudflare Worker. Accepts only `?issuer=<url>`, never a JWKS URL: it fetches the issuer's discovery document, takes `jwks_uri` from it, vets that URL the same way (HTTPS, domain name), fetches it, and returns `{ jwks_uri, keys }`. Requires a JWK Set of at most 50 keys and strips private and symmetric members (`d`, `p`, `q`, `dp`, `dq`, `qi`, `oth`, `k`). Both proxies share `src/lib/server/fetch-json.ts`: `vetRemoteUrl`, `discoveryUrl`, and `fetchJson` (5-second timeout, `redirect: 'error'`, 100 KB cap, JSON parse).
+Cloudflare Worker. Accepts only `?issuer=<url>`, never a JWKS URL: it fetches the issuer's discovery document, takes `jwks_uri` from it, vets that URL the same way (HTTPS, domain name), fetches it, and returns `{ jwks_uri, keys }`. Requires a JWK Set of at most 50 keys and strips private and symmetric members (`d`, `p`, `q`, `dp`, `dq`, `qi`, `oth`, `k`). Both proxies share `src/lib/server/fetch-json.ts`: `vetRemoteUrl`, `discoveryUrl`, and `fetchJson` (5-second timeout, `redirect: 'manual'` with any 3xx rejected as 502, 100 KB cap, JSON parse). Never `redirect: 'error'`: Workers do not implement it and throw a `TypeError` on every fetch, which Node does not, so tests alone will not catch it.
 
 ### JWS verification (`src/lib/jws.ts`)
 

@@ -31,14 +31,14 @@ You can expect an acknowledgement within 48 hours and a resolution or status upd
 
 ### Adversaries and assets
 
-| Adversary                          | Goal                                                              | Primary controls                                                                                                                                                                          |
-| ---------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Malicious paste / shared link      | Trigger XSS via crafted SAML or JWT content rendered in the DOM   | Svelte's default text escaping, `esc()` in the XML highlighter, CSP (`default-src 'self'`, no `unsafe-inline`, hash-pinned inline scripts)                                                |
-| Compromised npm package            | Inject malicious code into the build or CI environment            | GuardDog, `npm audit`, Grype, Dependency Review, SHA-pinned actions, `npm ci` lockfile enforcement                                                                                        |
-| Compromised upstream GitHub Action | Substitute malicious CI code via a tampered version tag           | All actions pinned to commit SHA, Dependabot rotates pins daily                                                                                                                           |
-| SSRF via OIDC proxy                | Use the discovery or JWKS Worker to reach internal infrastructure | No caller-chosen URLs (the JWKS URL comes only from the issuer's discovery document), HTTPS and domain names only, `redirect: 'error'`, 5-second timeout, 100 KB cap, response validation |
-| Compromised maintainer account     | Push unsigned or unreviewed code to `main`                        | Required commit signatures, branch protection, CODEOWNERS review, scoped API tokens                                                                                                       |
-| Information leakage                | Exfiltrate SAML assertions or JWT payloads                        | All decoding is client-side; no server ever receives token content; Worker code logs nothing; `Referrer-Policy: no-referrer` prevents issuer URLs from leaking via outbound navigation    |
+| Adversary                          | Goal                                                              | Primary controls                                                                                                                                                                        |
+| ---------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Malicious paste / shared link      | Trigger XSS via crafted SAML or JWT content rendered in the DOM   | Svelte's default text escaping, `esc()` in the XML highlighter, CSP (`default-src 'self'`, no `unsafe-inline`, hash-pinned inline scripts)                                              |
+| Compromised npm package            | Inject malicious code into the build or CI environment            | GuardDog, `npm audit`, Grype, Dependency Review, SHA-pinned actions, `npm ci` lockfile enforcement                                                                                      |
+| Compromised upstream GitHub Action | Substitute malicious CI code via a tampered version tag           | All actions pinned to commit SHA, Dependabot rotates pins daily                                                                                                                         |
+| SSRF via OIDC proxy                | Use the discovery or JWKS Worker to reach internal infrastructure | No caller-chosen URLs (the JWKS URL comes only from the issuer's discovery document), HTTPS and domain names only, redirects refused, 5-second timeout, 100 KB cap, response validation |
+| Compromised maintainer account     | Push unsigned or unreviewed code to `main`                        | Required commit signatures, branch protection, CODEOWNERS review, scoped API tokens                                                                                                     |
+| Information leakage                | Exfiltrate SAML assertions or JWT payloads                        | All decoding is client-side; no server ever receives token content; Worker code logs nothing; `Referrer-Policy: no-referrer` prevents issuer URLs from leaking via outbound navigation  |
 
 ### Out of scope
 
@@ -89,7 +89,7 @@ Signature verification itself runs in the browser with WebCrypto. The Workers do
 
 - **No caller-chosen URLs** — both Workers accept only an issuer; the discovery path is fixed, and the JWKS URL comes from the issuer's own discovery document
 - **No IP-literal hosts** — the issuer's and the `jwks_uri`'s hostname are checked after URL parsing; any IPv4 or IPv6 literal is rejected with 400 before a fetch is attempted
-- **Redirects are not followed** — the fetch is made with `redirect: 'error'`; any redirect results in a 502 error
+- **Redirects are not followed** — the fetch is made with `redirect: 'manual'` and any 3xx response is rejected with 502, so a redirect can never steer the Worker to another host (Workers do not implement `redirect: 'error'`; it throws on every request)
 - **5-second timeout** — an `AbortController` cancels the fetch after 5 seconds; a timed-out request returns 504
 - **100 KB response cap** — the `Content-Length` header is checked before reading the body, and the body itself is capped at 100,000 bytes; oversized responses are rejected with 502
 - **Response validation** — the body must be valid JSON; a discovery document must be a non-null object with an `issuer` field (required by RFC 8414), and a JWKS must be a JWK Set of at most 50 keys; anything else returns 502

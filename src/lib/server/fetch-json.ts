@@ -44,7 +44,9 @@ export async function fetchJson(url: string, noun: string): Promise<unknown> {
     try {
         response = await fetch(url, {
             headers: { Accept: 'application/json' },
-            redirect: 'error',
+            // Workers do not implement redirect: 'error' (it throws a TypeError on
+            // every request), so take the redirect response and refuse it below
+            redirect: 'manual',
             signal: controller.signal
         });
     } catch (e) {
@@ -54,6 +56,10 @@ export async function fetchJson(url: string, noun: string): Promise<unknown> {
         error(502, `failed to reach ${noun} endpoint`);
     } finally {
         clearTimeout(timeout);
+    }
+
+    if (response.status >= 300 && response.status < 400) {
+        error(502, `${noun} endpoint redirected; redirects are not followed`);
     }
 
     if (!response.ok) {
