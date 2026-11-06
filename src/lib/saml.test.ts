@@ -105,6 +105,17 @@ describe('decodeSaml — POST binding (plain base64)', () => {
         expect(labels).toContain('SessionNotOnOrAfter');
     });
 
+    it('records what each timestamp means', () => {
+        const r = decodeSaml(blob);
+        const kinds = Object.fromEntries(r.summary.timestamps.map((t) => [t.label, t.kind]));
+        expect(kinds).toMatchObject({
+            AuthnInstant: 'instant',
+            NotBefore: 'notBefore',
+            NotOnOrAfter: 'expiry',
+            SessionNotOnOrAfter: 'expiry'
+        });
+    });
+
     it('parses attributes', () => {
         const r = decodeSaml(blob);
         const attrs = r.summary.attributes;

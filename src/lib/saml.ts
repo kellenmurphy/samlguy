@@ -1,3 +1,4 @@
+import type { TimeKind } from './time.js';
 import { inflateRaw } from 'pako';
 
 const NS_SAML = 'urn:oasis:names:tc:SAML:2.0:assertion';
@@ -12,6 +13,7 @@ export interface TimestampField {
     label: string;
     raw: string;
     date: Date;
+    kind: TimeKind;
 }
 
 export interface SamlStatus {
@@ -407,14 +409,14 @@ function parseSummary(
                 : paramName;
 
     const timestamps: TimestampField[] = [];
-    const addTs = (label: string, raw: string | null | undefined) => {
+    const addTs = (label: string, raw: string | null | undefined, kind: TimeKind = 'expiry') => {
         if (!raw) return;
         const date = new Date(raw);
-        if (!isNaN(date.getTime())) timestamps.push({ label, raw, date });
+        if (!isNaN(date.getTime())) timestamps.push({ label, raw, date, kind });
     };
 
     const authnStmt = getEl(doc, NS_SAML, 'AuthnStatement');
-    addTs('AuthnInstant', attr(authnStmt, 'AuthnInstant'));
+    addTs('AuthnInstant', attr(authnStmt, 'AuthnInstant'), 'instant');
     addTs('SessionNotOnOrAfter', attr(authnStmt, 'SessionNotOnOrAfter'));
 
     const authnCtxEl = authnStmt ? getEl(authnStmt, NS_SAML, 'AuthnContext') : null;
@@ -437,7 +439,7 @@ function parseSummary(
         : undefined;
 
     const conditions = getEl(doc, NS_SAML, 'Conditions');
-    addTs('NotBefore', attr(conditions, 'NotBefore'));
+    addTs('NotBefore', attr(conditions, 'NotBefore'), 'notBefore');
     addTs('NotOnOrAfter', attr(conditions, 'NotOnOrAfter'));
 
     // Only add SubjectConfirmation NotOnOrAfter if it differs from Conditions

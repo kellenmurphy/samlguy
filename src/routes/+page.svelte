@@ -28,13 +28,19 @@
     import { SAML_TS_KEY } from '#lib/explanations.ts';
     import { encodePayload, decodePayload } from '#lib/hash.ts';
     import { getAttributeInfo, eppnScopedStatus } from '#lib/attributes.ts';
-    import { relativeLabel, isExpired } from '#lib/time.ts';
+    import { relativeLabel, isExpired, timeStatus, type TimeTone } from '#lib/time.ts';
     import type { CertInfo } from '#lib/cert.ts';
     import CertDetails from '#lib/CertDetails.svelte';
     import { highlightXml, XML_ELEMENT_TIPS } from '#lib/xml-highlight.ts';
     import { EXAMPLES, EXAMPLE_CATEGORIES } from '#lib/examples.ts';
 
     type InputType = 'saml' | 'jwt' | null;
+
+    const TONE_CLASS: Record<TimeTone, string> = {
+        good: 'text-green-700 dark:text-green-400',
+        bad: 'text-red-600 dark:text-red-400',
+        neutral: 'text-neutral-500'
+    };
 
     let input = $state('');
     let results = $state<SamlDecodeResult[]>([]);
@@ -726,11 +732,7 @@
                                     class="font-mono text-sm text-neutral-900 dark:text-neutral-100"
                                     >{ts.date.toISOString()}</span
                                 >
-                                <span
-                                    class="text-xs {ts.expired
-                                        ? 'text-red-600 dark:text-red-400'
-                                        : 'text-green-700 dark:text-green-400'}">{ts.label}</span
-                                >
+                                <span class="text-xs {TONE_CLASS[ts.tone]}">{ts.label}</span>
                             </dd>
                         </div>
                     {/if}
@@ -745,11 +747,7 @@
                                     class="font-mono text-sm text-neutral-900 dark:text-neutral-100"
                                     >{ts.date.toISOString()}</span
                                 >
-                                <span
-                                    class="text-xs {ts.expired
-                                        ? 'text-red-600 dark:text-red-400'
-                                        : 'text-green-700 dark:text-green-400'}">{ts.label}</span
-                                >
+                                <span class="text-xs {TONE_CLASS[ts.tone]}">{ts.label}</span>
                             </dd>
                         </div>
                     {/if}
@@ -764,11 +762,7 @@
                                     class="font-mono text-sm text-neutral-900 dark:text-neutral-100"
                                     >{ts.date.toISOString()}</span
                                 >
-                                <span
-                                    class="text-xs {ts.expired
-                                        ? 'text-red-600 dark:text-red-400'
-                                        : 'text-green-700 dark:text-green-400'}">{ts.label}</span
-                                >
+                                <span class="text-xs {TONE_CLASS[ts.tone]}">{ts.label}</span>
                             </dd>
                         </div>
                     {/if}
@@ -1870,7 +1864,7 @@
                 </div>
                 <dl class="divide-y divide-neutral-100 dark:divide-neutral-800">
                     {#each s.timestamps as ts (ts.label)}
-                        {@const expired = isExpired(ts.date)}
+                        {@const status = timeStatus(ts.date, ts.kind)}
                         <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-4 py-2.5">
                             <dt class="w-36 shrink-0 text-sm text-neutral-500">
                                 {ts.label}<InfoTip key={SAML_TS_KEY[ts.label]} />
@@ -1880,12 +1874,8 @@
                                     class="font-mono text-sm text-neutral-900 dark:text-neutral-100"
                                     >{ts.raw}</span
                                 >
-                                <span
-                                    class="text-xs {expired
-                                        ? 'text-red-600 dark:text-red-400'
-                                        : 'text-green-700 dark:text-green-400'}"
-                                >
-                                    {relativeLabel(ts.date)}
+                                <span class="text-xs {TONE_CLASS[status.tone]}">
+                                    {status.label}
                                 </span>
                             </dd>
                         </div>
