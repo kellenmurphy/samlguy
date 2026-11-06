@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.6.1...samlguy-v1.7.0) (2026-11-06)
+
+
+### Features
+
+* **cert:** show certificates and public keys as PEM ([#444](https://github.com/kellenmurphy/samlguy/issues/444)) ([4d45f35](https://github.com/kellenmurphy/samlguy/commit/4d45f350736b9cf3a641005bb0cc1593a69a9afe))
+
 ## [1.6.1](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.6.0...samlguy-v1.6.1) (2026-10-18)
 
 
