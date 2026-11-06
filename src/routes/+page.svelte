@@ -30,6 +30,7 @@
     import { getAttributeInfo, eppnScopedStatus } from '#lib/attributes.ts';
     import { relativeLabel, isExpired } from '#lib/time.ts';
     import type { CertInfo } from '#lib/cert.ts';
+    import CertDetails from '#lib/CertDetails.svelte';
     import { highlightXml, XML_ELEMENT_TIPS } from '#lib/xml-highlight.ts';
     import { EXAMPLES, EXAMPLE_CATEGORIES } from '#lib/examples.ts';
 
@@ -212,6 +213,27 @@
         for (const r of results) {
             const raw = r.summary.signingCertificate;
             if (!raw) continue;
+            const key = raw.slice(0, 20);
+            if (key in certInfos) continue;
+            import('#lib/cert.ts')
+                .then(({ decodeCert }) => {
+                    try {
+                        certInfos = { ...certInfos, [key]: decodeCert(raw) };
+                    } catch {
+                        certInfos = { ...certInfos, [key]: false };
+                    }
+                })
+                .catch(() => {
+                    certInfos = { ...certInfos, [key]: false };
+                });
+        }
+    });
+
+    $effect(() => {
+        const x5c = jwtResult?.header.x5c;
+        if (!Array.isArray(x5c)) return;
+        for (const raw of x5c) {
+            if (typeof raw !== 'string') continue;
             const key = raw.slice(0, 20);
             if (key in certInfos) continue;
             import('#lib/cert.ts')
@@ -513,6 +535,9 @@
         {@const alg = typeof jwtResult.header.alg === 'string' ? jwtResult.header.alg : 'none'}
         {@const typ = typeof jwtResult.header.typ === 'string' ? jwtResult.header.typ : null}
         {@const kid = typeof jwtResult.header.kid === 'string' ? jwtResult.header.kid : null}
+        {@const x5c = Array.isArray(jwtResult.header.x5c)
+            ? jwtResult.header.x5c.filter((c): c is string => typeof c === 'string')
+            : []}
         {@const iss = typeof jwtResult.payload.iss === 'string' ? jwtResult.payload.iss : null}
         {@const sub = typeof jwtResult.payload.sub === 'string' ? jwtResult.payload.sub : null}
         {@const jti = typeof jwtResult.payload.jti === 'string' ? jwtResult.payload.jti : null}
@@ -600,6 +625,16 @@
                         </dd>
                     </div>
                 {/if}
+                {#each x5c as cert, ci (ci)}
+                    <div class="flex gap-4 px-4 py-2.5">
+                        <dt class="w-36 shrink-0 text-sm text-neutral-500">
+                            {ci === 0 ? 'Certificate' : `Chain cert ${ci}`}<InfoTip key="jwt.x5c" />
+                        </dt>
+                        <dd class="min-w-0 space-y-1.5">
+                            <CertDetails certificate={cert} info={certInfos[cert.slice(0, 20)]} />
+                        </dd>
+                    </div>
+                {/each}
                 {#if iss}
                     <div class="flex gap-4 px-4 py-2.5">
                         <dt class="w-36 shrink-0 text-sm text-neutral-500">
@@ -1330,45 +1365,8 @@
                                       ? 'Signing cert'
                                       : 'Certificate'}<InfoTip key="meta.keys" />
                             </dt>
-                            <dd class="space-y-1.5">
-                                {#if c === false}
-                                    <span class="text-sm text-neutral-500"
-                                        >present (could not decode)</span
-                                    >
-                                {:else if c}
-                                    <div class="flex flex-wrap gap-2">
-                                        <span
-                                            class="rounded px-1.5 py-0.5 font-mono text-xs {c.isValid
-                                                ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400'
-                                                : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400'}"
-                                            >{c.isValid ? 'Valid' : 'Expired'}</span
-                                        >
-                                        <span
-                                            class="rounded bg-neutral-200 px-1.5 py-0.5 font-mono text-xs text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300"
-                                            >{c.keyAlgorithm}</span
-                                        >
-                                    </div>
-                                    <div
-                                        class="font-mono text-xs text-neutral-700 dark:text-neutral-300"
-                                    >
-                                        {c.subject}
-                                    </div>
-                                    <div class="font-mono text-xs text-neutral-500">
-                                        Issuer: {c.issuer}
-                                    </div>
-                                    <div class="text-xs text-neutral-500">
-                                        {c.validFrom.toISOString().slice(0, 10)} →
-                                        {c.validTo.toISOString().slice(0, 10)}
-                                        <span
-                                            class="ml-1 {isExpired(c.validTo)
-                                                ? 'text-red-600 dark:text-red-400'
-                                                : 'text-green-700 dark:text-green-400'}"
-                                            >({relativeLabel(c.validTo)})</span
-                                        >
-                                    </div>
-                                {:else}
-                                    <span class="text-sm text-neutral-500">decoding…</span>
-                                {/if}
+                            <dd class="min-w-0 space-y-1.5">
+                                <CertDetails certificate={k.certificate} info={c} />
                             </dd>
                         </div>
                     {/each}
@@ -1852,46 +1850,8 @@
                         <dt class="w-36 shrink-0 text-sm text-neutral-500">
                             Signing cert<InfoTip key="saml.signingCert" />
                         </dt>
-                        <dd class="space-y-1.5">
-                            {#if c === false}
-                                <span class="text-sm text-neutral-500"
-                                    >present (could not decode)</span
-                                >
-                            {:else if c}
-                                <div class="flex flex-wrap gap-2">
-                                    <span
-                                        class="rounded px-1.5 py-0.5 font-mono text-xs {c.isValid
-                                            ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400'
-                                            : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400'}"
-                                    >
-                                        {c.isValid ? 'Valid' : 'Expired'}
-                                    </span>
-                                    <span
-                                        class="rounded bg-neutral-200 px-1.5 py-0.5 font-mono text-xs text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300"
-                                    >
-                                        {c.keyAlgorithm}
-                                    </span>
-                                </div>
-                                <div
-                                    class="font-mono text-xs text-neutral-700 dark:text-neutral-300"
-                                >
-                                    {c.subject}
-                                </div>
-                                <div class="font-mono text-xs text-neutral-500">
-                                    Issuer: {c.issuer}
-                                </div>
-                                <div class="text-xs text-neutral-500">
-                                    {c.validFrom.toISOString().slice(0, 10)} →
-                                    {c.validTo.toISOString().slice(0, 10)}
-                                    <span
-                                        class="ml-1 {isExpired(c.validTo)
-                                            ? 'text-red-600 dark:text-red-400'
-                                            : 'text-green-700 dark:text-green-400'}"
-                                    >
-                                        ({relativeLabel(c.validTo)})
-                                    </span>
-                                </div>
-                            {/if}
+                        <dd class="min-w-0 space-y-1.5">
+                            <CertDetails certificate={s.signingCertificate} info={c} />
                         </dd>
                     </div>
                 {/if}
