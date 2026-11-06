@@ -33,6 +33,9 @@ export const FIELD_EXPLANATIONS: Record<string, string> = {
     'saml.signingCert':
         "The X.509 certificate whose private key signed this message. The relying party should verify the signature using the public key from the issuer's SAML metadata. An expired or unknown certificate outside a trusted metadata feed is a security concern.",
 
+    'saml.redirectSignature':
+        "An HTTP-Redirect message is signed over its query string: the SAMLRequest (or SAMLResponse), RelayState and SigAlg parameters exactly as URL-encoded in the URL (SAML Bindings §3.4.4.1), so the full URL has to be pasted, not just the decoded message. Verify it against the sender's signing certificate: for an AuthnRequest that is the SP's, from the signing KeyDescriptor in its metadata. Checked in your browser.",
+
     'saml.editRequest':
         'Change IssueInstant, the ACS URL or index, or the requested AuthnContext, and get the request back encoded for the same binding: DEFLATE + base64 for HTTP-Redirect, base64 for HTTP-POST. Useful for replaying a captured request with a fresh timestamp or for testing an MFA requirement. Everything else in the request is kept. A signed request cannot be re-signed here, so the IdP must accept unsigned requests from the SP.',
 

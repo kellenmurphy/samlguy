@@ -279,7 +279,8 @@ describe('decodeSaml source', () => {
             xml: REQ,
             relayState: 'rs',
             endpoint: 'https://idp.example.org/sso?x=1',
-            redirectSigned: true
+            redirectSigned: true,
+            query: input.slice(input.indexOf('?') + 1)
         });
     });
 

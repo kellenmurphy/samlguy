@@ -26,7 +26,7 @@ But it's not just SAML! It's equally useful for OAuth 2.0 / OIDC work. Access to
 
 **Input** — paste just about anything: raw base64+DEFLATE or base64 blob, query string, full URL, raw HTTP log line, JWT, or `Authorization: Bearer` header. Multiple SAML messages in one paste are handled. RelayState is always extracted separately; double URL-encoding is unwound automatically. `ctrl-a` in your logs and paste away — it'll make sense of it. An **Examples** button loads any of 11 pre-built, dynamically-generated payloads (SAMLResponse, SAMLRequest, IdP/SP metadata, JWT, Authorization header, query string, and full redirect URL) as one-click starting points.
 
-**SAML** — binding type, message type, status with human-readable description and spec link, issuer, NameID, timestamps with relative labels ("expired 3 hours ago"), AuthnContext class reference with friendly label and assurance-level tooltip (OASIS, REFEDS, RAF, NIST), attribute table with **InCommon attribute annotations** (R&S and eppn-scoped/unscoped badges from an embedded attribute registry; friendly names filled in even when the assertion omits them), signing cert details (key algorithm, validity) with the certificate and its public key copyable as PEM, an **AuthnRequest editor** (fresh IssueInstant, a different ACS URL or index, a different requested AuthnContext and Comparison, re-encoded for the original binding as a `SAMLRequest` value and, for a pasted URL, a ready-to-use redirect URL with RelayState kept), and syntax-highlighted XML with hover tips on all known SAML element names.
+**SAML** — binding type, message type, status with human-readable description and spec link, issuer, NameID, timestamps with relative labels ("expired 3 hours ago"), AuthnContext class reference with friendly label and assurance-level tooltip (OASIS, REFEDS, RAF, NIST), attribute table with **InCommon attribute annotations** (R&S and eppn-scoped/unscoped badges from an embedded attribute registry; friendly names filled in even when the assertion omits them), signing cert details (key algorithm, validity) with the certificate and its public key copyable as PEM, **HTTP-Redirect signature verification** (paste the full signed URL, then the SP metadata, a certificate or a PEM key; RSA-SHA256/384/512 and ECDSA, with RSA-SHA1 flagged as deprecated), an **AuthnRequest editor** (fresh IssueInstant, a different ACS URL or index, a different requested AuthnContext and Comparison, re-encoded for the original binding as a `SAMLRequest` value and, for a pasted URL, a ready-to-use redirect URL with RelayState kept), and syntax-highlighted XML with hover tips on all known SAML element names.
 
 **SAML metadata** — paste an `EntityDescriptor` (or a single entity from an `EntitiesDescriptor` aggregate) and it's parsed into a structured view: entity ID, registration authority, `validUntil` with a relative label, and colour-coded **entity category badges** (Research & Scholarship, SIRTFI, Code of Conduct, Registered-by-InCommon, …) linked to their spec pages. Each IdP/SP role lists its signing requirements, SSO/SLO/ACS endpoints with human-readable binding labels and default/index flags, supported NameID formats, `shibmd:Scope`, and signing/encryption certificates decoded with the same X.509 parser as assertions, each viewable and copyable as a certificate or public key PEM. SP roles show their **requested attributes** with friendly names and required/optional flags; MDUI display info, organization, and contacts are surfaced too — alongside the syntax-highlighted XML. A **health-checks** panel flags the common federation footguns that are detectable from the document itself: expired/missing `validUntil`, unsigned metadata or a SHA-1 signature, certificates pasted with PEM headers, missing signing certs, plaintext (HTTP) endpoints, entityID whitespace/trailing-slash mismatches, misspelled entity-category URIs (e.g. `refeds.org/sirtf`), and lingering SAML 1.x support. Entity-category badges are colour-coded by kind and link out to their REFEDS / GÉANT / federation specifications.
 
@@ -74,6 +74,7 @@ src/
     pem.ts              # PEM armor (RFC 7468) and public JWK to SubjectPublicKeyInfo conversion
     jws.ts              # JWS signature verification with WebCrypto: key selection, JWK/PEM/x5c input
     authn-edit.ts       # AuthnRequest editing and re-encoding for HTTP-Redirect / HTTP-POST
+    redirect-sig.ts     # HTTP-Redirect binding signature verification over the raw query
     server/fetch-json.ts # shared proxy fetch: URL vetting, timeout, no redirects, size cap
     time.ts             # timestamp math and relative label helpers
     generic.ts          # fallback decoder for unrecognized base64/JSON/XML blobs
@@ -86,6 +87,7 @@ src/
     CertDetails.svelte  # certificate summary with PEM view and copy buttons
     SignatureVerify.svelte # JWT signature check: issuer JWKS, x5c, or pasted key
     AuthnRequestEditor.svelte # edit and re-encode a decoded AuthnRequest
+    RedirectSignature.svelte # verify a signed redirect against pasted SP metadata or a key
   routes/
     +layout.svelte      # nav, shared chrome, dark mode
     +page.svelte        # main decoder — auto-detects SAML vs JWT
@@ -110,7 +112,7 @@ src/
 
 - **Diff view** — paste two assertions side-by-side and highlight what changed; most useful for attribute table and timestamp diffs when debugging why a second login attempt looks different
 - **MDQ discovery** — "Discover" button on the SAML Issuer row fetches the IdP's metadata from InCommon's MDQ service (`https://mdq.incommon.org/entities/{entityID}`) and feeds it into the metadata view — no aggregate download needed; optional MDQ base URL for other federations (eduGAIN, etc.)
-- **SAML signature validation** — verify `<ds:Signature>` against the signing cert retrieved via MDQ (or from the pasted metadata); show a verified/failed badge
+- **SAML signature validation** — verify enveloped `<ds:Signature>` (HTTP-POST requests, responses and assertions) against the signing cert retrieved via MDQ (or from the pasted metadata); needs Exclusive XML Canonicalization. HTTP-Redirect signatures are already verified
 - **SP-initiated flow simulator** — given an EntityID, construct and encode a valid AuthnRequest URL for testing IdP behavior without a real SP; note: unsigned only (most IdPs accept this, some require signed requests)
 - **REFEDS entity category checker** — given an EntityID (via MDQ), check whether the IdP's attribute release policy would likely cover the SP's requested attributes; builds on the entity-category and requested-attribute parsing already in the metadata view
 

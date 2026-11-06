@@ -33,6 +33,7 @@
     import CertDetails from '#lib/CertDetails.svelte';
     import SignatureVerify from '#lib/SignatureVerify.svelte';
     import AuthnRequestEditor from '#lib/AuthnRequestEditor.svelte';
+    import RedirectSignature from '#lib/RedirectSignature.svelte';
     import { isAuthnRequest } from '#lib/authn-edit.ts';
     import { highlightXml, XML_ELEMENT_TIPS } from '#lib/xml-highlight.ts';
     import { EXAMPLES, EXAMPLE_CATEGORIES } from '#lib/examples.ts';
@@ -1980,6 +1981,10 @@
                     </table>
                 </div>
             </div>
+        {/if}
+
+        {#if result.source.redirectSigned && result.source.query}
+            <RedirectSignature query={result.source.query} issuer={s.issuer} />
         {/if}
 
         {#if s.messageType === 'SAMLRequest' && isAuthnRequest(result.source.xml)}
