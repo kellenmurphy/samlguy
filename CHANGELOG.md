@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.10.0](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.9.0...samlguy-v1.10.0) (2026-11-06)
+
+
+### Features
+
+* **saml:** verify HTTP-Redirect signatures ([#457](https://github.com/kellenmurphy/samlguy/issues/457)) ([04792de](https://github.com/kellenmurphy/samlguy/commit/04792de755563b66573f2ceb4e5643a9d2e2e6b2))
+
 ## [1.9.0](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.8.1...samlguy-v1.9.0) (2026-11-06)
 
 
