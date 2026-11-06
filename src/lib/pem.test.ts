@@ -101,7 +101,7 @@ describe('certPublicKeySpki', () => {
 describe('jwkToSpki', () => {
     const cases: [string, KeyObject][] = [
         ['RSA-2048', generateKeyPairSync('rsa', { modulusLength: 2048 }).publicKey],
-        ['RSA-1024', generateKeyPairSync('rsa', { modulusLength: 1024 }).publicKey],
+        ['RSA-4096', generateKeyPairSync('rsa', { modulusLength: 4096 }).publicKey],
         ['EC P-256', generateKeyPairSync('ec', { namedCurve: 'P-256' }).publicKey],
         ['EC P-384', generateKeyPairSync('ec', { namedCurve: 'P-384' }).publicKey],
         ['EC P-521', generateKeyPairSync('ec', { namedCurve: 'P-521' }).publicKey],
