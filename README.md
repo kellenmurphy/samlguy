@@ -26,7 +26,7 @@ But it's not just SAML! It's equally useful for OAuth 2.0 / OIDC work. Access to
 
 **Input** — paste just about anything: raw base64+DEFLATE or base64 blob, query string, full URL, raw HTTP log line, JWT, or `Authorization: Bearer` header. Multiple SAML messages in one paste are handled. RelayState is always extracted separately; double URL-encoding is unwound automatically. `ctrl-a` in your logs and paste away — it'll make sense of it. An **Examples** button loads any of 11 pre-built, dynamically-generated payloads (SAMLResponse, SAMLRequest, IdP/SP metadata, JWT, Authorization header, query string, and full redirect URL) as one-click starting points.
 
-**SAML** — binding type, message type, status with human-readable description and spec link, issuer, NameID, timestamps with relative labels ("expired 3 hours ago"), AuthnContext class reference with friendly label and assurance-level tooltip (OASIS, REFEDS, RAF, NIST), attribute table with **InCommon attribute annotations** (R&S and eppn-scoped/unscoped badges from an embedded attribute registry; friendly names filled in even when the assertion omits them), signing cert details (key algorithm, validity) with the certificate and its public key copyable as PEM, and syntax-highlighted XML with hover tips on all known SAML element names.
+**SAML** — binding type, message type, status with human-readable description and spec link, issuer, NameID, timestamps with relative labels ("expired 3 hours ago"), AuthnContext class reference with friendly label and assurance-level tooltip (OASIS, REFEDS, RAF, NIST), attribute table with **InCommon attribute annotations** (R&S and eppn-scoped/unscoped badges from an embedded attribute registry; friendly names filled in even when the assertion omits them), signing cert details (key algorithm, validity) with the certificate and its public key copyable as PEM, an **AuthnRequest editor** (fresh IssueInstant, a different ACS URL or index, a different requested AuthnContext and Comparison, re-encoded for the original binding as a `SAMLRequest` value and, for a pasted URL, a ready-to-use redirect URL with RelayState kept), and syntax-highlighted XML with hover tips on all known SAML element names.
 
 **SAML metadata** — paste an `EntityDescriptor` (or a single entity from an `EntitiesDescriptor` aggregate) and it's parsed into a structured view: entity ID, registration authority, `validUntil` with a relative label, and colour-coded **entity category badges** (Research & Scholarship, SIRTFI, Code of Conduct, Registered-by-InCommon, …) linked to their spec pages. Each IdP/SP role lists its signing requirements, SSO/SLO/ACS endpoints with human-readable binding labels and default/index flags, supported NameID formats, `shibmd:Scope`, and signing/encryption certificates decoded with the same X.509 parser as assertions, each viewable and copyable as a certificate or public key PEM. SP roles show their **requested attributes** with friendly names and required/optional flags; MDUI display info, organization, and contacts are surfaced too — alongside the syntax-highlighted XML. A **health-checks** panel flags the common federation footguns that are detectable from the document itself: expired/missing `validUntil`, unsigned metadata or a SHA-1 signature, certificates pasted with PEM headers, missing signing certs, plaintext (HTTP) endpoints, entityID whitespace/trailing-slash mismatches, misspelled entity-category URIs (e.g. `refeds.org/sirtf`), and lingering SAML 1.x support. Entity-category badges are colour-coded by kind and link out to their REFEDS / GÉANT / federation specifications.
 
@@ -73,6 +73,7 @@ src/
     cert.ts             # X.509 DER/ASN.1 parser: subject, issuer, key algorithm, validity, SPKI
     pem.ts              # PEM armor (RFC 7468) and public JWK to SubjectPublicKeyInfo conversion
     jws.ts              # JWS signature verification with WebCrypto: key selection, JWK/PEM/x5c input
+    authn-edit.ts       # AuthnRequest editing and re-encoding for HTTP-Redirect / HTTP-POST
     server/fetch-json.ts # shared proxy fetch: URL vetting, timeout, no redirects, size cap
     time.ts             # timestamp math and relative label helpers
     generic.ts          # fallback decoder for unrecognized base64/JSON/XML blobs
@@ -84,6 +85,7 @@ src/
     InfoTip.svelte      # hover tooltip component
     CertDetails.svelte  # certificate summary with PEM view and copy buttons
     SignatureVerify.svelte # JWT signature check: issuer JWKS, x5c, or pasted key
+    AuthnRequestEditor.svelte # edit and re-encode a decoded AuthnRequest
   routes/
     +layout.svelte      # nav, shared chrome, dark mode
     +page.svelte        # main decoder — auto-detects SAML vs JWT
