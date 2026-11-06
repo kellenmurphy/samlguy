@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.7.0...samlguy-v1.7.1) (2026-11-06)
+
+
+### Bug Fixes & Dependencies
+
+* **time:** label timestamps by what they mean, not as expiries ([#447](https://github.com/kellenmurphy/samlguy/issues/447)) ([09cdd7c](https://github.com/kellenmurphy/samlguy/commit/09cdd7ca7956b2eee34ede52c12c25c39a540004))
+
 ## [1.7.0](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.6.1...samlguy-v1.7.0) (2026-11-06)
 
 
