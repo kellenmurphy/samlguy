@@ -30,13 +30,13 @@ But it's not just SAML! It's equally useful for OAuth 2.0 / OIDC work. Access to
 
 **SAML metadata** — paste an `EntityDescriptor` (or a single entity from an `EntitiesDescriptor` aggregate) and it's parsed into a structured view: entity ID, registration authority, `validUntil` with a relative label, and colour-coded **entity category badges** (Research & Scholarship, SIRTFI, Code of Conduct, Registered-by-InCommon, …) linked to their spec pages. Each IdP/SP role lists its signing requirements, SSO/SLO/ACS endpoints with human-readable binding labels and default/index flags, supported NameID formats, `shibmd:Scope`, and signing/encryption certificates decoded with the same X.509 parser as assertions, each viewable and copyable as a certificate or public key PEM. SP roles show their **requested attributes** with friendly names and required/optional flags; MDUI display info, organization, and contacts are surfaced too — alongside the syntax-highlighted XML. A **health-checks** panel flags the common federation footguns that are detectable from the document itself: expired/missing `validUntil`, unsigned metadata or a SHA-1 signature, certificates pasted with PEM headers, missing signing certs, plaintext (HTTP) endpoints, entityID whitespace/trailing-slash mismatches, misspelled entity-category URIs (e.g. `refeds.org/sirtf`), and lingering SAML 1.x support. Entity-category badges are colour-coded by kind and link out to their REFEDS / GÉANT / federation specifications.
 
-**JWT** — algorithm with safety flags (`alg: none` danger badge, HMAC weak badge), any `x5c` certificate chain decoded with PEM export, claims summary, timestamps with relative labels, scope/scp badge list, raw JSON header and payload. OIDC discovery fetches the issuer's `.well-known/openid-configuration` server-side (Cloudflare Worker, avoids CORS) and checks algorithm support against the token's `alg`. Accepts bare JWTs, `Bearer <token>`, or full `Authorization: Bearer <token>` header lines.
+**JWT** — algorithm with safety flags (`alg: none` danger badge, HMAC weak badge), any `x5c` certificate chain decoded with PEM export, claims summary, timestamps with relative labels, scope/scp badge list, raw JSON header and payload. OIDC discovery fetches the issuer's `.well-known/openid-configuration` server-side (Cloudflare Worker, avoids CORS) and checks algorithm support against the token's `alg`. **Signature verification** checks RS, PS, ES and EdDSA signatures in the browser with WebCrypto, against the issuer's JWKS (fetched through the same proxy, picking the key by `kid`), the token's own `x5c` certificate, or a pasted JWK, JWKS or PEM; the JWKS keys are listed with the signing key marked and each copyable as PEM. Accepts bare JWTs, `Bearer <token>`, or full `Authorization: Bearer <token>` header lines.
 
 **Everything else** — contextual `?` tooltips on every field covering the SAML spec, JWT/OIDC standards, and trust fabric conventions. Shareable links base64url-encode the input into the URL fragment — never sent to the server. Dark mode default with `localStorage` persistence.
 
 ## Privacy & Security
 
-**All SAML and JWT payloads are decoded entirely in your browser.** Nothing you paste is ever transmitted to or stored on any server. The only network request the tool makes on your behalf is the OIDC discovery proxy described above, which receives only an issuer URL, not the token itself.
+**All SAML and JWT payloads are decoded entirely in your browser.** Nothing you paste is ever transmitted to or stored on any server. The only network requests the tool makes on your behalf are the OIDC discovery and JWKS proxies described above, which receive only an issuer URL, not the token itself.
 
 See [SECURITY.md](SECURITY.md) for the full vulnerability disclosure policy and a description of the security controls in this project.
 
@@ -72,6 +72,8 @@ src/
     jwt.ts              # JWT decode: base64url, header/payload, alg flags, timestamps, scopes
     cert.ts             # X.509 DER/ASN.1 parser: subject, issuer, key algorithm, validity, SPKI
     pem.ts              # PEM armor (RFC 7468) and public JWK to SubjectPublicKeyInfo conversion
+    jws.ts              # JWS signature verification with WebCrypto: key selection, JWK/PEM/x5c input
+    server/fetch-json.ts # shared proxy fetch: URL vetting, timeout, no redirects, size cap
     time.ts             # timestamp math and relative label helpers
     generic.ts          # fallback decoder for unrecognized base64/JSON/XML blobs
     hash.ts             # base64url encode/decode for shareable URL fragments
@@ -81,12 +83,15 @@ src/
     explanations.ts     # externalized hover tooltip text for all summary fields
     InfoTip.svelte      # hover tooltip component
     CertDetails.svelte  # certificate summary with PEM view and copy buttons
+    SignatureVerify.svelte # JWT signature check: issuer JWKS, x5c, or pasted key
   routes/
     +layout.svelte      # nav, shared chrome, dark mode
     +page.svelte        # main decoder — auto-detects SAML vs JWT
     api/
       discover/
         +server.ts      # OIDC discovery proxy (Cloudflare Worker)
+      jwks/
+        +server.ts      # JWKS proxy: jwks_uri from the issuer's discovery document only
     privacy/
       +page.svelte      # privacy policy
 .github/
@@ -105,7 +110,6 @@ src/
 - **MDQ discovery** — "Discover" button on the SAML Issuer row fetches the IdP's metadata from InCommon's MDQ service (`https://mdq.incommon.org/entities/{entityID}`) and feeds it into the metadata view — no aggregate download needed; optional MDQ base URL for other federations (eduGAIN, etc.)
 - **SAML signature validation** — verify `<ds:Signature>` against the signing cert retrieved via MDQ (or from the pasted metadata); show a verified/failed badge
 - **SP-initiated flow simulator** — given an EntityID, construct and encode a valid AuthnRequest URL for testing IdP behavior without a real SP; note: unsigned only (most IdPs accept this, some require signed requests)
-- **JWT JWKS validation** — after OIDC discovery, fetch `jwks_uri` and verify the JWT signature against the matching key
 - **REFEDS entity category checker** — given an EntityID (via MDQ), check whether the IdP's attribute release policy would likely cover the SP's requested attributes; builds on the entity-category and requested-attribute parsing already in the metadata view
 
 ## Contributing

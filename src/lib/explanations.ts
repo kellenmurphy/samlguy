@@ -123,6 +123,9 @@ export const FIELD_EXPLANATIONS: Record<string, string> = {
     'jwt.x5c':
         'The "x5c" (X.509 certificate chain) header — the certificate holding the signing public key, first, followed by any certificates that chain it to a trusted root. Each entry is base64 DER, not base64url (RFC 7515 §4.1.6). A verifier that trusts the chain can check the signature without fetching a JWKS; it must still validate the chain, because anyone can put a certificate in a header.',
 
+    'jwt.signature':
+        'Checks the signature with a public key, in your browser. "Verify with issuer JWKS" fetches the key set named by the issuer\'s discovery document and picks the key by "kid"; "Verify with x5c" uses the certificate in the token\'s own header, which proves who signed it but not that the certificate is trusted; "Paste a key" accepts a JWK, a JWKS, or a PEM public key or certificate. HMAC (HS*) tokens need the shared secret and cannot be checked this way.',
+
     'jwt.issuer':
         'The "iss" claim — the authorization server or identity provider that issued this token. Consumers must validate that iss matches the expected issuer. In OIDC, this is the provider\'s canonical base URL (e.g. https://idp.example.com).',
 
