@@ -84,8 +84,8 @@ describe('GET /api/discover', () => {
         await assertion;
     });
 
-    it('returns 502 when the fetch fails for a non-timeout reason (e.g. redirect blocked)', async () => {
-        vi.mocked(fetch).mockRejectedValue(new TypeError('redirect mode is set to error'));
+    it('returns 502 when the fetch fails for a non-timeout reason (e.g. DNS failure)', async () => {
+        vi.mocked(fetch).mockRejectedValue(new TypeError('fetch failed'));
         await expect(GET(makeEvent({ issuer: 'https://idp.example.com' }))).rejects.toMatchObject({
             status: 502
         });
@@ -178,7 +178,24 @@ describe('GET /api/discover', () => {
 
         expect(vi.mocked(fetch)).toHaveBeenCalledWith(
             'https://idp.example.com/.well-known/openid-configuration',
-            expect.objectContaining({ redirect: 'error' })
+            // Workers throw on redirect: 'error', so the fetch must use 'manual'
+            expect.objectContaining({ redirect: 'manual' })
         );
     });
+
+    it.each([301, 302, 307, 308])(
+        'refuses a %i redirect instead of following it',
+        async (status) => {
+            vi.mocked(fetch).mockResolvedValue(
+                new Response(null, { status, headers: { Location: 'https://169.254.169.254/' } })
+            );
+            await expect(
+                GET(makeEvent({ issuer: 'https://idp.example.com' }))
+            ).rejects.toMatchObject({
+                status: 502,
+                body: { message: 'discovery endpoint redirected; redirects are not followed' }
+            });
+            expect(fetch).toHaveBeenCalledTimes(1);
+        }
+    );
 });
