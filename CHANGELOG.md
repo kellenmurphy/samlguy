@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.8.0...samlguy-v1.8.1) (2026-11-06)
+
+
+### Bug Fixes & Dependencies
+
+* **api:** refuse redirects manually; Workers reject redirect: 'error' ([#452](https://github.com/kellenmurphy/samlguy/issues/452)) ([19cb02f](https://github.com/kellenmurphy/samlguy/commit/19cb02fa916bb1729ce0e95ecaf48b98bf8b9f0b))
+
 ## [1.8.0](https://github.com/kellenmurphy/samlguy/compare/samlguy-v1.7.1...samlguy-v1.8.0) (2026-11-06)
 
 
