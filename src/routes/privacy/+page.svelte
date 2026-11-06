@@ -57,15 +57,20 @@
 
         <section class="space-y-2">
             <h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-                OIDC discovery proxy
+                OIDC discovery and JWKS proxy
             </h2>
             <p>
-                The planned OIDC discovery feature sends an issuer URL to a server-side proxy, which
-                fetches the issuer's <code
+                When you press Discover or Verify on a JWT, the issuer URL from the token is sent to
+                a server-side proxy, which fetches the issuer's <code
                     class="rounded bg-neutral-100 px-1 font-mono text-xs dark:bg-neutral-800"
                     >.well-known/openid-configuration</code
-                > endpoint on your behalf to avoid browser CORS restrictions. The proxy forwards the response
-                and does not log or store the issuer URL or the response.
+                >
+                document and, for Verify, the public key set at the
+                <code class="rounded bg-neutral-100 px-1 font-mono text-xs dark:bg-neutral-800"
+                    >jwks_uri</code
+                > that document names. The proxy exists only to avoid browser CORS restrictions. It receives
+                the issuer URL and nothing else, never the token, and does not log or store the issuer
+                URL or the responses. Signature verification itself runs in your browser.
             </p>
         </section>
 

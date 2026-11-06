@@ -31,19 +31,19 @@ You can expect an acknowledgement within 48 hours and a resolution or status upd
 
 ### Adversaries and assets
 
-| Adversary                          | Goal                                                            | Primary controls                                                                                                                                                                       |
-| ---------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Malicious paste / shared link      | Trigger XSS via crafted SAML or JWT content rendered in the DOM | Svelte's default text escaping, `esc()` in the XML highlighter, CSP (`default-src 'self'`, no `unsafe-inline`, hash-pinned inline scripts)                                             |
-| Compromised npm package            | Inject malicious code into the build or CI environment          | GuardDog, `npm audit`, Grype, Dependency Review, SHA-pinned actions, `npm ci` lockfile enforcement                                                                                     |
-| Compromised upstream GitHub Action | Substitute malicious CI code via a tampered version tag         | All actions pinned to commit SHA, Dependabot rotates pins daily                                                                                                                        |
-| SSRF via OIDC proxy                | Use the discovery Worker to reach internal infrastructure       | `redirect: 'error'`, 5-second timeout, 100 KB cap, response validation                                                                                                                 |
-| Compromised maintainer account     | Push unsigned or unreviewed code to `main`                      | Required commit signatures, branch protection, CODEOWNERS review, scoped API tokens                                                                                                    |
-| Information leakage                | Exfiltrate SAML assertions or JWT payloads                      | All decoding is client-side; no server ever receives token content; Worker code logs nothing; `Referrer-Policy: no-referrer` prevents issuer URLs from leaking via outbound navigation |
+| Adversary                          | Goal                                                              | Primary controls                                                                                                                                                                          |
+| ---------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Malicious paste / shared link      | Trigger XSS via crafted SAML or JWT content rendered in the DOM   | Svelte's default text escaping, `esc()` in the XML highlighter, CSP (`default-src 'self'`, no `unsafe-inline`, hash-pinned inline scripts)                                                |
+| Compromised npm package            | Inject malicious code into the build or CI environment            | GuardDog, `npm audit`, Grype, Dependency Review, SHA-pinned actions, `npm ci` lockfile enforcement                                                                                        |
+| Compromised upstream GitHub Action | Substitute malicious CI code via a tampered version tag           | All actions pinned to commit SHA, Dependabot rotates pins daily                                                                                                                           |
+| SSRF via OIDC proxy                | Use the discovery or JWKS Worker to reach internal infrastructure | No caller-chosen URLs (the JWKS URL comes only from the issuer's discovery document), HTTPS and domain names only, `redirect: 'error'`, 5-second timeout, 100 KB cap, response validation |
+| Compromised maintainer account     | Push unsigned or unreviewed code to `main`                        | Required commit signatures, branch protection, CODEOWNERS review, scoped API tokens                                                                                                       |
+| Information leakage                | Exfiltrate SAML assertions or JWT payloads                        | All decoding is client-side; no server ever receives token content; Worker code logs nothing; `Referrer-Policy: no-referrer` prevents issuer URLs from leaking via outbound navigation    |
 
 ### Out of scope
 
-- Vulnerabilities in the tokens or assertions themselves — this tool is a decoder, not a validator; it makes no trust decisions on the user's behalf
-- Denial-of-service against the OIDC discovery proxy at volume — rate limiting is delegated to Cloudflare's edge
+- Vulnerabilities in the tokens or assertions themselves — this tool is a decoder, not a relying party; signature verification reports whether a key verifies a signature, and makes no trust decision about the key, the issuer or the claims
+- Denial-of-service against the OIDC discovery and JWKS proxies at volume — rate limiting is delegated to Cloudflare's edge
 
 ---
 
@@ -68,22 +68,31 @@ All SAML and JWT decoding is entirely client-side. Tokens and assertions are nev
 
 ### What runs server-side
 
-The only server-side code is the OIDC discovery proxy at `/api/discover`, running as a Cloudflare Worker. It:
+The only server-side code is two proxies running as Cloudflare Workers, sharing one fetch helper (`src/lib/server/fetch-json.ts`).
+
+The OIDC discovery proxy at `/api/discover`:
 
 - Accepts a single `issuer` query parameter
 - Validates the issuer is a valid HTTPS URL (non-HTTPS issuers are rejected with HTTP 400)
 - Fetches `{issuer}/.well-known/openid-configuration` server-side to avoid browser CORS constraints
 - Returns the discovery document JSON to the browser
 
-The Worker does not receive, log, or store any JWT token. It receives only the issuer URL. The Worker code itself logs nothing; Cloudflare's platform logs contain only request metadata (timing, status, the `?issuer=` query string) and never any token content, because no token content is ever sent to the Worker.
+The JWKS proxy at `/api/jwks`, used by JWT signature verification:
+
+- Accepts the same single `issuer` query parameter, and no URL of the caller's choosing
+- Fetches the issuer's discovery document as above, takes `jwks_uri` from it, and vets that URL the same way (HTTPS, domain name, no IP literal) before fetching it
+- Requires a JWK Set (`{ "keys": [...] }`) of at most 50 keys, and strips private and symmetric members (`d`, `p`, `q`, `dp`, `dq`, `qi`, `oth`, `k`) before returning `{ jwks_uri, keys }`
+
+Signature verification itself runs in the browser with WebCrypto. The Workers do not receive, log, or store any JWT token. They receive only the issuer URL. The Worker code itself logs nothing; Cloudflare's platform logs contain only request metadata (timing, status, the `?issuer=` query string) and never any token content, because no token content is ever sent to the Worker.
 
 **SSRF mitigations in the Worker:**
 
-- **No IP-literal issuers** — the hostname is checked after URL parsing; any IPv4 or IPv6 literal is rejected with 400 before a fetch is attempted
+- **No caller-chosen URLs** — both Workers accept only an issuer; the discovery path is fixed, and the JWKS URL comes from the issuer's own discovery document
+- **No IP-literal hosts** — the issuer's and the `jwks_uri`'s hostname are checked after URL parsing; any IPv4 or IPv6 literal is rejected with 400 before a fetch is attempted
 - **Redirects are not followed** — the fetch is made with `redirect: 'error'`; any redirect results in a 502 error
 - **5-second timeout** — an `AbortController` cancels the fetch after 5 seconds; a timed-out request returns 504
 - **100 KB response cap** — the `Content-Length` header is checked before reading the body, and the body itself is capped at 100,000 bytes; oversized responses are rejected with 502
-- **Response validation** — the body must be valid JSON, must be a non-null object, and must contain an `issuer` field (required by RFC 8414); anything else returns 502
+- **Response validation** — the body must be valid JSON; a discovery document must be a non-null object with an `issuer` field (required by RFC 8414), and a JWKS must be a JWK Set of at most 50 keys; anything else returns 502
 - **Origin restriction** — responses include `Access-Control-Allow-Origin: https://samlguy.com`, preventing other browser origins from using the Worker as a free fetch proxy; this does not prevent the outbound request itself, only cross-origin response reads
 - **Method restriction** — only `GET` is exported from the endpoint; SvelteKit returns `405 Method Not Allowed` with an `Allow: GET, HEAD` header for any other method automatically
 
@@ -98,7 +107,7 @@ CSP is configured via the `csp` option of the `sveltekit()` plugin in `vite.conf
 - `default-src 'self'` — baseline: only same-origin resources allowed
 - `script-src 'self' <hashes>` — no `unsafe-inline`; SvelteKit automatically hashes its bootstrap script per render; the theme-detection script in `app.html` is covered by a manually computed static hash
 - `style-src 'self'` — all styles compile to external files; no inline `<style>` tags remain in the rendered HTML
-- `connect-src 'self'` — fetch calls (OIDC discovery proxy) are same-origin
+- `connect-src 'self'` — fetch calls (the OIDC discovery and JWKS proxies) are same-origin
 - `img-src 'self'` — favicon and assets only
 - `font-src 'none'` — no external fonts loaded
 - `object-src 'none'` — blocks plugins

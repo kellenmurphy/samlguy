@@ -72,7 +72,7 @@ The page handles:
 
 ### PEM and JWK conversion (`src/lib/pem.ts`)
 
-No external library. `toPem(der, label)` wraps DER bytes or a base64 DER string in `CERTIFICATE` or `PUBLIC KEY` armor at 64 columns (RFC 7468). `jwkToSpki(jwk)` / `jwkToPem(jwk)` build an SPKI from a public JWK: RSA (`n`/`e` as minimal positive INTEGERs), EC P-256/P-384/P-521 (uncompressed point, coordinate lengths checked), and OKP Ed25519/Ed448/X25519/X448; `oct` keys are rejected because they have no public form. `encodeTlv` is the DER encoder behind both. The tests use Node's `crypto` as an independent oracle for every key type. Nothing renders JWKs yet; `jwkToPem` is there for JWKS display when signature verification lands (#441).
+No external library. `toPem(der, label)` wraps DER bytes or a base64 DER string in `CERTIFICATE` or `PUBLIC KEY` armor at 64 columns (RFC 7468). `jwkToSpki(jwk)` / `jwkToPem(jwk)` build an SPKI from a public JWK: RSA (`n`/`e` as minimal positive INTEGERs), EC P-256/P-384/P-521 (uncompressed point, coordinate lengths checked), and OKP Ed25519/Ed448/X25519/X448; `oct` keys are rejected because they have no public form. `encodeTlv` is the DER encoder behind both. The tests use Node's `crypto` as an independent oracle for every key type. `jwkToSpki` is what lets `jws.ts` import a JWK the same way as a PEM key.
 
 ### Certificate details (`src/lib/CertDetails.svelte`)
 
@@ -89,6 +89,18 @@ Renders one certificate: validity badge, key algorithm, subject, issuer and date
 ### OIDC discovery proxy (`src/routes/api/discover/+server.ts`)
 
 Cloudflare Worker. Accepts `?issuer=<url>`, validates HTTPS, fetches `{issuerUrl.href}/.well-known/openid-configuration`, returns the discovery document. Rejects non-HTTPS issuers with HTTP 400. Called from the JWT results panel when `iss` is present — surfaces issuer match and supported algorithm checks against the decoded token.
+
+### JWKS proxy (`src/routes/api/jwks/+server.ts`)
+
+Cloudflare Worker. Accepts only `?issuer=<url>`, never a JWKS URL: it fetches the issuer's discovery document, takes `jwks_uri` from it, vets that URL the same way (HTTPS, domain name), fetches it, and returns `{ jwks_uri, keys }`. Requires a JWK Set of at most 50 keys and strips private and symmetric members (`d`, `p`, `q`, `dp`, `dq`, `qi`, `oth`, `k`). Both proxies share `src/lib/server/fetch-json.ts`: `vetRemoteUrl`, `discoveryUrl`, and `fetchJson` (5-second timeout, `redirect: 'error'`, 100 KB cap, JSON parse).
+
+### JWS verification (`src/lib/jws.ts`)
+
+WebCrypto, no library. Every key becomes a `CandidateKey` holding SPKI DER (via `jwkToSpki` or `certPublicKeySpki`), so JWKs, PEM public keys and certificates import the same way. `keysFromJwks`, `keysFromX5c` (leaf certificate only) and `parseKeyInput` (JWK, JWKS, `PUBLIC KEY` or `CERTIFICATE` PEM) build candidates; `selectKeys` drops `use: "enc"` keys and keys pinned to another `alg`, and narrows by `kid` when any key carries one. `verifyJwt(token, keys)` never throws and returns `valid` / `invalid` / `no-key` / `unsupported` / `unsigned` with a readable `detail`. Supports RS256-512, PS256-512 (salt = hash length), ES256/384/512 (raw r||s, length checked) and EdDSA / Ed25519; HS* is reported as needing the shared secret. Tests sign real tokens with Node's `crypto` for every algorithm.
+
+### Signature panel (`src/lib/SignatureVerify.svelte`)
+
+The JWT "Signature" row. Offers "Verify with issuer JWKS" (when `iss` is present, via `/api/jwks`), "Verify with x5c" (when the header has one; the result carries a note that the chain is not validated), and "Paste a key". After a JWKS fetch it lists the keys with the signing key marked and a Copy PEM button on each. `jws.ts` and `pem.ts` are imported on first use. State resets when the token changes, and a generation counter drops responses for a token that is no longer shown.
 
 ### InfoTip component (`src/lib/InfoTip.svelte`)
 
@@ -148,7 +160,6 @@ Run with: `npm run coverage`
 ### Medium priority
 
 - **SAML signature validation** — fetch the IdP's SAML metadata (by EntityID or URL), extract the signing cert, and verify `<ds:Signature>` using the Web Crypto API. Display verified/unverified status prominently.
-- **JWT JWKS validation** — after OIDC discovery, fetch `jwks_uri` and attempt to verify the JWT signature against the matching key.
 
 ### Lower priority / ideas
 

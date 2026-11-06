@@ -31,6 +31,7 @@
     import { relativeLabel, isExpired, timeStatus, type TimeTone } from '#lib/time.ts';
     import type { CertInfo } from '#lib/cert.ts';
     import CertDetails from '#lib/CertDetails.svelte';
+    import SignatureVerify from '#lib/SignatureVerify.svelte';
     import { highlightXml, XML_ELEMENT_TIPS } from '#lib/xml-highlight.ts';
     import { EXAMPLES, EXAMPLE_CATEGORIES } from '#lib/examples.ts';
 
@@ -641,6 +642,18 @@
                         </dd>
                     </div>
                 {/each}
+                <div class="flex gap-4 px-4 py-2.5">
+                    <dt class="w-36 shrink-0 text-sm text-neutral-500">
+                        Signature<InfoTip key="jwt.signature" />
+                    </dt>
+                    <dd class="min-w-0 flex-1">
+                        <SignatureVerify
+                            token={jwtResult.raw}
+                            header={jwtResult.header}
+                            issuer={iss}
+                        />
+                    </dd>
+                </div>
                 {#if iss}
                     <div class="flex gap-4 px-4 py-2.5">
                         <dt class="w-36 shrink-0 text-sm text-neutral-500">
