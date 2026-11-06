@@ -210,9 +210,36 @@ export const STATUS_SPEC_URLS: Record<string, string> = {
     [`${ST_PFX}UnsupportedBinding`]: SAML_CORE_SPEC
 };
 
+/** What re-encoding needs: the message as received, not the pretty-printed copy. */
+export interface SamlSource {
+    /** The decoded XML exactly as received. */
+    xml: string;
+    relayState?: string;
+    /** The endpoint the message was sent to, with the SAML parameters removed, when the input was a URL. */
+    endpoint?: string;
+    /** Whether the query string carried an HTTP-Redirect binding signature (SigAlg / Signature). */
+    redirectSigned: boolean;
+}
+
 export interface SamlDecodeResult {
     xml: string;
     summary: SamlSummary;
+    source: SamlSource;
+}
+
+const SAML_PARAMS = ['SAMLRequest', 'SAMLResponse', 'RelayState', 'SigAlg', 'Signature'];
+
+/** The endpoint URL without its SAML parameters, when the input is a full URL. */
+function endpointOf(input: string): string | undefined {
+    let url: URL;
+    try {
+        url = new URL(input);
+    } catch {
+        return undefined;
+    }
+    if (!/^https?:$/.test(url.protocol)) return undefined;
+    for (const p of SAML_PARAMS) url.searchParams.delete(p);
+    return url.toString();
 }
 
 export function decodeSaml(raw: string): SamlDecodeResult {
@@ -225,7 +252,13 @@ export function decodeSaml(raw: string): SamlDecodeResult {
         throw new Error('Decoded content is not valid XML');
     }
 
-    return { xml: prettyPrintXml(xml), summary: parseSummary(doc, binding, relayState, paramName) };
+    const qs = extractQueryString(input);
+    const redirectSigned = qs !== null && new URLSearchParams(qs).has('Signature');
+    return {
+        xml: prettyPrintXml(xml),
+        summary: parseSummary(doc, binding, relayState, paramName),
+        source: { xml, relayState, endpoint: endpointOf(input), redirectSigned }
+    };
 }
 
 export function decodeAllSaml(raw: string): SamlDecodeResult[] {

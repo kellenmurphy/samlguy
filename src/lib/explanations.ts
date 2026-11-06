@@ -33,6 +33,9 @@ export const FIELD_EXPLANATIONS: Record<string, string> = {
     'saml.signingCert':
         "The X.509 certificate whose private key signed this message. The relying party should verify the signature using the public key from the issuer's SAML metadata. An expired or unknown certificate outside a trusted metadata feed is a security concern.",
 
+    'saml.editRequest':
+        'Change IssueInstant, the ACS URL or index, or the requested AuthnContext, and get the request back encoded for the same binding: DEFLATE + base64 for HTTP-Redirect, base64 for HTTP-POST. Useful for replaying a captured request with a fresh timestamp or for testing an MFA requirement. Everything else in the request is kept. A signed request cannot be re-signed here, so the IdP must accept unsigned requests from the SP.',
+
     'saml.authnContext':
         'The Authentication Context Class Reference — a URI that describes how the user authenticated at the IdP. Common values: Password (HTTPS) means username/password over TLS; Kerberos means a Kerberos ticket was used; REFEDS MFA means the session satisfies the REFEDS Multi-Factor Authentication profile, widely used in research and education federations.',
 

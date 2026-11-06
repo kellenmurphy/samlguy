@@ -45,6 +45,12 @@ The page handles:
 6. **`STATUS_DESCRIPTIONS`** / **`STATUS_SPEC_URLS`** — maps all 23 SAML 2.0 status code URNs to human-readable descriptions and links to the SAML Core spec PDF.
 7. **`AUTHN_CONTEXT_LABELS`** / **`AUTHN_CONTEXT_SPEC_URLS`** — maps SAML AuthnContext Class Reference URIs (OASIS, REFEDS, RAF, NIST) to short display labels and spec links.
 
+### AuthnRequest editing (`src/lib/authn-edit.ts`)
+
+Pure DOM, no library. `readFields(xml)` returns `IssueInstant`, `AssertionConsumerServiceURL` or `AssertionConsumerServiceIndex`, the `RequestedAuthnContext` class references and `Comparison` (missing or unknown reads as `exact`). `applyEdits(xml, fields)` works on the message as received, so everything not edited is kept: an index removes the URL and `ProtocolBinding` (mutually exclusive, Core §3.4.1), no class references removes `RequestedAuthnContext`, a new one goes before `Scoping` per the schema sequence, and `exact` is not written out. `validateFields` checks the instant has a time zone, URL xor index, an absolute ACS URL and an unsigned-short index. `encodeRequest(xml, binding)` is DEFLATE + base64 for Redirect and base64 for POST; `redirectUrl(endpoint, value, relayState)` replaces any SAML parameters and never adds `SigAlg` / `Signature`, because the request cannot be re-signed in the browser. `hasEmbeddedSignature` drives the POST warning. Every re-encoded message in the tests is decoded again with `decodeSaml`.
+
+`decodeSaml` returns a `source` alongside the summary for this: the XML exactly as received (not the pretty-printed copy), `relayState`, the `endpoint` (the input URL minus `SAMLRequest`, `SAMLResponse`, `RelayState`, `SigAlg`, `Signature`) and `redirectSigned`. `AuthnRequestEditor.svelte` renders the "Edit Request" card for any `SAMLRequest` whose root is an `AuthnRequest`; form ids come from `$props.id()` so several requests in one paste do not collide.
+
 ### SAML metadata library (`src/lib/metadata.ts`)
 
 **Pure DOM parsing, no external library** (same philosophy as `saml.ts`). Routed ahead of the SAML-message decode path in `+page.svelte`.
