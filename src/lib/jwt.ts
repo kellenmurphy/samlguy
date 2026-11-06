@@ -1,10 +1,10 @@
-import { relativeLabel, isExpired } from './time.js';
+import { timeStatus, type TimeKind, type TimeTone } from './time.js';
 
 export interface JwtTimestamp {
     raw: number;
     date: Date;
     label: string;
-    expired: boolean;
+    tone: TimeTone;
 }
 
 export interface JwtDecodeResult {
@@ -28,10 +28,10 @@ function base64urlDecode(s: string): string {
     return atob(pad === 0 ? padded : padded + '='.repeat(4 - pad));
 }
 
-function parseTimestamp(val: unknown): JwtTimestamp | undefined {
+function parseTimestamp(val: unknown, kind: TimeKind): JwtTimestamp | undefined {
     if (typeof val !== 'number') return undefined;
     const date = new Date(val * 1000);
-    return { raw: val, date, label: relativeLabel(date), expired: isExpired(date) };
+    return { raw: val, date, ...timeStatus(date, kind) };
 }
 
 function parseScopes(payload: Record<string, unknown>): string[] | null {
@@ -82,9 +82,9 @@ export function decodeJwt(input: string): JwtDecodeResult {
         isAlgNone,
         isWeakAlg,
         timestamps: {
-            iat: parseTimestamp(payload.iat),
-            exp: parseTimestamp(payload.exp),
-            nbf: parseTimestamp(payload.nbf)
+            iat: parseTimestamp(payload.iat, 'instant'),
+            exp: parseTimestamp(payload.exp, 'expiry'),
+            nbf: parseTimestamp(payload.nbf, 'notBefore')
         },
         scopes: parseScopes(payload)
     };

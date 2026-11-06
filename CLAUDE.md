@@ -80,7 +80,7 @@ Renders one certificate: validity badge, key algorithm, subject, issuer and date
 
 ### Time helpers (`src/lib/time.ts`)
 
-`relativeLabel(date)` — returns human-readable relative strings ("just expired", "3 hours ago", "in 5 minutes", "active"). `isExpired(date)` — boolean check.
+`timeStatus(date, kind)` returns `{ label, tone }` for a timestamp according to what it means. `expiry` (exp, NotOnOrAfter, validUntil) reads "valid for 3 hours" / "expired 2 days ago"; `notBefore` (nbf, NotBefore) reads "valid since 2 hours ago" / "not valid yet, starts in 3 hours"; `instant` (iat, AuthnInstant) reads a neutral "1 hour ago", and only a time well in the future is flagged, since a few seconds ahead is clock skew. `tone` is `good` / `bad` / `neutral`, mapped to colours by `TONE_CLASS` in `+page.svelte`. `saml.ts` records each SAML timestamp's `kind`, and `jwt.ts` passes the right kind for iat, nbf and exp. `relativeLabel(date)` is the expiry wording on its own, and `isExpired(date)` a boolean check, both kept for certificate and metadata validity.
 
 ### Generic fallback decoder (`src/lib/generic.ts`)
 

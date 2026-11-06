@@ -67,17 +67,23 @@ describe('decodeJwt — RS256 with full claims', () => {
 
     it('parses iat timestamp', () => {
         expect(result.timestamps.iat?.raw).toBe(999996400);
-        expect(result.timestamps.iat?.expired).toBe(true);
+        // an issue time in the past is normal, not an expiry
+        expect(result.timestamps.iat?.tone).toBe('neutral');
+        expect(result.timestamps.iat?.label).toMatch(/^\d+ days ago$/);
         expect(result.timestamps.iat?.date.toISOString()).toBe('2001-09-09T00:46:40.000Z');
     });
 
     it('parses exp timestamp', () => {
         expect(result.timestamps.exp?.raw).toBe(1000000000);
-        expect(result.timestamps.exp?.expired).toBe(true);
+        expect(result.timestamps.exp?.tone).toBe('bad');
+        expect(result.timestamps.exp?.label).toMatch(/^expired \d+ days ago$/);
     });
 
     it('parses nbf timestamp', () => {
         expect(result.timestamps.nbf?.raw).toBe(999996400);
+        // a start time in the past means the token is inside its window
+        expect(result.timestamps.nbf?.tone).toBe('good');
+        expect(result.timestamps.nbf?.label).toMatch(/^valid since \d+ days ago$/);
     });
 
     it('parses scope string into array', () => {
