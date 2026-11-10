@@ -9,9 +9,12 @@
 # `cooldown` is the supply-chain control: a newly published version is not
 # eligible for a version-update PR until it has been on the registry for
 # default-days, so a malicious release has a window to be caught and yanked
-# before it reaches us. Majors get a longer soak. Weekly batching stretches this
-# further in practice: a release only lands in a PR on the next Monday run, so
-# the effective minimum age is the cooldown plus up to six more days.
+# before it reaches us. npm majors get a longer soak; github-actions does not
+# support the semver-*-days keys and rejects the whole file if they are present,
+# so Actions majors wait default-days like everything else. Weekly batching
+# stretches this further in practice: a release only lands in a PR on the next
+# Monday run, so the effective minimum age is the cooldown plus up to six more
+# days.
 #
 # The one gap, per GitHub's docs, is that cooldown does NOT apply to security
 # updates: those are raised as soon as the advisory publishes. That is the right
@@ -62,7 +65,6 @@ updates:
       open-pull-requests-limit: 5
       cooldown:
           default-days: 5
-          semver-major-days: 14
       commit-message:
           prefix: 'chore'
           include: 'scope'
